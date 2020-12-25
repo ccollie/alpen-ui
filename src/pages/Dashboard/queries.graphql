@@ -1,0 +1,33 @@
+query DashboardPage($range: String!) {
+  hosts {
+    id
+    name
+    description
+    uri
+    redis {
+      redis_version
+      uptime_in_seconds
+      connected_clients
+      blocked_clients
+      total_system_memory
+      used_memory
+      maxmemory
+    }
+    jobCounts {
+      active
+      failed
+      paused
+      completed
+      delayed
+      waiting
+    }
+    queueCount
+    workerCount
+    stats(input: { range: $range, granularity: minute }) {
+      ...StatsSnapshot
+    }
+    lastStatsSnapshot(input:{ granularity: minute }) {
+      ...StatsSnapshot
+    }
+  }
+}

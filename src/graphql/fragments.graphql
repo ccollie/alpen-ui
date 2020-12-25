@@ -1,0 +1,203 @@
+fragment JobRepeatOptions on JobRepeatOptions {
+  cron
+  tz
+  startDate
+  endDate
+  limit
+  every
+  jobId
+  count
+}
+
+fragment JobOptions on JobOptions {
+  timestamp
+  priority
+  delay
+  attempts
+  repeat {
+    ...JobRepeatOptions
+  }
+  backoff
+  lifo
+  timeout
+  jobId
+  removeOnComplete
+  removeOnFail
+  stackTraceLimit
+}
+
+fragment Job on Job {
+  id
+  queueId
+  timestamp
+  state
+  name
+  data
+  opts {
+    ...JobOptions
+  }
+  delay
+  progress
+  attemptsMade
+  processedOn
+  finishedOn
+  failedReason
+  stacktrace
+  returnvalue
+}
+
+fragment RepeatableJob on RepeatableJob {
+  key
+  id
+  name
+  endDate
+  tz
+  cron
+  next
+  descr
+}
+
+fragment Meter on Meter {
+  count
+  meanRate
+  currentRate
+  m1Rate
+  m5Rate
+  m15Rate
+}
+
+fragment StatsSnapshot on StatsSnapshot {
+  count
+  failed
+  completed
+  startTime
+  endTime
+  stddev
+  mean
+  min
+  max
+  median
+  p90
+  p95
+  p99
+  p995
+}
+
+fragment JobCounts on Queue {
+  jobCounts {
+    active
+    failed
+    paused
+    completed
+    delayed
+    waiting
+  }
+}
+
+fragment Queue on Queue {
+  id
+  name
+  host
+  hostId
+  prefix
+  isPaused
+  ...JobCounts
+  repeatableJobCount
+  jobNames
+  workerCount
+}
+
+fragment QueueWorkers on Queue {
+  workers {
+    id
+    name
+    addr
+    age
+    started
+    idle
+    role
+    db
+    omem
+  }
+}
+
+fragment RuleMetric on RuleMetric {
+  type
+  options
+}
+
+fragment RuleAlertOptions on RuleAlertOptions {
+  triggerWindow
+  minViolations
+  maxAlertsPerEvent
+  alertOnReset
+  recoveryWindow
+  renotifyInterval
+}
+
+fragment Rule on Rule {
+  id
+  name
+  description
+  createdAt
+  updatedAt
+  metric {
+    ...RuleMetric
+  }
+  condition {
+    ... on ThresholdCondition {
+      errorThreshold
+      warningThreshold
+      operator
+    }
+    ... on PeakCondition {
+      errorThreshold
+      warningThreshold
+      influence
+      lag
+      direction
+    }
+    ... on ChangeCondition {
+      changeType
+      errorThreshold
+      warningThreshold
+      operator
+      timeWindow
+      timeShift
+      aggregationType
+    }
+  }
+  state
+  payload
+  channels
+  isActive
+  message
+  options {
+    ...RuleAlertOptions
+  }
+  alertCount
+}
+
+fragment NotificationChannel on NotificationChannel {
+  id
+  type
+  name
+  enabled
+  ... on MailNotificationChannel {
+    recipients
+  }
+  ... on SlackNotificationChannel {
+    webhook
+    channel
+    token
+  }
+  ... on WebhookNotificationChannel {
+    url
+    method
+    headers
+    timeout
+    retry
+    followRedirect
+    httpSuccessCodes
+  }
+}

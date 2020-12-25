@@ -1,0 +1,42 @@
+query HostPageQuery($id: ID!, $range: String!, $filter: HostQueuesFilter) {
+  host(id: $id) {
+    id
+    name
+    description
+    redis {
+      ...RedisStats
+    }
+    queues(filter: $filter) {
+      id
+      name
+      isPaused
+      ...JobCounts
+      repeatableJobCount
+      workerCount
+      throughput {
+        count
+        m1Rate
+        m5Rate
+        m15Rate
+      }
+      errorRate {
+        count
+        m1Rate
+        m5Rate
+        m15Rate
+      }
+      ruleAlertCount
+      workerCount
+      stats(input: { range: $range, granularity: minute }) {
+        ...StatsSnapshot
+      }
+      statsAggregate(input: { range: $range, granularity: minute }) {
+        ...StatsSnapshot
+      }
+      lastStatsSnapshot(input:{ granularity: minute }) {
+        ...StatsSnapshot
+      }
+      waitTimeAvg(limit: 500)
+    }
+  }
+}

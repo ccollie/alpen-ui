@@ -1,0 +1,115 @@
+query GetQueueJobCounts($id: ID!) {
+  queue(id: $id) {
+    id
+    ...JobCounts
+  }
+}
+
+query GetQueueJobs($id: ID!, $offset: Int = 0, $limit: Int = 10, $status: JobStatus, $sortOrder: SortOrderEnum) {
+  queue(id: $id) {
+    id
+    jobs(input: { offset: $offset, limit: $limit, status: $status, sortOrder: $sortOrder }) {
+      ...Job
+    }
+    ...JobCounts
+  }
+}
+
+query GetRepeatableJobs($id: ID!, $offset: Int = 0, $limit: Int = 10, $sortOrder: SortOrderEnum) {
+  queue(id: $id) {
+    id
+    repeatableJobs(input: { offset: $offset, limit: $limit, order: $sortOrder }) {
+      ...RepeatableJob
+    }
+    repeatableJobCount
+  }
+}
+
+query GetJobById($queueId: ID!, $id: ID!) {
+  job(queueId: $queueId, id: $id) {
+    ...Job
+  }
+}
+
+query GetJobLogs($queueId: ID!, $id: ID!, $start: Int = 0, $end: Int = -1) {
+  job(queueId: $queueId, id: $id) {
+    logs(start: $start, end: $end) {
+      count
+      items
+    }
+  }
+}
+
+mutation AddJob($queueId: ID!, $jobName: String!, $data: JSONObject, $options: JobOptionsInput) {
+  jobAdd(
+    input: {
+      queueId: $queueId,
+      jobName: $jobName,
+      data: $data,
+      options: $options
+    }) {
+      ...Job
+  }
+}
+
+mutation DeleteJob($queueId: ID!, $jobId: ID!) {
+  jobRemove(input: { queueId: $queueId, jobId: $jobId }) {
+    job {
+      id
+    }
+  }
+}
+
+mutation DeleteRepeatableJobByKey($queueId: ID!, $key: String!) {
+  repeatableJobRemoveByKey(input: { queueId: $queueId, key: $key }) {
+    key
+  }
+}
+
+mutation DeleteBulkJobs($queueId: ID!, $jobIds: [ID!]!) {
+  jobRemoveBulk(input: { queueId: $queueId, jobIds: $jobIds }) {
+    status {
+      id
+      success
+      reason
+    }
+  }
+}
+
+mutation RetryJob($queueId: ID!, $jobId: ID!) {
+  jobRetry(input: { queueId: $queueId, jobId: $jobId }) {
+    job {
+      id
+    }
+  }
+}
+
+mutation RetryBulkJobs($queueId: ID!, $jobIds: [ID!]!) {
+  jobRetryBulk(input: { queueId: $queueId, jobIds: $jobIds }) {
+    status {
+      id
+      success
+      reason
+    }
+  }
+}
+
+mutation PromoteJob($queueId: ID!, $jobId: ID!) {
+  jobPromote(input: { queueId: $queueId, jobId: $jobId }) {
+    job {
+      id
+      state
+    }
+  }
+}
+
+
+mutation PromoteBulkJobs($queueId: ID!, $jobIds: [ID!]!) {
+  jobPromoteBulk(input: { queueId: $queueId, jobIds: $jobIds }) {
+    status {
+      id
+      success
+      reason
+    }
+  }
+}

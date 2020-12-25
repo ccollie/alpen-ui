@@ -1,0 +1,14 @@
+query GetHosts {
+    hosts {
+        id
+        name
+        description
+        uri
+        workerCount
+        queues {
+            name
+            id
+            isPaused
+        }
+    }
+}

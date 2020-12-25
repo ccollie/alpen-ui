@@ -1,0 +1,88 @@
+
+query GetQueueById($id: ID!) {
+  queue(id: $id) {
+    ...Queue
+  }
+}
+
+query GetQueueWorkers($id: ID!) {
+  queue(id: $id) {
+    id
+    workers {
+      id
+      name
+      addr
+      age
+      started
+      idle
+      role
+      db
+      omem
+    }
+  }
+}
+
+
+mutation PauseQueue($id: ID!) {
+  queuePause(id: $id) {
+    isPaused
+  }
+}
+
+mutation ResumeQueue($id: ID!) {
+  queueResume(id: $id) {
+    isPaused
+  }
+}
+
+query GetQueueRules($queueId: ID!) {
+  queue(id: $queueId) {
+    rules {
+      ...Rule
+    }
+  }
+}
+
+mutation DeleteQueue($id: ID!, $checkActivity: Boolean = false) {
+  queueDelete(id: $id, options: { checkActivity: $checkActivity }) {
+    deletedKeys
+  }
+}
+
+mutation CleanQueue($id: ID! $grace: Duration!, $limit: Int, $status: JobStatus) {
+  queueClean(input: { id: $id, grace: $grace, limit: $limit, status: $status }) {
+    count
+  }
+}
+
+mutation DrainQueue($id: ID!, $delayed: Boolean) {
+  queueDrain(id: $id, delayed: $delayed) {
+    queue {
+      ...Queue
+    }
+  }
+}
+
+query GetJobSchemas($queueId: ID!) {
+  queue(id: $queueId) {
+    jobSchemas {
+      jobName
+      schema
+      defaultOpts
+    }
+  }
+}
+
+mutation SetJobSchema($queueId: ID!, $jobName: String!, $schema: JSONSchema!,  $defaultOpts: JobOptionsInput) {
+  queueJobSchemaSet(input: { queueId: $queueId, jobName: $jobName, schema: $schema, defaultOpts: $defaultOpts }) {
+    jobName
+    schema
+    defaultOpts
+  }
+}
+
+mutation DeleteJobSchema($queueId: ID!, $jobName: String!) {
+  queueJobSchemaDelete(input: { queueId: $queueId, jobName: $jobName }) {
+    jobName
+  }
+}

@@ -1,0 +1,7 @@
+query QueueJobsPageQuery($id: ID!) {
+    queue(id: $id) {
+        id
+        isPaused
+        ...JobCounts
+    }
+}

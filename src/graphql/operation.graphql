@@ -1,0 +1,17 @@
+
+query getAvailableMetrics {
+  metrics {
+    key
+    description
+    unit
+    category
+    isPolling
+  }
+}
+
+query getAvailableAggregates {
+  aggregates {
+    key,
+    description
+  }
+}

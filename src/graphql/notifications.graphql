@@ -1,0 +1,8 @@
+
+query getHostChannels($hostId: ID!) {
+  host(id: $hostId) {
+    channels {
+      ... NotificationChannel
+    }
+  }
+}
