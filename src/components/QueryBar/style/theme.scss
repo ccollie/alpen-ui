@@ -1,0 +1,198 @@
+i {
+  &.info-sprinkle {
+    margin-left: 5px;
+    margin-right: 1px;
+    cursor: pointer;
+    font-size: 14px;
+    position: relative;
+    top: 1px;
+    opacity: 0.5;
+    &:hover {
+      color: #fbb129;
+    }
+  }
+}
+a {
+  i {
+    &.info-sprinkle {
+      color: #337ab7;
+      opacity: 1.0;
+      text-decoration: none;
+      &:hover {
+        color: #23527c;
+      }
+    }
+  }
+}
+.caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: middle;
+}
+.caret-down {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: middle;
+  border-top: solid;
+  border-right: solid transparent;
+  border-left: solid transparent;
+}
+.caret-right {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: middle;
+  border-left: solid;
+  border-right: 0;
+  border-top: solid transparent;
+  border-bottom: solid transparent;
+}
+.btn {
+  height: 32px;
+  padding: 0 20px 0 20px;
+  border-radius: 3px;
+  font-weight: normal;
+  font-size: 15px;
+  text-align: center;
+  color: #464C4F;
+  transition: all 0.3s ease-out;
+}
+.btn.disabled,
+.btn[disabled],
+.btn[disabled]:hover,
+fieldset[disabled] .btn {
+  cursor: not-allowed;
+  opacity: .65;
+}
+.btn.disabled,
+fieldset[disabled] .btn {
+  pointer-events: none;
+}
+.btn-default {
+  background: linear-gradient(180deg,#FFFFFF 0%,#F6F6F6 100%);
+  box-shadow: inset 0 -1px 0 0 #DDDDDD;
+  border: 1px solid #DDDDDD;
+  &:active {
+    background: linear-gradient(180deg,#EDEDED 0%,#FFFFFF 99.31%);
+    box-shadow: inset 0 2px 2px 0 #CACACA;
+  }
+}
+.btn-default:hover,
+.btn-default:focus {
+  background: linear-gradient(180deg,#FFFFFF 0%,#EDEDED 100%);
+  box-shadow: inset 0 -1px 0 0 #CACACA, 0 2px 4px 0 rgba(0,0,0,0.1);
+  border: 1px solid #CACACA;
+}
+.btn-primary {
+  background: linear-gradient(180deg,#6BA442 0%,#5A9330 100%);
+  border: 1px solid #4D7A2D;
+  box-shadow: inset 0 -1px 0 0 #4D7A2D;
+  color: white;
+  &:active {
+    background: linear-gradient(180deg,#4A7E25 0%,#6BA442 100%);
+    box-shadow: inset 0 2px 2px 0 #3B6A1B;
+    border: 1px solid #3B6A1B;
+  }
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: linear-gradient(180deg,#6BA442 0%,#4A7E25 100%);
+  box-shadow: inset 0 -1px 0 0 #3B6A1B, 0 2px 4px 0 rgba(0,0,0,0.1);
+  border: 1px solid #3B6A1B;
+}
+.btn-info {
+  background-color: #FFFFFF;
+  border: 1px solid #6BA442;
+  border-radius: 3px;
+  box-shadow: none;
+  color: #6BA442;
+  &:active {
+    background: linear-gradient(180deg,#578B30 0%,#6BA442 100%);
+    box-shadow: inset 0 2px 2px 0 #4D7A2D;
+  }
+}
+.btn-info:hover,
+.btn-info:focus {
+  background: linear-gradient(180deg,#6BA442 0%,#5A9330 100%);
+  box-shadow: inset 0 -1px 0 0 #4D7A2D, 0 2px 4px 0 rgba(0,0,0,0.1);
+  border: 1px solid #4D7A2D;
+  color: white;
+}
+.btn-alert {
+  background: linear-gradient(180deg,#EF4C4C 0%,#C93434 100%);
+  border: 1px solid #9D2121;
+  box-shadow: inset 0 -1px 0 0 #9D2121;
+  color: white;
+  &:active {
+    background: linear-gradient(180deg,#C93434 0%,#EF4C4C 100%);
+    box-shadow: inset 0 2px 2px 0 #9D2121;
+  }
+}
+.btn-alert:hover,
+.btn-alert:focus {
+  background: linear-gradient(180deg,#CA3535 0%,#901717 100%);
+  box-shadow: inset 0 -1px 0 0 #6F1212;
+  border: 1px solid #6F1313;
+  color: white;
+}
+.btn-lg {
+  height: 45px;
+  font-size: 18px;
+  line-height: 43px;
+}
+.btn-sm {
+  padding: 0 10px 0 10px;
+  height: 28px;
+  font-weight: bold;
+  font-size: 13px;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+.btn-xs {
+  padding: 0 10px 0px 10px;
+  height: 22px;
+  font-weight: bold;
+  font-size: 11px;
+  line-height: 20px;
+  text-transform: uppercase;
+}
+.btn-full-width {
+  width: 100%;
+}
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  padding: 6px 0;
+  border-radius: 50%;
+}
+.btn-icon {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0 10px 0 10px;
+}
+.btn-group {
+  display: inline-block;
+}
+.btn-borderless {
+  color: #a06c29;
+  font-weight: bold;
+  background-color: transparent;
+  border: 0;
+}
+.btn-edit {
+  background: none;
+  color: #a06c29;
+  border: 1px solid #a06c29;
+  box-shadow: inset 0 -1px 0 0 #a06c29;
+}
+.btn-edit:hover,
+.btn-edit:focus {
+  box-shadow: none;
+  background: none;
+}
+.btn,
+button {
+  outline: none;
+}

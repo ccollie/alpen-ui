@@ -1,4 +1,4 @@
-import { Col, Row, Space } from 'antd';
+import { Col, Row } from 'antd';
 import React from 'react';
 import { QueueJobActions } from '../../@types/actions';
 import { JobStatus } from '../../api';

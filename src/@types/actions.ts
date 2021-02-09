@@ -2,6 +2,7 @@ import {
   BulkStatusItem,
   DiscoverQueuesPayload,
   JobLogs,
+  JobSchema,
   JobStatus,
   Queue,
 } from '../api';
@@ -46,4 +47,12 @@ export interface QueueActions {
     name: string,
   ) => Promise<Queue>;
   unregisterQueue: (id: string) => Promise<boolean>;
+}
+
+export interface JobSchemaActions {
+  getJobNames: () => Promise<string[]>;
+  getSchema: (jobName: string) => Promise<JobSchema | null>;
+  setSchema: (jobName: string, schema: JobSchema) => Promise<JobSchema>;
+  deleteSchema: (jobName: string) => Promise<void>;
+  getJobOptionsSchema: () => Promise<Record<string, any>>;
 }

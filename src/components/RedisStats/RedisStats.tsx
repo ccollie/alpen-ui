@@ -1,4 +1,4 @@
-import { Statistic } from 'antd';
+import { Space, Statistic } from 'antd';
 import ProCard from '@ant-design/pro-card';
 import React, { ReactText } from 'react';
 import { RedisInfo } from '../../api';
@@ -47,7 +47,9 @@ export const RedisStats: React.FC<RedisStatsProps> = ({ stats }) => {
   return (
     <ProCard.Group>
       <ProCard>
-        <RedisLogo />
+        <Space align="center">
+          <RedisLogo />
+        </Space>
       </ProCard>
       <ProCard>
         <Statistic title="Version" value={redis_version} />

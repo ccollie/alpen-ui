@@ -5,9 +5,6 @@ import { useQueryString } from './index';
 
 const defaultValues: QueueFilter = {
   sortOrder: SortOrderEnum.Asc,
-  active: true,
-  paused: true,
-  searchText: '',
   sortBy: 'name',
 };
 
@@ -31,12 +28,14 @@ export function useQueueFilterParams(props?: QueueFilter): QueueFilter {
 
   const order = ['asc', 'desc'].includes(sortOrder || '') ? sortOrder : 'asc';
 
-  return {
-    prefix: !prefix ? undefined : `${prefix}`,
-    active: !active ? undefined : toBool(active),
-    paused: !paused ? undefined : toBool(paused),
-    sortBy: !sortBy ? 'name' : sortBy,
-    searchText: !searchText ? undefined : `${searchText}`,
+  const result: QueueFilter = {
+    sortBy: sortBy ?? 'name',
     sortOrder: order as QueueFilter['sortOrder'],
   };
+
+  if (searchText) result.searchText = searchText;
+  if (prefix) result.prefix = prefix;
+  if (active !== undefined) result.active = toBool(active);
+  if (paused !== undefined) result.paused = toBool(paused);
+  return result;
 }

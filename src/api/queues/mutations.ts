@@ -8,8 +8,12 @@ import {
   DrainQueueDocument,
   DrainQueueMutation,
   GetHostsAndQueuesDocument,
+  GetJobSchemaDocument,
+  GetJobSchemaQuery,
   GetQueueByIdDocument,
   GetQueueJobCountsDocument,
+  JobOptionsInput,
+  JobSchema,
   JobStatus,
   PauseQueueDocument,
   PauseQueueMutation,
@@ -17,6 +21,8 @@ import {
   QueueFragmentDoc,
   ResumeQueueDocument,
   ResumeQueueMutation,
+  SetJobSchemaDocument,
+  SetJobSchemaMutation,
   UnregisterQueueDocument,
   UnregisterQueueMutation,
 } from '../generated';
@@ -230,6 +236,21 @@ export function drainQueue(id: string, delayed?: boolean): Promise<Queue> {
     });
 }
 
+export const getJobSchema = (
+  queueId: string,
+  jobName: string,
+): Promise<JobSchema> => {
+  return client
+    .query<GetJobSchemaQuery>({
+      query: GetJobSchemaDocument,
+      variables: { queueId, jobName },
+    })
+    .then((result) => {
+      if (result.error) throw result.error;
+      return result.data?.queueJobSchema as JobSchema;
+    });
+};
+
 export function deleteJobSchema(
   queueId: string,
   jobName: string,
@@ -248,5 +269,38 @@ export function deleteJobSchema(
           graphQLErrors: result.errors,
         });
       }
+    });
+}
+
+export function setJobSchema(
+  queueId: string,
+  jobName: string,
+  schema: Record<string, any>,
+  options?: Partial<JobOptionsInput>,
+): Promise<JobSchema> {
+  return client
+    .mutate({
+      mutation: SetJobSchemaDocument,
+      variables: {
+        queueId,
+        jobName,
+        schema,
+        defaultOpts: options,
+      },
+    })
+    .then((result: FetchResult<SetJobSchemaMutation>) => {
+      const { errors, data } = result;
+      if (errors) {
+        throw new ApolloError({
+          graphQLErrors: errors,
+        });
+      }
+      const { schema, defaultOpts } = data?.queueJobSchemaSet || {};
+      const res: JobSchema = {
+        jobName,
+        schema,
+        defaultOpts,
+      };
+      return res;
     });
 }

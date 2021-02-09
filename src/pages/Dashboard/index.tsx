@@ -1,12 +1,10 @@
 import { Empty, PageHeader } from 'antd';
 import React, { FC, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { DashboardPageDocument, QueueHost } from '../../api';
 import { useQuery } from '@apollo/client';
 import { HostCard } from '../../components';
 
 const Dashboard: FC = () => {
-  const navigate = useNavigate();
   const [hosts, setHosts] = useState<QueueHost[]>([]);
   const [range, setRange] = useState('last_hour');
 

@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Queue as AppQueue, GetQueueByIdDocument } from '../../api';
 import QueueHeader from './QueueHeader';
-import { Empty, Skeleton, Divider, Button, Result } from 'antd';
+import { Empty, Skeleton, Button, Result } from 'antd';
 import { useParams, Outlet } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 

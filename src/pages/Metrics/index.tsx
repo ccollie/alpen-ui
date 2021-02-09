@@ -82,7 +82,7 @@ const Metrics: FC = () => {
       setErrorChartData(getErrorChardData(snapshots));
       const summary = queueData?.queue?.statsAggregate;
       if (summary) {
-        const perc = calcErrorPercentage(summary);
+        const perc = calcErrorPercentage(summary as StatsSnapshot);
         setErrorPercentage(perc);
       }
     }

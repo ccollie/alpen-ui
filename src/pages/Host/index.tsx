@@ -12,9 +12,9 @@ import { Queue, RedisInfo, HostPageQueryDocument, QueueHost } from '../../api';
 import { useParams } from 'react-router';
 import { useQuery } from '@apollo/client';
 import { QueueFilterToolbar } from '../../components/QueueFilterToolbar';
-import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
 import QueueCard from './QueueCard';
 import { RedisStats } from '../../components';
+import RedisIcon from '../../components/Icons/Redis';
 import { PlusOutlined, CloudServerOutlined } from '@ant-design/icons';
 import {
   useDisclosure,
@@ -28,6 +28,7 @@ const Host: React.FC = () => {
   const { hostId: id } = useParams();
   const [host, setHost] = useState<QueueHost | null>(null);
   const [queues, setQueues] = useState<Queue[]>([]);
+  const [name, setName] = useState('host');
   const [range, setRange] = useState('last_hour');
   const filter = useRef(useQueueFilterParams());
   let actions = useQueueActions();
@@ -39,6 +40,12 @@ const Host: React.FC = () => {
   } = useDisclosure({
     defaultIsOpen: false,
   });
+
+  const { isOpen: isRedisStatsOpen, onToggle: toggleRedisInfo } = useDisclosure(
+    {
+      defaultIsOpen: false,
+    },
+  );
 
   const updateNavigation = useNavigationUpdate();
 
@@ -52,8 +59,10 @@ const Host: React.FC = () => {
 
   useEffect(() => {
     if (hostData && !loading) {
-      setHost((hostData?.host || null) as QueueHost);
-      updateQueues((hostData?.host?.queues ?? []) as Queue[]);
+      const _host = hostData?.host || null;
+      setHost(_host as QueueHost);
+      setName(_host?.name || 'host');
+      updateQueues((_host?.queues ?? []) as Queue[]);
     }
   }, [loading, hostData]);
 
@@ -146,56 +155,50 @@ const Host: React.FC = () => {
         filter={filter.current}
         onFilterUpdated={onFilterUpdate}
       />
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        key="add-queue-btn"
+        onClick={openAddDialog}
+      >
+        Add Queue
+      </Button>
+      <RedisIcon
+        size={24}
+        onClick={toggleRedisInfo}
+        style={{ marginTop: '5px', cursor: 'pointer' }}
+      />
     </Space>
   );
-
-  // todo: make this a shareable container
-  function Header({ title, icon }: { title: string; icon: React.ReactNode }) {
-    return (
-      <PageHeader
-        title={title}
-        ghost={false}
-        tags={<Tags />}
-        extra={[
-          toolbar,
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            key="add-queue-btn"
-            onClick={openAddDialog}
-          >
-            Add Queue
-          </Button>,
-        ]}
-        avatar={{
-          icon,
-        }}
-      ></PageHeader>
-    );
-  }
 
   return (
     <Fragment>
       <div>
-        <RedisStats stats={host?.redis as RedisInfo} />
-        <Header title={host?.name || 'host'} icon={<CloudServerOutlined />} />
+        <PageHeader
+          title={name}
+          ghost={true}
+          tags={<Tags />}
+          extra={[toolbar]}
+          avatar={{
+            icon: <CloudServerOutlined />,
+          }}
+        />
+        {isRedisStatsOpen && <RedisStats stats={host?.redis as RedisInfo} />}
       </div>
       {hostError ? (
         <div>Error loading host #{id}</div>
       ) : (
-        <div>
-          <Space size={[8, 4]} align="start" wrap>
-            {queues.map((queue) => (
-              <QueueCard
-                key={`q-${queue.id}`}
-                queue={queue}
-                stats={queue.stats}
-                statsSummary={queue.statsAggregate}
-                actions={actions}
-              />
-            ))}
-          </Space>
-        </div>
+        <Space size={[8, 4]} align="start" wrap>
+          {queues.map((queue) => (
+            <QueueCard
+              key={`q-${queue.id}`}
+              queue={queue}
+              stats={queue.stats}
+              statsSummary={queue.statsAggregate}
+              actions={actions}
+            />
+          ))}
+        </Space>
       )}
       <RegisterQueueDialog
         visible={isAddQueueOpen}

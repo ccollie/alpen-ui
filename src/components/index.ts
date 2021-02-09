@@ -7,6 +7,7 @@ export * from './JobActions';
 export * from './JobBulkActions';
 export * from './JobCard';
 export * from './JobId';
+export * from './JsonEditor';
 export * from './NumberInfo';
 export * from './QueueMenu';
 export * from './QueuePauseSwitch';

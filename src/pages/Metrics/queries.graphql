@@ -25,9 +25,6 @@ query QueueStatsPageQuery($id: ID!, $range: String!, $granularity: StatsGranular
     statsAggregate(input: { range: $range, granularity: $granularity }) {
       ...StatsSnapshot
     }
-    lastStatsSnapshot(input:{ granularity: $granularity }) {
-      ...StatsSnapshot
-    }
     waitTimeAvg(limit: 500)
   }
 }

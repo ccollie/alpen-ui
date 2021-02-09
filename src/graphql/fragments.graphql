@@ -60,7 +60,6 @@ fragment RepeatableJob on RepeatableJob {
 fragment Meter on Meter {
   count
   meanRate
-  currentRate
   m1Rate
   m5Rate
   m15Rate
@@ -81,6 +80,10 @@ fragment StatsSnapshot on StatsSnapshot {
   p95
   p99
   p995
+  meanRate
+  m1Rate
+  m5Rate
+  m15Rate
 }
 
 fragment JobCounts on Queue {

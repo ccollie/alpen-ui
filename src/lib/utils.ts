@@ -1,6 +1,4 @@
-export function isString(value: unknown): boolean {
-  return typeof value === 'string';
-}
+import { isString } from './assertion';
 
 export function randomId(): string {
   const uint32 = window.crypto.getRandomValues(new Uint32Array(1))[0];
@@ -99,6 +97,10 @@ export function getNestedValue(obj: Record<string, any>, key: string): any {
   return key.split('.').reduce((result, key) => {
     return result[key];
   }, obj);
+}
+
+export function isNil(value: unknown): boolean {
+  return value === null || value === undefined;
 }
 
 export const TYPENAME_FIELD = '__typename';

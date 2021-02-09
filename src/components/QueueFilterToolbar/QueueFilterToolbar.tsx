@@ -14,10 +14,7 @@ interface FilterToolbarProps {
 }
 
 const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
-  const filter = useRef<QueueFilter>({
-    sortOrder: SortOrderEnum.Asc,
-    ...(props.filter || { sortBy: 'name' }),
-  });
+  const filter = useRef<QueueFilter>(normalizeFilter(props.filter));
 
   useWhyDidYouUpdate('QueueFilterToolbar', props);
 
@@ -123,18 +120,32 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
         sortOrder={sortOrder}
         onSortChanged={onSortChanged}
       />
-
       <FilterDropdown />
     </Space>
   );
 };
 
-function getSortOrder(filter: QueueFilter): SortOrderEnum {
-  return filter.sortOrder || SortOrderEnum.Asc;
-}
-
-function getSortBy(filter: QueueFilter): string {
-  return filter.sortBy || 'name';
+function normalizeFilter(filter: QueueFilter): QueueFilter {
+  filter = filter ?? {
+    sortOrder: SortOrderEnum.Asc,
+  };
+  const result: QueueFilter = {
+    sortOrder: filter.sortOrder || SortOrderEnum.Asc,
+    sortBy: filter.sortBy || 'name',
+  };
+  if (filter.searchText) {
+    result.searchText = filter.searchText;
+  }
+  if (filter.prefix) {
+    result.prefix = filter.prefix;
+  }
+  if (filter.paused !== undefined) {
+    result.paused = filter.paused;
+  }
+  if (filter.active !== undefined) {
+    result.active = filter.active;
+  }
+  return result;
 }
 
 function stringEqual(a: string | undefined, b: string | undefined): boolean {
@@ -143,12 +154,14 @@ function stringEqual(a: string | undefined, b: string | undefined): boolean {
 }
 
 function filtersEqual(a: QueueFilter, b: QueueFilter): boolean {
+  a = normalizeFilter(a);
+  b = normalizeFilter(b);
   return (
     a.paused === b.paused &&
     stringEqual(a.prefix, b.prefix) &&
     stringEqual(a.searchText, b.searchText) &&
-    getSortBy(a) === getSortBy(b) &&
-    getSortOrder(a) === getSortOrder(b)
+    a.sortBy === b.sortBy &&
+    a.sortOrder === b.sortOrder
   );
 }
 

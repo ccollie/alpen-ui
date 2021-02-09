@@ -3,3 +3,4 @@ declare module '*.less' {
   export = resource;
 }
 declare module 'react-fittext';
+declare module 'ace-builds/src-noconflict/worker-json.js';

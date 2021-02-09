@@ -9,7 +9,6 @@ import { calcErrorPercentage, calcJobRatePerUnit } from '../../lib/stats';
 import { roundNumber } from '../../lib';
 import { JobCountsPieChart, MiniArea } from '../Charts';
 import { HostStateTag } from '../HostStateTag';
-const { Title } = Typography;
 
 interface HostCardProps {
   host: QueueHost;
@@ -109,11 +108,7 @@ const HostCard: React.FC<HostCardProps> = (props) => {
 
   return (
     <>
-      <ProCard
-        title={title}
-        extra={<Title level={5}>{host.uri}</Title>}
-        onClick={selectHost}
-      >
+      <ProCard title={title} extra={host.uri} onClick={selectHost}>
         <JobCountsPieChart counts={counts} height={300} />
         <div style={{ marginBottom: '8px' }}>
           <MiniArea height={45} color="#975FE4" data={chartData} />

@@ -10,7 +10,6 @@ import {
   getJobs,
   getJobLogs,
   JobStatus,
-  JobLogs,
 } from '../api';
 
 // move this to store ??

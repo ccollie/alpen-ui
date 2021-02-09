@@ -1,4 +1,5 @@
-import { Space, Table } from 'antd';
+import { FilterOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Space, Table } from 'antd';
 import { TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
@@ -16,9 +17,11 @@ import {
   useInterval,
   useNavigationUpdate,
   useJobActions,
+  useDisclosure,
 } from '../../hooks';
 import { getColumns } from './columns';
 import { JobListDetail } from './JobListDetail';
+import JobSchemaDialog from './JobSchemaDialog';
 
 const Jobs: React.FC = () => {
   const { queueId } = useParams();
@@ -36,7 +39,9 @@ const Jobs: React.FC = () => {
   const [called, setCalled] = useState(false);
   const [data, setData] = useState<JobFragment[]>([]);
   const [total, setTotal] = useState(0);
-  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<readonly React.Key[]>(
+    [],
+  );
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const pagination = useRef<{
@@ -47,6 +52,14 @@ const Jobs: React.FC = () => {
     page,
     pageSize,
     total: 0,
+  });
+
+  const {
+    isOpen: isSchemaDialogOpen,
+    onOpen: openSchemaDialog,
+    onClose: closeSchemaDialog,
+  } = useDisclosure({
+    defaultIsOpen: false,
   });
 
   const updateNavigation = useNavigationUpdate();
@@ -110,7 +123,7 @@ const Jobs: React.FC = () => {
     );
   }
 
-  function onExpandedRowsChange(expandedRows: React.Key[]): void {
+  function onExpandedRowsChange(expandedRows: readonly React.Key[]): void {
     setExpandedRowKeys(expandedRows);
   }
 
@@ -189,18 +202,25 @@ const Jobs: React.FC = () => {
 
   return (
     <div>
-      <StatusMenu
-        counts={counts}
-        selectedStatus={status}
-        onSelectStatus={statusSelected}
-      />
-      <Space direction="vertical">
-        <JobBulkActions
-          status={status}
-          selectedIds={selectedIds}
-          actions={actions}
-          onBulkAction={onBulkAction}
+      <span>
+        <StatusMenu
+          counts={counts}
+          selectedStatus={status}
+          onSelectStatus={statusSelected}
         />
+        <Button onClick={openSchemaDialog}>Schemas</Button>
+      </span>
+      <Space direction="vertical">
+        <span>
+          <JobBulkActions
+            status={status}
+            selectedIds={selectedIds}
+            actions={actions}
+            onBulkAction={onBulkAction}
+          />
+          <Button icon={<PlusOutlined />}>Add</Button>
+          <Button icon={<FilterOutlined />}></Button>
+        </span>
         <Table<JobFragment>
           columns={columns}
           rowKey="id"
@@ -222,6 +242,11 @@ const Jobs: React.FC = () => {
           onChange={handleTableChange}
         />
       </Space>
+      <JobSchemaDialog
+        queueId={queueId}
+        isOpen={isSchemaDialogOpen}
+        onClose={closeSchemaDialog}
+      />
     </div>
   );
 };

@@ -75,6 +75,17 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
     }[]
   >([]);
 
+  const [counts, setJobCounts] = useState<JobCounts>(
+    queue.jobCounts || {
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      active: 0,
+      waiting: 0,
+      paused: 0,
+    },
+  );
+
   useEffect(() => {
     const data = (stats ?? []).map((val) => ({
       x: val.startTime,
@@ -91,15 +102,6 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
   }, [statsSummary]);
 
   const navigate = useNavigate();
-
-  const counts: JobCounts = queue.jobCounts || {
-    completed: 0,
-    failed: 0,
-    delayed: 0,
-    active: 0,
-    waiting: 0,
-    paused: 0,
-  };
 
   const selectQueue = () => navigate(`/queues/${queue.id}/jobs`);
   const gotoWorkers = () => navigate(`/queues/${queue.id}/workers`);

@@ -1,0 +1,63 @@
+.component {
+    position: relative;
+    z-index: 1;
+}
+.input-container {
+    padding: 12px 0px 10px 12px;
+    background: #f5f6f7;
+    border-bottom: 1px solid #ebebed;
+}
+.input-container .syntax-help {
+    position: absolute;
+    top: 7px;
+    left: 5px;
+    z-index: 2;
+}
+.input-container .dropdown {
+    margin-left: 5px;
+    height: 28px;
+}
+.input-container .dropdown i {
+    top: 1px;
+}
+.input-container .dropdown-toggle {
+    height: 28px;
+}
+.input-container .dropdown-menu {
+    font-size: 13px;
+}
+.input-group {
+    display: flex;
+    align-items: flex-start;
+}
+.option-container {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    border: 1px solid #bfbfbe;
+    background: #fff;
+    margin-right: 10px;
+    overflow: hidden;
+}
+.option-container > .option:first-child {
+    border: none;
+}
+.option-container .CodeMirror-placeholder {
+    color: #999999;
+}
+.has-focus {
+    border-color: #43b1e5;
+}
+.option-group {
+    display: flex;
+    flex-direction: row;
+}
+.button-group {
+    display: flex;
+    flex-grow: 0;
+}
+.reset-button {
+    margin-left: 5px;
+}

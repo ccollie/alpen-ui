@@ -63,6 +63,14 @@ mutation DrainQueue($id: ID!, $delayed: Boolean) {
   }
 }
 
+query GetJobSchema($queueId: ID!, $jobName: String!) {
+  queueJobSchema(input: { queueId: $queueId, jobName: $jobName}) {
+    jobName,
+    schema
+    defaultOpts
+  }
+}
+
 query GetJobSchemas($queueId: ID!) {
   queue(id: $queueId) {
     jobSchemas {
@@ -84,5 +92,15 @@ mutation SetJobSchema($queueId: ID!, $jobName: String!, $schema: JSONSchema!,  $
 mutation DeleteJobSchema($queueId: ID!, $jobName: String!) {
   queueJobSchemaDelete(input: { queueId: $queueId, jobName: $jobName }) {
     jobName
+  }
+}
+
+query GetJobOptionsSchema {
+  jobOptionsSchema
+}
+
+query GetQueueJobsNames($id: ID!) {
+  queue(id: $id) {
+    jobNames
   }
 }
