@@ -1,4 +1,4 @@
-import { FilterOutlined, PlusOutlined } from '@ant-design/icons';
+import { FilterOutlined, PlusOutlined, FilterTwoTone } from '@ant-design/icons';
 import { Button, Space, Table } from 'antd';
 import { TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +10,9 @@ import {
   JobFragment,
   JobStatus,
 } from '../../api';
+import { isEmpty } from '../../lib';
 import { BulkActionType, JobBulkActions, StatusMenu } from '../../components';
+import QueryBar from '../../components/QueryBar';
 import {
   usePaginationQueryString,
   useQueryString,
@@ -61,6 +63,14 @@ const Jobs: React.FC = () => {
   } = useDisclosure({
     defaultIsOpen: false,
   });
+
+  const { isOpen: isFilterOpen, onToggle: toggleFilter } = useDisclosure({
+    defaultIsOpen: false,
+  });
+
+  const [filter, setFilter] = useState<Record<string, any>>(
+    Object.create(null),
+  );
 
   const updateNavigation = useNavigationUpdate();
 
@@ -200,6 +210,21 @@ const Jobs: React.FC = () => {
     }
   }
 
+  function onFilterReset() {
+    console.log('filter reset');
+  }
+
+  function onFilterApply() {
+    console.log('filter apply');
+  }
+
+  function FilterIcon() {
+    if (isEmpty(filter)) {
+      return <FilterOutlined />;
+    }
+    return <FilterTwoTone />;
+  }
+
   return (
     <div>
       <span>
@@ -219,8 +244,19 @@ const Jobs: React.FC = () => {
             onBulkAction={onBulkAction}
           />
           <Button icon={<PlusOutlined />}>Add</Button>
-          <Button icon={<FilterOutlined />}></Button>
+          <Button icon={<FilterIcon />} onClick={toggleFilter}></Button>
         </span>
+        {isFilterOpen && (
+          <div>
+            <QueryBar
+              filter={filter}
+              limit={20}
+              onReset={onFilterReset}
+              onApply={onFilterApply}
+              schemaFields={[]}
+            />
+          </div>
+        )}
         <Table<JobFragment>
           columns={columns}
           rowKey="id"

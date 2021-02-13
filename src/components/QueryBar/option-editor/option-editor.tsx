@@ -1,14 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import AceEditor from 'react-ace';
 import { getAceInstance } from 'react-ace/lib/editorOptions';
-
-import styles from './option-editor.module.css';
-
 import 'ace-builds/src-min-noconflict/ext-language_tools';
 import 'mongodb-ace-mode';
 import 'mongodb-ace-theme-query';
-import { AutocompleteField, QueryAutoCompleter } from '../query-autocompleter';
+import { AutocompleteField, createCompleter } from '../query-autocompleter';
 import { Ace } from 'ace-builds';
+import styles from './option-editor.module.css';
 
 const ace = getAceInstance();
 const tools = ace.require('ace/ext/language_tools');
@@ -27,29 +25,29 @@ const OPTIONS = {
   showPrintMargin: false,
   behavioursEnabled: true,
   showGutter: false,
-  useWorker: false
+  useWorker: false,
 };
 
 interface OptionEditorProps {
   label: string;
   autoPopulated: boolean;
   value?: string;
-  onChange: (label: string, value: string) => void;
+  onChange: (value: string, label: string) => void;
   onApply: () => void;
-  schemaFields?: AutocompleteField[]
+  schemaFields?: AutocompleteField[];
 }
 
 const OptionEditor: React.FC<OptionEditorProps> = (props) => {
   const { schemaFields = [], value = '', label = '' } = props;
-  const [completer] = useState(QueryAutoCompleter.create(schemaFields));
+  const [completer] = useState(() => createCompleter(schemaFields));
   const _editor = useRef<Ace.Editor>();
 
   function handleApply() {
-    props.onApply && props.onApply();
+    props?.onApply();
   }
 
   function onChangeQuery(newCode: string) {
-    if (props.onChange) props.onChange(label, newCode);
+    props?.onChange(newCode, label);
   }
 
   function onEditorLoaded(opts: Ace.Editor) {
@@ -57,7 +55,7 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
   }
 
   function onFocus() {
-    tools.setCompleters([ completer ]);
+    tools.setCompleters([completer]);
   }
 
   useEffect(() => {
@@ -67,20 +65,16 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
     }
   }, [value, _editor.current]);
 
-  useEffect(() => {
-    completer.update(schemaFields);
-    if (props.autoPopulated) {
-      //
-    }
-  }, [schemaFields]);
-
-  const commands = [{
+  const commands = [
+    {
       name: 'executeQuery',
       bindKey: {
-        win: 'Enter', mac: 'Enter'
+        win: 'Enter',
+        mac: 'Enter',
       },
-      exec: handleApply
-    }];
+      exec: handleApply,
+    },
+  ];
 
   return (
     <AceEditor
@@ -95,7 +89,8 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
       name={`query-bar-option-input-${label}`}
       setOptions={OPTIONS}
       onFocus={onFocus}
-      onLoad={onEditorLoaded} />
+      onLoad={onEditorLoaded}
+    />
   );
 };
 

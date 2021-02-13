@@ -1,3 +1,2 @@
-import QueryAutoCompleter from './query-autocompleter';
-export { QueryAutoCompleter };
-export * from './autocompete-field'
+export * from './query-autocompleter';
+export * from './autocompete-field';

@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
 import {
@@ -61,13 +61,13 @@ interface QueryBarProps {
   filter: Record<string, any>;
   limit: number;
   sample?: boolean;
-  autoPopulated: boolean;
+  autoPopulated?: boolean;
   buttonLabel?: string;
   layout?: Array<QueryKey | QueryKey[]>;
   expanded?: boolean;
   onReset: () => void;
-  onApply?: () => void;
-  onChange?: (label: QueryKey, value: string) => void;
+  onApply?: (filter: string) => void;
+  onChange?: (value: string, label: QueryKey) => void;
   schemaFields: AutocompleteField[];
 }
 
@@ -84,6 +84,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   const [expanded, setExpanded] = useState(!!props.expanded);
   const [queryState, setQueryState] = useState(DEFAULT_STATE);
   const [valid, setValid] = useState(true);
+  const [isEmptyQuery, setIsEmptyQuery] = useState(false);
   const [sample, setSample] = useState(props.sample ?? DEFAULT_SAMPLE);
   const lastExecutedQuery = useRef<Query>(_getDefaultQuery());
 
@@ -255,6 +256,11 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    * @param {Object} input   the query string (i.e. manual user input)
    */
   function setQueryString(label: QueryKey, input: string): void {
+    let empty: boolean = false;
+    if (!input || !input.length) {
+      input = '{}';
+      empty = true;
+    }
     const validatedInput = validateInput(label, input);
 
     const _valid = validatedInput !== false;
@@ -275,10 +281,11 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     // if the input was validated, also set the corresponding state variable
     if (_valid) {
       meta.stringValue = input;
-      setValid(Keys.every(_isFieldValid));
+      setValid(empty || Keys.every(_isFieldValid));
     } else {
       setValid(_valid);
     }
+    setIsEmptyQuery(empty);
   }
 
   /**
@@ -322,12 +329,14 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
       setQueryState(QueryState.APPLY_STATE);
       Object.assign(lastExecutedQuery.current, cloneQuery());
       if (isFunction(props.onApply)) {
-        props.onApply();
+        const filter = lastExecutedQuery.current.filter;
+        const filterString = JSON.stringify(filter);
+        props.onApply(filterString);
       }
     }
   }
 
-  function onChange(label: QueryKey, value: string) {
+  function onChange(value: string, label: QueryKey) {
     const type = OPTION_DEFINITION[label].type;
     if (['numeric', 'document'].includes(type)) {
       return setQueryString(label, value);
@@ -506,15 +515,10 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     });
 
     const applyDisabled = !valid;
+    const resetDisabled = queryState !== QueryState.APPLY_STATE;
 
     const _queryOptionClassName = classnames(styles['option-container'], {
       [styles['has-focus']]: hasFocus,
-    });
-
-    const _applyButtonClassName = classnames(styles['apply-button']);
-
-    const _resetButtonClassName = classnames({
-      disabled: queryState !== QueryState.APPLY_STATE,
     });
 
     return (
@@ -529,13 +533,13 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
             <OptionsToggle expanded={expanded} onToggle={toggleExpand} />
           )}
         </div>
-        <div className={classnames(styles['button-group'])}>
+
+        <Space>
           <Button
             type="primary"
             size="small"
-            data-test-id="query-bar-apply-filter-button"
+            id="query-bar-apply-filter-button"
             key="apply-button"
-            className={_applyButtonClassName}
             onClick={onApplyButtonClicked}
             disabled={applyDisabled}
           >
@@ -543,14 +547,14 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
           </Button>
           <Button
             size="small"
-            data-test-id="query-bar-reset-filter-button"
+            id="query-bar-reset-filter-button"
             key="reset-button"
-            className={_resetButtonClassName}
+            disabled={resetDisabled}
             onClick={onResetButtonClicked}
           >
             Reset
           </Button>
-        </div>
+        </Space>
       </div>
     );
   }

@@ -1,15 +1,8 @@
-import { EXPRESSION_OPERATORS } from "./expression-operators";
-import { CONVERSION_OPERATORS } from "./conversion-operators";
+import { EXPRESSION_OPERATORS } from './expression-operators';
+import { CONVERSION_OPERATORS } from './conversion-operators';
 import { QUERY_OPERATORS } from './query-operators';
-import { Ace } from 'ace-builds';
 import { getAceInstance } from 'react-ace/lib/editorOptions';
-import { AutocompleteField } from "./autocompete-field";
-import EditSession = Ace.EditSession;
-import Editor = Ace.Editor;
-import Completer = Ace.Completer;
-import CompleterCallback = Ace.CompleterCallback;
-import Point = Ace.Point;
-const filter = require('./filter');
+import { AutocompleteField } from './autocompete-field';
 const ace = getAceInstance();
 const tools = ace.require('ace/ext/language_tools');
 
@@ -22,44 +15,31 @@ const STRING = 'string';
  * The match completions.
  */
 const MATCH_COMPLETIONS = [
-  ...QUERY_OPERATORS, 
+  ...QUERY_OPERATORS,
   ...EXPRESSION_OPERATORS,
-  ...CONVERSION_OPERATORS
+  ...CONVERSION_OPERATORS,
 ];
 
 /**
- * Adds autocomplete suggestions for queries.
+ * Filter the entires based on the prefix.
+ *
+ * @param {String} version - The server version.
+ * @param {Array} entries - The entries to filter.
+ * @param {String} prefix - The prefix.
+ *
+ * @returns {Array} The matching entries.
  */
-class QueryAutoCompleter implements Completer {
-  private readonly version: string;
-  private fields: AutocompleteField[];
-  private expressions: AutocompleteField[];
-  private readonly textCompleter: any;
+const filter = (
+  version: string,
+  entries: AutocompleteField[],
+  prefix: string,
+) => entries.filter((e) => !!e.name?.startsWith(prefix));
 
-  /**
-   * Instantiate a new completer.
-   *
-   * @param {String} version - The version.
-   * @param {Completer} textCompleter - The fallback Ace text completer.
-   * @param {Array} fields - The collection fields.
-   */
-  constructor(version: string, textCompleter: Completer, fields?: AutocompleteField[]) {
-    this.version = version;
-    this.textCompleter = textCompleter;
-    this.fields = fields || [];
-    this.expressions = MATCH_COMPLETIONS.concat(this.fields);
-  }
+export function createCompleter(schemaFields?: AutocompleteField[]): Function {
+  const fields = schemaFields || [];
+  const expressions = MATCH_COMPLETIONS.concat(fields);
 
-  /**
-   * Update the autocompleter with new fields.
-   *
-   * @param {Array} fields - The new fields.
-   */
-  update(fields: AutocompleteField[]) {
-    this.fields = fields;
-    this.expressions = MATCH_COMPLETIONS.concat(this.fields);
-  }
-
+  const textCompleter = tools.textCompleter;
   /**
    * Get the completion list for the provided params.
    *
@@ -71,11 +51,13 @@ class QueryAutoCompleter implements Completer {
    *
    * @returns {Function} The completion function.
    */
-  getCompletions(editor: Editor,
-                 session: EditSession,
-                 position: Point,
-                 prefix: string,
-                 done: CompleterCallback) {
+  return function (
+    editor: any,
+    session: any,
+    position: any,
+    prefix: string,
+    done: Function,
+  ) {
     // Empty prefixes do not return results.
     if (prefix === '') return done(null, []);
     // If the current token is a string with single or double quotes, then
@@ -84,23 +66,16 @@ class QueryAutoCompleter implements Completer {
     // have already typed.
     const currentToken = session.getTokenAt(position.row, position.column);
     if (currentToken && currentToken.type === STRING) {
-      return this.textCompleter.getCompletions(
+      return textCompleter.getCompletions(
         editor,
         session,
         position,
         prefix,
-        done
+        done,
       );
     }
     // If the current token is not a string, then we proceed as normal to suggest
     // operators to the user.
-    done(null, filter(this.version, this.expressions, prefix));
-  }
-
-  static create(schemaFields: AutocompleteField[]): QueryAutoCompleter {
-    const textCompleter = tools.textCompleter;
-    return new QueryAutoCompleter('', textCompleter, schemaFields);
-  }
+    done(null, filter('', expressions, prefix));
+  };
 }
-
-export default QueryAutoCompleter;

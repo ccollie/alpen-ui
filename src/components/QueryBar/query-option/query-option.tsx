@@ -5,18 +5,18 @@ import OptionEditor from '../option-editor';
 
 import styles from './query-option.module.css';
 import { AutocompleteField } from '../query-autocompleter';
-import { OptionType } from "../constants";
+import { OptionType } from '../constants';
 
 interface QueryOptionProps {
   placeholder?: string;
   label: OptionType;
   link: string;
-  inputType: 'numeric' | 'boolean' | 'document',
+  inputType: 'numeric' | 'boolean' | 'document';
   value: any;
   autoPopulated?: boolean;
   hasToggle?: boolean;
   hasError?: boolean;
-  onChange?: (label: OptionType, value: string) => void;
+  onChange?: (value: string, label: OptionType) => void;
   onApplyFilter?: () => void;
   schemaFields?: AutocompleteField[];
 }
@@ -30,24 +30,24 @@ const QueryOption = (props: QueryOptionProps) => {
     value = '',
     placeholder = '',
     autoPopulated = false,
-    schemaFields = []
+    schemaFields = [],
   } = props;
 
-  const isAutoComplete = [ 'filter', 'sort'].includes(label);
-  const isBoolean = (inputType === 'boolean');
+  const isAutoComplete = ['filter', 'sort'].includes(label);
+  const isBoolean = inputType === 'boolean';
   const isSimple = !isAutoComplete && !isBoolean;
 
   const _className = classnames(
     styles.component,
-    { [ styles[`is-${inputType}-type`] ]: true },
-    { [ styles['has-error'] ]: hasError }
+    { [styles[`is-${inputType}-type`]]: true },
+    { [styles['has-error']]: hasError },
   );
 
   const innerClassName = classnames(
     styles.input,
-    { [ styles[`input-${label}`] ]: label },
-    { [ styles[`input-${inputType}`] ]: inputType },
-    { [ styles['has-toggle'] ]: hasToggle }
+    { [styles[`input-${label}`]]: label },
+    { [styles[`input-${inputType}`]]: inputType },
+    { [styles['has-toggle']]: hasToggle },
   );
 
   function _openLink(href: string) {
@@ -55,7 +55,7 @@ const QueryOption = (props: QueryOptionProps) => {
   }
 
   function handleChange(value: string) {
-    props.onChange && props.onChange(label, value);
+    props.onChange && props.onChange(value, label);
   }
 
   function handleApply() {
@@ -67,45 +67,45 @@ const QueryOption = (props: QueryOptionProps) => {
   }
 
   return (
-    <div
-      className={_className}
-      data-test-id="query-bar-option">
+    <div className={_className} data-test-id="query-bar-option">
       <div
         className={classnames(styles.label)}
-        data-test-id="query-bar-option-label">
+        data-test-id="query-bar-option-label"
+      >
         <InfoSprinkle helpLink={props.link} onClickHandler={_openLink} />
         {label}
       </div>
-      {isAutoComplete &&
-      <OptionEditor
-        label={label}
-        value={value}
-        onChange={handleChange}
-        onApply={handleApply}
-        autoPopulated={autoPopulated}
-        schemaFields={schemaFields} />
-      }
-      {isBoolean &&
-      <input
-        id={`querybar-option-input-${label}`}
-        data-test-id="query-bar-option-input"
-        className={innerClassName}
-        type="checkbox"
-        checked={value}
-        onChange={handleChangeEvent}
-      />
-      }
-      {isSimple &&
-      <input
-        id={`querybar-option-input-${label}`}
-        data-test-id="query-bar-option-input"
-        className={innerClassName}
-        type="text"
-        value={value}
-        onChange={handleChangeEvent}
-        placeholder={placeholder}
-      />
-      }
+      {isAutoComplete && (
+        <OptionEditor
+          label={label}
+          value={value}
+          onChange={handleChange}
+          onApply={handleApply}
+          autoPopulated={autoPopulated}
+          schemaFields={schemaFields}
+        />
+      )}
+      {isBoolean && (
+        <input
+          id={`querybar-option-input-${label}`}
+          data-test-id="query-bar-option-input"
+          className={innerClassName}
+          type="checkbox"
+          checked={value}
+          onChange={handleChangeEvent}
+        />
+      )}
+      {isSimple && (
+        <input
+          id={`querybar-option-input-${label}`}
+          data-test-id="query-bar-option-input"
+          className={innerClassName}
+          type="text"
+          value={value}
+          onChange={handleChangeEvent}
+          placeholder={placeholder}
+        />
+      )}
     </div>
   );
 };

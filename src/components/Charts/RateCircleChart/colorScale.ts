@@ -1,5 +1,5 @@
 // Create color scale
-import { scaleLinear, scaleQuantile } from 'd3-scale';
+import { scaleQuantile } from 'd3-scale';
 
 const colorCodes = [
   '#66C2A5',

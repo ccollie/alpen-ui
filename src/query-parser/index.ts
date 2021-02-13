@@ -1,7 +1,7 @@
-import mingo from 'mingo'
+import mingo from 'mingo';
 import { initExpressionOperators } from './expression';
 import { initQueryOperators } from './query';
-import { initAggregationOperators } from "./aggregation";
+import { initAggregationOperators } from './aggregation';
 
 let isInit = false;
 
@@ -17,7 +17,12 @@ function initIfNecessary() {
 export function validateQuery(query: string | Record<string, any>): boolean {
   let q: Record<string, any>;
   if (typeof query === 'string') {
-    q = JSON.parse(query);
+    if (!query) return true;
+    try {
+      q = JSON.parse(query);
+    } catch (e) {
+      return false;
+    }
   } else {
     q = query as Record<string, any>;
   }
