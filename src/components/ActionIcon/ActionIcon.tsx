@@ -15,6 +15,7 @@ interface ActionIconProps {
   errorMessage?: MessageContent | false;
   title?: ReactNode;
   handler: () => void | Promise<void>;
+  danger?: boolean;
 }
 
 function ActionIcon(props: ActionIconProps) {
@@ -37,7 +38,7 @@ function ActionIcon(props: ActionIconProps) {
         setTimeout(() => message.success(showMessage), 0);
       }
     } else {
-      if (errorMessage === false) return;
+      if (!errorMessage) return;
       let msg = errorMessage;
       if (!msg) {
         if (err) {

@@ -2,7 +2,6 @@ import { Alert } from 'antd';
 import React, { useEffect, useState } from 'react';
 import AceEditor, { IMarker } from 'react-ace';
 import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
-import { randomId } from '../../lib';
 import { validate, validateSchema } from '../../lib/ajv';
 
 import 'ace-builds/src-noconflict/mode-json';
@@ -21,30 +20,21 @@ ace.config.setModuleUrl(
 );
 
 type JsonEditorProps = {
-  id?: string;
   readOnly?: boolean;
-  value: string | Record<string, any>;
+  value?: string | Record<string, any>;
   onChange?: (newValue: Record<string, any> | null) => void;
   theme?: string;
   schema?: Record<string, any> | undefined | null;
   [key: string]: any;
 };
 
-const defaultProps: JsonEditorProps = {
-  value: '',
-  theme: 'monokai',
-  readOnly: false,
-  id: randomId(),
-};
-
 export const JsonEditor: React.FC<JsonEditorProps> = (props) => {
-  const _props = Object.assign({}, defaultProps, props);
-  const { schema, theme, value, onChange, id } = _props;
-  let { readOnly = false } = _props;
+  const { schema, theme = 'monokai', value = '{}', onChange, ...rest } = props;
+  let { readOnly = false } = props;
   const [hasSchema, setHasSchema] = useState(false);
   const [markers, setMarkers] = useState<IMarker[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-  const [json, setJson] = useState<string>();
+  const [json, setJson] = useState<string>('{}');
 
   // function createMarker(err: IOutputError): IMarker {
   //   const { start, end } = err;
@@ -77,8 +67,11 @@ export const JsonEditor: React.FC<JsonEditorProps> = (props) => {
             setErrors(errs);
             // setMarkers(_errors.map(createMarker))
           }
+        } else {
+          setErrors([]);
         }
-      } catch {
+      } catch (e) {
+        console.log(e);
         setErrors(['Error parsing result as JSON']);
       }
     }
@@ -114,11 +107,10 @@ export const JsonEditor: React.FC<JsonEditorProps> = (props) => {
     <>
       <AceEditor
         mode="json"
-        {...props}
+        {...rest}
         value={json}
         theme={theme}
         onChange={handleChange}
-        name={id}
         readOnly={readOnly}
         debounceChangePeriod={380}
         editorProps={{ $blockScrolling: true }}
@@ -127,12 +119,11 @@ export const JsonEditor: React.FC<JsonEditorProps> = (props) => {
           enableLiveAutocompletion: false,
           enableSnippets: false,
         }}
-        markers={markers}
       />
       {errors && errors.length && (
         <div>
           {errors.map((err) => (
-            <Alert message={err} type="error" />
+            <Alert key="json-alert" message={err} type="error" />
           ))}
         </div>
       )}

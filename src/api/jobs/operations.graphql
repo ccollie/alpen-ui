@@ -15,6 +15,19 @@ query GetQueueJobs($id: ID!, $offset: Int = 0, $limit: Int = 10, $status: JobSta
   }
 }
 
+query GetJobsByFilter($id: ID!, $status: JobStatus, $cursor: String, $criteria: JSONObject, $count: Int = 10) {
+  queue(id: $id) {
+    id
+    jobSearch(filter: { cursor: $cursor, count: $count, status: $status, criteria: $criteria }) {
+      cursor,
+      jobs {
+        ...Job
+      }
+    }
+    ...JobCounts
+  }
+}
+
 query GetRepeatableJobs($id: ID!, $offset: Int = 0, $limit: Int = 10, $sortOrder: SortOrderEnum) {
   queue(id: $id) {
     id

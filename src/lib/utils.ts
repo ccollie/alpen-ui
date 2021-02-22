@@ -131,3 +131,9 @@ export const toBool = (val: unknown): boolean => {
   if (['true', '1'].includes(`${val}`)) return true;
   return false;
 };
+
+export function stringify(obj: Record<string, any>): string {
+  return JSON.stringify(obj)
+    .replace(/ ?\n ? ?/g, '')
+    .replace(/ {2,}/g, ' ');
+}

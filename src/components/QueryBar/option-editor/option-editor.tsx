@@ -40,6 +40,7 @@ interface OptionEditorProps {
 const OptionEditor: React.FC<OptionEditorProps> = (props) => {
   const { schemaFields = [], value = '', label = '' } = props;
   const [completer] = useState(() => createCompleter(schemaFields));
+  const [edited, setEdited] = useState<string>(value);
   const _editor = useRef<Ace.Editor>();
 
   function handleApply() {
@@ -47,6 +48,7 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
   }
 
   function onChangeQuery(newCode: string) {
+    setEdited(newCode);
     props?.onChange(newCode, label);
   }
 

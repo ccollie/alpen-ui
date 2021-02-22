@@ -1,10 +1,14 @@
 import {
   BulkStatusItem,
   DiscoverQueuesPayload,
+  JobCounts,
+  JobFragment,
   JobLogs,
   JobSchema,
+  JobSearchInput,
   JobStatus,
   Queue,
+  SortOrderEnum,
 } from '../api';
 
 export type JobAction = (id: string) => Promise<void>;
@@ -28,7 +32,23 @@ export interface BulkJobActions {
   ) => Promise<number>;
 }
 
-export interface QueueJobActions extends SingleJobActions, BulkJobActions {}
+export interface QueueJobActions extends SingleJobActions, BulkJobActions {
+  getJobs: (
+    queueId: string,
+    status: JobStatus,
+    page: number,
+    pageSize: number,
+    sortOrder?: SortOrderEnum,
+  ) => Promise<{ jobs: JobFragment[]; counts: JobCounts }>;
+  getJobsByFilter: (
+    queueId: string,
+    filter: JobSearchInput,
+  ) => Promise<{
+    jobs: JobFragment[];
+    counts: JobCounts;
+    cursor: string | undefined;
+  }>;
+}
 
 // todo: discover
 export interface QueueActions {
@@ -52,6 +72,7 @@ export interface QueueActions {
 export interface JobSchemaActions {
   getJobNames: () => Promise<string[]>;
   getSchema: (jobName: string) => Promise<JobSchema | null>;
+  getSchemas: () => Promise<JobSchema[]>;
   setSchema: (jobName: string, schema: JobSchema) => Promise<JobSchema>;
   deleteSchema: (jobName: string) => Promise<void>;
   getJobOptionsSchema: () => Promise<Record<string, any>>;

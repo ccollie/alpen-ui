@@ -1,11 +1,12 @@
 import {
   GetJobOptionsSchemaDocument,
   GetJobOptionsSchemaQuery,
+  GetJobSchemasDocument,
+  GetJobSchemasQuery,
   GetQueueByIdDocument,
   GetQueueByIdQuery,
   GetQueueJobsNamesDocument,
   GetQueueJobsNamesQuery,
-  JobCounts,
   JobSchema,
   Queue,
 } from '../generated';
@@ -40,6 +41,20 @@ export const getJobNames = (id: string): Promise<string[]> => {
     });
 };
 
+export const getJobSchemas = (id: string): Promise<JobSchema[]> => {
+  return client
+    .query<GetJobSchemasQuery>({
+      query: GetJobSchemasDocument,
+      variables: { queueId: id },
+    })
+    .then((fetchResult) => {
+      if (fetchResult?.error) {
+        throw new ApolloError(fetchResult?.error);
+      }
+      return fetchResult?.data?.queue?.jobSchemas ?? [];
+    });
+};
+
 export const getJobOptionsSchema = (): Promise<Record<string, any>> => {
   return client
     .query<GetJobOptionsSchemaQuery>({
@@ -51,13 +66,4 @@ export const getJobOptionsSchema = (): Promise<Record<string, any>> => {
       }
       return result?.data?.jobOptionsSchema;
     });
-};
-
-const EmptyJobCounts: JobCounts = {
-  completed: 0,
-  active: 0,
-  delayed: 0,
-  failed: 0,
-  waiting: 0,
-  paused: 0,
 };

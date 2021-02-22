@@ -93,18 +93,17 @@ const Main: React.FC = ({ children }) => {
   const loadingIcon = <LoadingOutlined style={iconStyle} spin />;
 
   function Logo() {
-    if (appLoading) return <Spin indicator={loadingIcon}></Spin>;
+    if (appLoading) return <Spin indicator={loadingIcon} />;
     return <span style={iconStyle}>🎯</span>;
   }
   return (
-    <Layout>
+    <Layout style={{ minHeight: '100vh' }}>
       <Sider
         collapsible={true}
         onCollapse={onCollapsed}
         style={{
           overflow: 'auto',
           height: '100vh',
-          position: 'fixed',
           left: 0,
         }}
       >
@@ -121,8 +120,7 @@ const Main: React.FC = ({ children }) => {
           </Menu.Item>
         </Menu>
       </Sider>
-      <Layout className="site-layout" style={{ marginLeft: 200 }}>
-        <Header className="site-layout-background" style={{ padding: 0 }} />
+      <Layout className="site-layout">
         <Content
           style={{ margin: '16px 16px 0', minHeight: 280, overflow: 'initial' }}
         >

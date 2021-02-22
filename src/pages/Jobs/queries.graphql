@@ -1,7 +1,12 @@
-query QueueJobsPageQuery($id: ID!) {
+query QueueSchemaQuery($id: ID!) {
     queue(id: $id) {
         id
-        isPaused
+        jobNames
+        jobSchemas {
+            jobName
+            schema
+            defaultOpts
+        },
         ...JobCounts
     }
 }

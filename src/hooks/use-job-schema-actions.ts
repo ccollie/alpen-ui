@@ -4,6 +4,7 @@ import {
   getJobNames,
   getJobOptionsSchema,
   getJobSchema,
+  getJobSchemas,
   JobSchema,
   setJobSchema,
 } from '../api';
@@ -21,6 +22,9 @@ export function useJobSchemaActions(queueId: string): JobSchemaActions {
     },
     getSchema(jobName: string): Promise<JobSchema | null> {
       return getJobSchema(queueId, jobName);
+    },
+    getSchemas(): Promise<JobSchema[]> {
+      return getJobSchemas(queueId);
     },
     setSchema(jobName: string, schema: JobSchema): Promise<JobSchema> {
       const opts = schema.defaultOpts ?? undefined;

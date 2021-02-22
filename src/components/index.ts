@@ -11,6 +11,7 @@ export * from './JsonEditor';
 export * from './NumberInfo';
 export * from './QueueMenu';
 export * from './QueuePauseSwitch';
+export * from './QueryBar';
 export * from './RedisStats';
 export * from './StatusMenu';
 export * from './Trend';

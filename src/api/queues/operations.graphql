@@ -5,6 +5,13 @@ query GetQueueById($id: ID!) {
   }
 }
 
+query GetQueueJobCounts($id: ID!) {
+  queue(id: $id) {
+    id
+    ...JobCounts
+  }
+}
+
 query GetQueueWorkers($id: ID!) {
   queue(id: $id) {
     id

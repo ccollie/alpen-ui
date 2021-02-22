@@ -1,32 +1,26 @@
 import { Button, Space } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classnames from 'classnames';
-import {
-  isArray,
-  isBoolean,
-  isEmpty,
-  isEqual,
-  isFunction,
-  isString,
-} from 'lodash';
+import { isArray, isEmpty, isEqual, isFunction, isString } from 'lodash';
+import { useWhyDidYouUpdate } from '../../../hooks/use-why-update';
+import { toBool } from '../../../lib';
 
 import QueryOption from '../query-option';
 import OptionsToggle from '../options-toggle';
 import styles from './query-bar.module.css';
 
 import {
+  DEFAULT_BUTTON_LABEL,
   DEFAULT_FILTER,
   DEFAULT_LIMIT,
-  DEFAULT_SAMPLE,
-  DEFAULT_SAMPLE_SIZE,
   DEFAULT_STATE,
   QueryState,
 } from '../constants';
 import { AutocompleteField } from '../query-autocompleter';
-import { stringify, isNumberValid, isFilterValid } from '../utils';
+import { isNumberValid, isFilterValid } from '../utils';
 
 type Query = {
-  filter: Record<string, any>;
+  filter: string;
   limit?: number;
 };
 
@@ -58,24 +52,22 @@ function _getDefaultQuery(): Query {
 }
 
 interface QueryBarProps {
-  filter: Record<string, any>;
-  limit: number;
-  sample?: boolean;
+  filter?: string;
+  limit?: number;
   autoPopulated?: boolean;
   buttonLabel?: string;
   layout?: Array<QueryKey | QueryKey[]>;
   expanded?: boolean;
   onReset: () => void;
-  onApply?: (filter: string) => void;
+  onApply?: (filter: string, limit: number) => void;
   onChange?: (value: string, label: QueryKey) => void;
-  schemaFields: AutocompleteField[];
+  schemaFields?: AutocompleteField[];
 }
 
 const QueryBar: React.FC<QueryBarProps> = (props) => {
   type FieldMeta = {
     value: any;
     isValid: boolean;
-    stringValue: string;
     isChanged: boolean;
   };
   type FieldMap = Record<QueryKey, FieldMeta>;
@@ -84,44 +76,48 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   const [expanded, setExpanded] = useState(!!props.expanded);
   const [queryState, setQueryState] = useState(DEFAULT_STATE);
   const [valid, setValid] = useState(true);
-  const [isEmptyQuery, setIsEmptyQuery] = useState(false);
-  const [sample, setSample] = useState(props.sample ?? DEFAULT_SAMPLE);
+  const [isEmptyQuery, setIsEmptyQuery] = useState(true);
   const lastExecutedQuery = useRef<Query>(_getDefaultQuery());
+
+  useWhyDidYouUpdate('QueryBar', props);
+
+  const filterInput = props.filter ?? DEFAULT_FILTER;
 
   const fieldMap = useRef<FieldMap>({
     filter: {
-      value: { ...props.filter },
       isValid: true,
-      stringValue: JSON.stringify(props.filter),
+      value: filterInput,
       isChanged: false,
     },
     limit: {
       isValid: true,
-      value: props.limit,
-      stringValue: props.limit.toString(),
+      value: (props.limit ?? DEFAULT_LIMIT).toString(),
       isChanged: false,
     },
   });
 
   useEffect(() => {
-    if (sample) {
-      // todo: only do this on first mount
-      const map = fieldMap.current;
-      if (isEmpty(map.filter)) {
-        map.filter.stringValue = OPTION_DEFINITION['filter'].placeholder;
-        map.filter.value = JSON.parse(map.filter.stringValue);
-      }
+    const map = fieldMap.current;
+    map.filter.value = filterInput;
+    map.limit.value = props.limit ?? DEFAULT_LIMIT;
+  }, [filterInput, props.limit]);
 
-      toggleSample(true);
+  useEffect(() => {
+    const input = fieldMap.current.filter.value;
+    if (!input.length || input === DEFAULT_FILTER) {
+      setIsEmptyQuery(true);
+    } else {
+      const parsed = JSON.parse(input);
+      setIsEmptyQuery(isEmpty(parsed));
     }
-  }, [sample, props.filter, props.limit]);
+  }, [fieldMap.current.filter.value]);
 
   const Keys: QueryKey[] = ['filter', 'limit'];
 
   const {
     layout = ['filter', ['limit']],
     schemaFields = [],
-    buttonLabel = 'Apply',
+    buttonLabel = DEFAULT_BUTTON_LABEL,
   } = props;
   const showToggle = layout.length > 1;
 
@@ -146,7 +142,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     const map = fieldMap.current;
     const filter = map.filter;
     return {
-      filter: isEmpty(filter.value) ? DEFAULT_FILTER : { ...map.filter.value },
+      filter: isEmpty(filter.value) ? DEFAULT_FILTER : `${map.filter.value}`,
       limit: map.limit.value,
     };
   }
@@ -160,10 +156,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    */
   function validateQuery() {
     const map = fieldMap.current;
-    return (
-      isFilterValid(map.filter.stringValue) &&
-      isNumberValid(map.limit.stringValue)
-    );
+    return isFilterValid(map.filter.value) && isNumberValid(map.limit.value);
   }
 
   /**
@@ -185,26 +178,6 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   }
 
   /**
-   * toggles between sampling on/off. Also can take a value to force sampling
-   * to be on or off directly. When sampling is turned on and there is no limit
-   * specified, set it to the DEFAULT_SAMPLE_SIZE.
-   *
-   * @param {Boolean} force   optional flag to force the sampling to be on or
-   *                          off. If not specified, the value switches to its
-   *                          opposite state.
-   */
-  function toggleSample(force?: boolean) {
-    const _sample = isBoolean(force) ? force : !sample;
-    const meta = fieldMap.current['limit'];
-    if (_sample && meta.value === 0) {
-      meta.value = DEFAULT_SAMPLE_SIZE;
-      meta.stringValue = `${DEFAULT_SAMPLE_SIZE}`;
-      meta.isValid = true;
-    }
-    setSample(_sample);
-  }
-
-  /**
    * set many/all properties of a query at once. The values are converted to
    * strings, and xxxString is set. The values are validated, and xxxValid is
    * set. the properties themselves are only set for valid values.
@@ -221,7 +194,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
     // convert all query inputs into their string values and validate them
     const inputStrings: Record<QueryKey, string> = {
-      filter: stringify(newQuery.filter),
+      filter: newQuery.filter,
       limit: `${newQuery.limit}`,
     };
 
@@ -231,10 +204,11 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
       const validated = validateInput(key, inputStrings[key]) !== false;
 
       if (validated) {
-        meta.stringValue = inputStrings[key];
+        meta.value = inputStrings[key];
         meta.isValid = true;
         if (key === 'filter') {
-          meta.value = isEmpty(newQuery?.filter) ? {} : { ...newQuery?.filter };
+          const filter = newQuery?.filter ?? DEFAULT_FILTER;
+          meta.value = isEmpty(newQuery?.filter) ? {} : JSON.parse(filter);
         } else if (key === 'limit') {
           meta.value = newQuery?.limit;
         }
@@ -256,11 +230,6 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    * @param {Object} input   the query string (i.e. manual user input)
    */
   function setQueryString(label: QueryKey, input: string): void {
-    let empty: boolean = false;
-    if (!input || !input.length) {
-      input = '{}';
-      empty = true;
-    }
     const validatedInput = validateInput(label, input);
 
     const _valid = validatedInput !== false;
@@ -268,24 +237,18 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     switch (label) {
       case 'filter':
         if (_valid) {
-          meta.value = JSON.parse(input);
+          meta.value = input ?? DEFAULT_FILTER;
         }
         break;
       case 'limit':
         if (_valid) {
-          meta.value = parseInt(input);
+          meta.value = parseInt(input ?? DEFAULT_LIMIT);
         }
         break;
     }
-
+    meta.isValid = _valid;
     // if the input was validated, also set the corresponding state variable
-    if (_valid) {
-      meta.stringValue = input;
-      setValid(empty || Keys.every(_isFieldValid));
-    } else {
-      setValid(_valid);
-    }
-    setIsEmptyQuery(empty);
+    setValid(Keys.every(_isFieldValid));
   }
 
   /**
@@ -312,7 +275,6 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
         const meta = fieldMap.current[k];
         meta.isValid = true;
         meta.value = '';
-        meta.stringValue = `${meta.value}`;
       });
       setValid(true);
       lastExecutedQuery.current.filter = DEFAULT_FILTER;
@@ -323,18 +285,21 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   /**
    * apply the current (valid) query, and store it in `lastExecutedQuery`.
    */
-  function apply() {
+  const handleApply = useCallback(() => {
     if (validateQuery()) {
       setValid(true);
       setQueryState(QueryState.APPLY_STATE);
       Object.assign(lastExecutedQuery.current, cloneQuery());
       if (isFunction(props.onApply)) {
+        const map = fieldMap.current;
         const filter = lastExecutedQuery.current.filter;
         const filterString = JSON.stringify(filter);
-        props.onApply(filterString);
+        props.onApply(filterString, map.limit.value);
       }
+    } else {
+      setValid(false);
     }
-  }
+  }, [props.onApply]);
 
   function onChange(value: string, label: QueryKey) {
     const type = OPTION_DEFINITION[label].type;
@@ -380,7 +345,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
       evt.preventDefault();
       evt.stopPropagation();
     }
-    apply();
+    handleApply();
   }
 
   /**
@@ -412,7 +377,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
     // checkbox options use the value directly, text inputs use the
     // `<option>String` prop.
-    const value = inputType === 'boolean' ? meta.value : meta.stringValue;
+    const value = inputType === 'boolean' ? toBool(meta.value) : meta.value;
 
     return (
       <QueryOption
@@ -426,7 +391,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
         link={link}
         inputType={inputType}
         onChange={onChange}
-        onApplyFilter={apply}
+        onApplyFilter={handleApply}
         schemaFields={schemaFields}
       />
     );
@@ -511,10 +476,10 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    */
   function InputForm() {
     const _inputGroupClassName = classnames(styles['input-group'], {
-      'has-error': !valid,
+      'has-error': !valid && !isEmptyQuery,
     });
 
-    const applyDisabled = !valid;
+    const applyDisabled = !valid || isEmptyQuery;
     const resetDisabled = queryState !== QueryState.APPLY_STATE;
 
     const _queryOptionClassName = classnames(styles['option-container'], {

@@ -2,6 +2,8 @@ import { ApolloQueryResult } from '@apollo/client';
 import { client } from '../../providers/ApolloProvider';
 import {
   GetJobLogsDocument,
+  GetJobsByFilterDocument,
+  GetJobsByFilterQuery,
   GetQueueJobsDocument,
   GetQueueJobsQuery,
   GetRepeatableJobsDocument,
@@ -9,6 +11,7 @@ import {
   JobCounts,
   JobFragment,
   JobLogs,
+  JobSearchInput,
   JobStatus,
   RepeatableJob,
   SortOrderEnum,
@@ -40,9 +43,42 @@ export function getJobs(
       if (results.error) throw results.error;
       const base = results.data?.queue;
       const jobs = (base?.jobs || []) as JobFragment[];
-      const counts = base?.jobCounts as JobCounts;
+      const { __typename, ...counts } = base?.jobCounts as JobCounts;
       return {
         jobs,
+        counts,
+      };
+    });
+}
+
+export function getJobsByFilter(
+  queueId: string,
+  { status = JobStatus.Completed, cursor, criteria, count }: JobSearchInput,
+) {
+  count = count ?? 10;
+  return client
+    .query({
+      query: GetJobsByFilterDocument,
+      variables: {
+        id: queueId,
+        status,
+        cursor,
+        count,
+        criteria,
+      },
+      fetchPolicy: 'network-only',
+    })
+    .then((results: ApolloQueryResult<GetJobsByFilterQuery>) => {
+      // todo: handle error
+      if (results.error) throw results.error;
+      const base = results.data?.queue;
+      const searchResult = base?.jobSearch;
+      const jobs = (searchResult?.jobs || []) as JobFragment[];
+      const counts = base?.jobCounts as JobCounts;
+      const cursor = searchResult?.cursor || undefined;
+      return {
+        jobs,
+        cursor,
         counts,
       };
     });

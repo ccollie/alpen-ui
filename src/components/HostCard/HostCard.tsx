@@ -1,5 +1,5 @@
 import ProCard from '@ant-design/pro-card';
-import { Col, Card, Divider, Row, Space, Statistic, Typography } from 'antd';
+import { Col, Row, Space, Statistic } from 'antd';
 import formatBytes from 'pretty-bytes';
 import React, { ReactText, useCallback, useEffect, useState } from 'react';
 import { EmptyJobCounts, JobCounts, QueueHost, StatsSnapshot } from '../../api';

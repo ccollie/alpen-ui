@@ -35,7 +35,7 @@ const filter = (
   prefix: string,
 ) => entries.filter((e) => !!e.name?.startsWith(prefix));
 
-export function createCompleter(schemaFields?: AutocompleteField[]): Function {
+export function createCompleter(schemaFields?: AutocompleteField[]) {
   const fields = schemaFields || [];
   const expressions = MATCH_COMPLETIONS.concat(fields);
 
@@ -51,7 +51,7 @@ export function createCompleter(schemaFields?: AutocompleteField[]): Function {
    *
    * @returns {Function} The completion function.
    */
-  return function (
+  const getCompletions = function (
     editor: any,
     session: any,
     position: any,
@@ -78,4 +78,6 @@ export function createCompleter(schemaFields?: AutocompleteField[]): Function {
     // operators to the user.
     done(null, filter('', expressions, prefix));
   };
+
+  return { getCompletions };
 }

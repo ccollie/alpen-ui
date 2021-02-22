@@ -1,8 +1,8 @@
+import { DeleteTwoTone } from '@ant-design/icons';
 import React from 'react';
 import { ActionIcon } from '../ActionIcon';
 import { PromoteIcon } from '../Icons/Promote';
 import { RetryIcon } from '../Icons/Retry';
-import { TrashIcon } from '../Icons/Trash';
 import { Space } from 'antd';
 import { JobStatus } from '../../api';
 
@@ -17,14 +17,30 @@ interface JobActionsProps {
 
 interface ButtonType {
   title: string;
-  Icon: React.ElementType;
+  Icon: React.ReactNode;
   actionKey: 'promoteJob' | 'deleteJob' | 'retryJob';
+  danger: boolean | undefined;
 }
 
 const buttonTypes: Record<string, ButtonType> = {
-  promote: { title: 'Promote', Icon: PromoteIcon, actionKey: 'promoteJob' },
-  clean: { title: 'Clean', Icon: TrashIcon, actionKey: 'deleteJob' },
-  retry: { title: 'Retry', Icon: RetryIcon, actionKey: 'retryJob' },
+  promote: {
+    title: 'Promote',
+    Icon: <PromoteIcon />,
+    actionKey: 'promoteJob',
+    danger: false,
+  },
+  clean: {
+    title: 'Clean',
+    Icon: <DeleteTwoTone twoToneColor="#eb2f96" />,
+    actionKey: 'deleteJob',
+    danger: true,
+  },
+  retry: {
+    title: 'Retry',
+    Icon: <RetryIcon />,
+    actionKey: 'retryJob',
+    danger: false,
+  },
 };
 
 const statusToButtonsMap: Record<string, ButtonType[]> = {
@@ -45,7 +61,7 @@ export const JobActions = ({ actions, status }: JobActionsProps) => {
       {buttons.map((type) => (
         <ActionIcon
           key={type.title}
-          baseIcon={<type.Icon />}
+          baseIcon={type.Icon}
           handler={actions[type.actionKey]}
         />
       ))}

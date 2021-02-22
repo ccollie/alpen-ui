@@ -4,7 +4,7 @@ import { ColumnType } from 'antd/es/table';
 import { format, isToday } from 'date-fns';
 import React, { Fragment } from 'react';
 import { FaCalendarPlus } from 'react-icons/fa';
-import { QueueJobActions } from '../../@types/actions';
+import { QueueJobActions } from '../../@types';
 import {
   getJobDuration,
   getJobWaitTime,
@@ -13,10 +13,10 @@ import {
   JobStatus,
   normalizeJobName,
 } from '../../api';
-import { JobProgress } from './JobProgress';
-import { formatDuration, parseDate, relativeFormat } from '../../lib/dates';
 import { JobId, RelativeDateFormat } from '../../components';
 import { JobActions } from '../../components/JobList/JobActions';
+import { formatDuration, parseDate, relativeFormat } from '../../lib/dates';
+import { JobProgress } from './JobProgress';
 
 const FIELDS = {
   [JobStatus.Active]: [
@@ -127,12 +127,17 @@ const Attempts = ({ job }: { job: Job | JobFragment }) => {
 
 const DateTimeWidth = 80;
 
-type JobColumnType = ColumnType<Job | JobFragment>;
+export type JobColumnType = ColumnType<Job | JobFragment>;
 
 export function getColumns(
   status: JobStatus,
   actions: QueueJobActions,
 ): JobColumnType[] {
+  const shouldConfirmDelete = [
+    JobStatus.Active,
+    JobStatus.Paused,
+    JobStatus.Waiting,
+  ].includes(status);
   const columns: JobColumnType[] = [
     {
       title: 'ID',
@@ -230,7 +235,13 @@ export function getColumns(
       align: 'right',
       key: 'actions',
       width: 50,
-      render: (_, job) => <JobActions job={job} actions={actions} />,
+      render: (_, job) => (
+        <JobActions
+          job={job}
+          actions={actions}
+          shouldConfirmDelete={shouldConfirmDelete}
+        />
+      ),
     },
   ];
 

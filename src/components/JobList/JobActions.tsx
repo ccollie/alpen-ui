@@ -1,17 +1,15 @@
 import { Space, message } from 'antd';
 import React from 'react';
-import { SingleJobActions } from '../../@types/actions';
+import { SingleJobActions } from '../../@types';
 import { Job, JobFragment, JobStatus, isJobFinished } from '../../api';
 import { ActionIcon } from '../ActionIcon';
-import {
-  ArrowUpOutlined,
-  DeleteOutlined,
-  RedoOutlined,
-} from '@ant-design/icons';
+import { ArrowUpOutlined, RedoOutlined } from '@ant-design/icons';
+import { TrashIcon } from '../Icons/Trash';
 
 interface JobActionsProps {
   job: Job | JobFragment;
   actions: SingleJobActions;
+  shouldConfirmDelete?: boolean;
 }
 
 export const JobActions: React.FC<JobActionsProps> = (props) => {
@@ -45,6 +43,11 @@ export const JobActions: React.FC<JobActionsProps> = (props) => {
       .catch(handleError);
   }
 
+  const ConfirmPrompt = 'Are you sure you want to delete this job?';
+  const deleteProps = {
+    confirmPrompt: !!props.shouldConfirmDelete ? ConfirmPrompt : undefined,
+  };
+
   return (
     <Space className="actions">
       {isDelayed && (
@@ -54,9 +57,9 @@ export const JobActions: React.FC<JobActionsProps> = (props) => {
         <ActionIcon baseIcon={<RedoOutlined />} handler={handleRetry} />
       )}
       <ActionIcon
-        baseIcon={<DeleteOutlined />}
+        baseIcon={<TrashIcon />}
         handler={handleDelete}
-        confirmPrompt="Are you sure you want to delete this job?"
+        {...deleteProps}
       />
     </Space>
   );

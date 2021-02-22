@@ -7,7 +7,7 @@ import { parseDuration } from '../../lib/dates';
 import ms from 'ms';
 import { ClockCircleOutlined } from '@ant-design/icons';
 
-type CleanJobsDialog = {
+type CleanJobsDialogProps = {
   max?: number;
   isOpen: boolean;
   status: JobStatus;
@@ -21,7 +21,7 @@ type CleanJobsDialog = {
 
 const DEFAULT_GRACE_PERIOD = ms('5 secs');
 
-const CleanJobsDialog: React.FC<CleanJobsDialog> = (props) => {
+const CleanJobsDialog: React.FC<CleanJobsDialogProps> = (props) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isPending, setIsPending] = useState(false);
   const [canClean, setCanClean] = useState(true);

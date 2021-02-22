@@ -8,6 +8,7 @@ import {
   promoteJob,
   retryJob,
   getJobs,
+  getJobsByFilter,
   getJobLogs,
   JobStatus,
 } from '../api';
@@ -33,6 +34,8 @@ export function useJobActions(queueId: string): QueueJobActions {
       return getJobLogs(queueId, jobId, start, end);
     },
     cleanJobs,
+    getJobs,
+    getJobsByFilter,
   };
 
   return actions;

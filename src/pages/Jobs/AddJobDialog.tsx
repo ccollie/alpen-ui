@@ -1,4 +1,4 @@
-import { DeleteOutlined, UndoOutlined } from '@ant-design/icons';
+import { UndoOutlined } from '@ant-design/icons';
 import {
   Drawer,
   Form,
@@ -10,12 +10,7 @@ import {
   SelectProps,
 } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  deleteJobSchema,
-  getJobSchema,
-  setJobSchema,
-  JobSchema,
-} from '../../api';
+import { getJobSchema, JobSchema } from '../../api';
 import isEqual from 'lodash/isEqual';
 import isEmpty from 'lodash/isEmpty';
 import { JsonEditor } from '../../components';
@@ -23,23 +18,23 @@ import { useJobSchemaActions } from '../../hooks';
 import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
 import { stringify } from '../../lib';
 
-interface JobSchemaDialogOpts {
+interface AddJobDialogOpts {
   queueId: string;
   isOpen?: boolean;
   onClose: () => void;
 }
 
-const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
+const AddJobDialog: React.FC<AddJobDialogOpts> = (props) => {
   const { queueId, onClose, isOpen = false } = props;
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isNewItem, setIsNewItem] = useState(false);
   const [jobName, setJobName] = useState<string | null>(null);
   const [jobNames, setJobNames] = useState<string[]>([]);
-  const [schema, setSchema] = useState<JobSchema>();
-  const [editSchema, setEditSchema] = useState<JobSchema>();
-  const [isLoadingSchema, setIsLoadingSchema] = useState(false);
-  const [isLoadingNames, setIsLoadingNames] = useState(false);
+  const [schemas, setSchemas] = useState<JobSchema[]>([]);
+  const [jobSchema, setJobSchema] = useState<JobSchema>();
+  const [jobDate, setJobData] = useState<Record<string, any>>({});
+  const [jobOptions, setJobOptions] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [isChanged, setChanged] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [options, setOptions] = useState<SelectProps<object>['options']>([]);
@@ -49,13 +44,17 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
   const [schemaString, setSchemaString] = useState<string>('{}');
   const [optionsString, setOptionsString] = useState<string>('{}');
 
-  const actions = useJobSchemaActions(queueId);
+  const schemaActions = useJobSchemaActions(queueId);
 
   useEffect(() => {
-    setIsLoadingNames(true);
+    setIsLoading(true);
     // todo: do a specific graphql query for this
-    Promise.all([actions.getJobNames(), actions.getJobOptionsSchema()])
-      .then(([names, schema]) => {
+    Promise.all([
+      schemaActions.getJobNames(),
+      schemaActions.getJobOptionsSchema(),
+      schemaActions.getSchemas(),
+    ])
+      .then(([names, optionsSchema, schemas]) => {
         setJobNames(names);
         setOptions(
           jobNames.map((value) => ({
@@ -63,104 +62,58 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
             key: value,
           })),
         );
-        setJobOptionsSchema(schema);
+        setJobOptionsSchema(optionsSchema);
+        setSchemas(schemas ?? []);
       })
-      .finally(() => setIsLoadingNames(false));
+      .finally(() => setIsLoading(false));
   }, [queueId]);
 
   useEffect(() => {
     let schema, defaultOpts: Record<string, any> | null | undefined;
-    if (editSchema) {
-      schema = editSchema.schema;
-      defaultOpts = editSchema.defaultOpts;
+    if (jobSchema) {
+      schema = jobSchema.schema;
+      defaultOpts = jobSchema.defaultOpts;
     }
     setSchemaString(schema ? stringify(schema) : '{}');
     setOptionsString(defaultOpts ? stringify(defaultOpts) : '{}');
-  }, [editSchema]);
+  }, [jobSchema]);
 
   const handleClose = useCallback(() => {
     onClose && onClose();
   }, [onClose]);
 
-  function loadSchema(jobName: string) {
-    setIsLoadingSchema(true);
-    getJobSchema(queueId, jobName)
-      .then((schema) => {
-        if (schema) {
-          setEditSchema({ ...schema });
-        } else {
-          setEditSchema(undefined);
-        }
-        setSchema(schema);
-      })
-      .finally(() => {
-        setIsLoadingSchema(false);
-      });
-    // todo: handle error
-  }
+  useEffect(() => {
+    const found = schemas.find((x) => x.jobName === jobName);
+    if (found) {
+      setJobSchema(found);
+    } else {
+      setJobSchema(undefined);
+    }
+  }, [jobName, schemas]);
 
   function handleJobNameChange(jobName: string): void {
     const found = !!jobNames.find((x) => x === jobName);
     setJobName(jobName);
     setIsNewItem(!found);
-    if (found) loadSchema(jobName);
   }
 
-  function saveSchema(): void {
-    if (editSchema) {
+  function saveJob(): void {
+    if (!isEmpty(jobDate)) {
       setIsSaving(true);
-      setJobSchema(
-        queueId,
-        jobName!,
-        editSchema.schema!,
-        editSchema.defaultOpts!,
-      )
-        .then((schema) => {
-          setSchema(schema);
-          setEditSchema(schema);
-        })
-        .finally(() => setIsSaving(false));
+      setIsSaving(false);
     }
   }
 
-  function handleDeleteSchema() {
-    if (schema && jobName) {
-      setIsDeleting(true);
-      deleteJobSchema(queueId, jobName)
-        .then(() => {
-          setSchema(undefined);
-        })
-        .finally(() => {
-          setIsDeleting(false);
-        });
-    }
+  function revertJob() {
+    setJobData({});
   }
 
-  function revertSchema() {
-    jobName && loadSchema(jobName);
-  }
-
-  function updateEditable(value: Partial<JobSchema>) {
-    setEditSchema({
-      ...(editSchema || {}),
-      ...value,
-      jobName: value?.jobName ?? jobName ?? '',
-    });
-    setChanged(isEqual(editSchema, schema));
-    if (isEmpty(editSchema?.schema) && isEmpty(editSchema?.defaultOpts)) {
-      // todo: error message if not new
-      setIsValid(false);
-    }
-  }
-
-  const onSchemaUpdate = useCallback((value: Record<string, any> | null) => {
-    value = value || Object.create(null);
-    updateEditable({ schema: value });
+  const onJobUpdate = useCallback((value: Record<string, any> | null) => {
+    setJobData(value || Object.create(null));
   }, []);
 
   const onOptionsUpdate = useCallback((value: Record<string, any> | null) => {
-    value = value || Object.create(null);
-    updateEditable({ defaultOpts: value });
+    setJobOptions(value || {});
   }, []);
 
   const handleAutoCompleteSearch = (value: string) => {
@@ -179,7 +132,7 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
   return (
     <>
       <Drawer
-        title="Job Schemas"
+        title="Add Job"
         width={720}
         onClose={handleClose}
         visible={isOpen}
@@ -209,7 +162,7 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
                   onSelect={handleJobNameChange}
                   placeholder="Please select or enter a job name"
                   options={options}
-                  disabled={isLoadingNames}
+                  disabled={isLoading}
                   onSearch={handleAutoCompleteSearch}
                 />
               </Form.Item>
@@ -217,15 +170,15 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
           </Row>
           <Row gutter={16}>
             <Col span={24}>
-              <span>Schema</span>
+              <span>Job Data</span>
               <JsonEditor
                 height="250px"
                 width="100%"
-                id="schema-editor"
-                name="schema"
-                isDisabled={isLoadingSchema}
+                id="job-data"
+                name="job-data"
+                isDisabled={isLoading}
                 value={schemaString}
-                onChange={onSchemaUpdate}
+                onChange={onJobUpdate}
               />
             </Col>
           </Row>
@@ -237,7 +190,7 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
                 width="100%"
                 id="default-options-editor"
                 name="default_options"
-                isDisabled={isLoadingSchema}
+                isDisabled={isLoading}
                 value={optionsString}
                 onChange={onOptionsUpdate}
               />
@@ -248,7 +201,7 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
               <div style={{ textAlign: 'right' }}>
                 <Space size={5}>
                   <Button
-                    onClick={saveSchema}
+                    onClick={saveJob}
                     loading={isSaving}
                     disabled={!isChanged || !isValid}
                   >
@@ -256,18 +209,10 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
                   </Button>
                   <Button
                     disabled={!isNewItem}
-                    onClick={revertSchema}
+                    onClick={revertJob}
                     icon={<UndoOutlined />}
                   >
                     Revert
-                  </Button>
-                  <Button
-                    loading={isDeleting}
-                    onClick={handleDeleteSchema}
-                    icon={<DeleteOutlined />}
-                    disabled={!isNewItem}
-                  >
-                    Delete
                   </Button>
                 </Space>
               </div>
@@ -279,4 +224,4 @@ const JobSchemaDialog: React.FC<JobSchemaDialogOpts> = (props) => {
   );
 };
 
-export default JobSchemaDialog;
+export default AddJobDialog;

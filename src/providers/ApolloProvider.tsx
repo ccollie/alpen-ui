@@ -172,7 +172,6 @@ const typePolicies = {
         merge: true,
       },
       jobs: {
-        keyArgs: ['offset', 'limit', 'status', 'sortOrder'],
         merge: mergeArrayByField<Job>(),
       },
       jobCounts: {
