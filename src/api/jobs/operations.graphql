@@ -15,7 +15,7 @@ query GetQueueJobs($id: ID!, $offset: Int = 0, $limit: Int = 10, $status: JobSta
   }
 }
 
-query GetJobsByFilter($id: ID!, $status: JobStatus, $cursor: String, $criteria: JSONObject, $count: Int = 10) {
+query GetJobsByFilter($id: ID!, $status: JobStatus, $cursor: String, $criteria: String, $count: Int = 10) {
   queue(id: $id) {
     id
     jobSearch(filter: { cursor: $cursor, count: $count, status: $status, criteria: $criteria }) {

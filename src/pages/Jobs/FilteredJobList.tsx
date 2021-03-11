@@ -43,7 +43,7 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
   });
 
   const [cursor, setCursor] = useState<string>();
-  const [filter, setFilter] = useState<Record<string, any>>();
+  const [filter, setFilter] = useState<string>();
   const [hasNext, setHasNext] = useState<boolean>(false);
 
   const updateNavigation = useNavigationUpdate();
