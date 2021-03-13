@@ -1,11 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useRef,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import AceEditor from 'react-ace';
+import { Ace } from 'ace-builds';
 import { getAceInstance } from 'react-ace/lib/editorOptions';
 import 'ace-builds/src-min-noconflict/ext-language_tools';
-import 'mongodb-ace-mode';
-import 'mongodb-ace-theme-query';
+import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/theme-xcode';
+import { useWhyDidYouUpdate } from '../../../hooks/use-why-update';
 import { AutocompleteField, createCompleter } from '../query-autocompleter';
-import { Ace } from 'ace-builds';
 import styles from './option-editor.module.css';
 
 const ace = getAceInstance();
@@ -37,11 +43,19 @@ interface OptionEditorProps {
   schemaFields?: AutocompleteField[];
 }
 
-const OptionEditor: React.FC<OptionEditorProps> = (props) => {
+const OptionEditor: React.FC<OptionEditorProps> = forwardRef((props, ref) => {
   const { schemaFields = [], value = '', label = '' } = props;
   const [completer] = useState(() => createCompleter(schemaFields));
   const [edited, setEdited] = useState<string>(value);
   const _editor = useRef<Ace.Editor>();
+
+  useWhyDidYouUpdate('OptionEditor', props);
+
+  useImperativeHandle(ref, () => ({
+    focus() {
+      _editor?.current?.focus();
+    },
+  }));
 
   function handleApply() {
     props?.onApply();
@@ -60,13 +74,6 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
     tools.setCompleters([completer]);
   }
 
-  useEffect(() => {
-    if (_editor.current) {
-      _editor.current.setValue(value);
-      _editor.current.clearSelection();
-    }
-  }, [value, _editor.current]);
-
   const commands = [
     {
       name: 'executeQuery',
@@ -81,10 +88,10 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
   return (
     <AceEditor
       className={styles['option-editor']}
-      mode="mongodb"
-      theme="mongodb-query"
+      mode="javascript"
+      theme="xcode"
       width="80%"
-      value={value}
+      value={edited}
       onChange={onChangeQuery}
       editorProps={{ $blockScrolling: Infinity }}
       commands={commands}
@@ -92,8 +99,9 @@ const OptionEditor: React.FC<OptionEditorProps> = (props) => {
       setOptions={OPTIONS}
       onFocus={onFocus}
       onLoad={onEditorLoaded}
+      debounceChangePeriod={150}
     />
   );
-};
+});
 
 export default OptionEditor;

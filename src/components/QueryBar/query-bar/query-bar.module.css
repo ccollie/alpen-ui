@@ -50,6 +50,10 @@
 .has-focus {
     border-color: #43b1e5;
 }
+.query-bar .has-error {
+    border-color: #C93434;
+}
+
 .option-group {
     display: flex;
     flex-direction: row;

@@ -11,7 +11,13 @@
 .component.has-error .label {
     background: #C93434;
 }
+.component.has-error {
+    border: #C93434;
+}
 .is-document-type {
+    flex-grow: 10;
+}
+.is-string-type {
     flex-grow: 10;
 }
 .is-numeric-type {

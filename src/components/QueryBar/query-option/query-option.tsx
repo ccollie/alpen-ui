@@ -11,7 +11,7 @@ interface QueryOptionProps {
   placeholder?: string;
   label: OptionType;
   link: string;
-  inputType: 'numeric' | 'boolean' | 'document';
+  inputType: 'numeric' | 'boolean' | 'document' | 'string';
   value: any;
   autoPopulated?: boolean;
   hasToggle?: boolean;

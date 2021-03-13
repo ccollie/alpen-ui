@@ -1,7 +1,7 @@
-import mingo from 'mingo';
 import { initExpressionOperators } from './expression';
 import { initQueryOperators } from './query';
 import { initAggregationOperators } from './aggregation';
+import jsep from 'jsep';
 
 let isInit = false;
 
@@ -14,23 +14,14 @@ function initIfNecessary() {
   }
 }
 
-export function validateQuery(query: string | Record<string, any>): boolean {
-  let q: Record<string, any>;
-  if (typeof query === 'string') {
-    if (!query) return true;
-    try {
-      q = JSON.parse(query);
-    } catch (e) {
-      return false;
-    }
-  } else {
-    q = query as Record<string, any>;
-  }
-
+export function parseExpression(query: string): jsep.Expression {
   initIfNecessary();
+  return jsep(query);
+}
 
+export function validateQuery(query: string): boolean {
   try {
-    new mingo.Query(q);
+    parseExpression(query);
     return true;
   } catch {
     return false;

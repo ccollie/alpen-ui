@@ -1,5 +1,11 @@
 import { Button, Space } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  forwardRef,
+} from 'react';
 import classnames from 'classnames';
 import { isArray, isEmpty, isEqual, isFunction, isString } from 'lodash';
 import { useWhyDidYouUpdate } from '../../../hooks/use-why-update';
@@ -28,8 +34,8 @@ type QueryKey = keyof Query;
 
 const OPTION_DEFINITION: Record<QueryKey, any> = {
   filter: {
-    type: 'document',
-    placeholder: "{ field: 'value' }",
+    type: 'string',
+    placeholder: 'job.processedOn > 0',
     link: 'https://docs.mongodb.com/compass/current/query/filter/',
   },
   limit: {
@@ -67,6 +73,7 @@ interface QueryBarProps {
 const QueryBar: React.FC<QueryBarProps> = (props) => {
   type FieldMeta = {
     value: any;
+    input: string;
     isValid: boolean;
     isChanged: boolean;
   };
@@ -86,11 +93,13 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   const fieldMap = useRef<FieldMap>({
     filter: {
       isValid: true,
+      input: '',
       value: filterInput,
       isChanged: false,
     },
     limit: {
       isValid: true,
+      input: '',
       value: (props.limit ?? DEFAULT_LIMIT).toString(),
       isChanged: false,
     },
@@ -104,12 +113,8 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
   useEffect(() => {
     const input = fieldMap.current.filter.value;
-    if (!input.length || input === DEFAULT_FILTER) {
-      setIsEmptyQuery(true);
-    } else {
-      const parsed = JSON.parse(input);
-      setIsEmptyQuery(isEmpty(parsed));
-    }
+    const mt = !(input && input.length);
+    setIsEmptyQuery(mt);
   }, [fieldMap.current.filter.value]);
 
   const Keys: QueryKey[] = ['filter', 'limit'];
@@ -173,6 +178,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
       if (isFilterValid(input)) {
         return input;
       }
+      return false;
     }
     return isNumberValid(input);
   }
@@ -208,7 +214,8 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
         meta.isValid = true;
         if (key === 'filter') {
           const filter = newQuery?.filter ?? DEFAULT_FILTER;
-          meta.value = isEmpty(newQuery?.filter) ? {} : JSON.parse(filter);
+          meta.value = isEmpty(newQuery?.filter) ? '' : filter;
+          meta.input = meta.value;
         } else if (key === 'limit') {
           meta.value = newQuery?.limit;
         }
@@ -246,6 +253,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
         }
         break;
     }
+    meta.input = input;
     meta.isValid = _valid;
     // if the input was validated, also set the corresponding state variable
     setValid(Keys.every(_isFieldValid));
@@ -275,6 +283,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
         const meta = fieldMap.current[k];
         meta.isValid = true;
         meta.value = '';
+        meta.input = '';
       });
       setValid(true);
       lastExecutedQuery.current.filter = DEFAULT_FILTER;
@@ -292,9 +301,8 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
       Object.assign(lastExecutedQuery.current, cloneQuery());
       if (isFunction(props.onApply)) {
         const map = fieldMap.current;
-        const filter = lastExecutedQuery.current.filter;
-        const filterString = JSON.stringify(filter);
-        props.onApply(filterString, map.limit.value);
+        const filter = lastExecutedQuery.current.filter ?? '';
+        props.onApply(filter, map.limit.value);
       }
     } else {
       setValid(false);
@@ -303,7 +311,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
   function onChange(value: string, label: QueryKey) {
     const type = OPTION_DEFINITION[label].type;
-    if (['numeric', 'document'].includes(type)) {
+    if (['numeric', 'document', 'string'].includes(type)) {
       return setQueryString(label, value);
     }
   }
@@ -315,10 +323,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   function onResetButtonClicked() {
     const { onReset } = props;
     reset();
-
-    if (isFunction(onReset)) {
-      onReset();
-    }
+    onReset?.();
   }
 
   function _queryHasChanges() {
@@ -377,7 +382,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
     // checkbox options use the value directly, text inputs use the
     // `<option>String` prop.
-    const value = inputType === 'boolean' ? toBool(meta.value) : meta.value;
+    const value = inputType === 'boolean' ? toBool(meta.value) : meta.input;
 
     return (
       <QueryOption
@@ -457,7 +462,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    */
   function OptionRows() {
     if (!expanded) {
-      return <OptionRow row={layout[0]} id={0} />;
+      return <OptionRow row={layout[0]} key={'opt-row-main'} id={0} />;
     }
 
     return (
@@ -501,7 +506,6 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
         <Space>
           <Button
-            type="primary"
             size="small"
             id="query-bar-apply-filter-button"
             key="apply-button"

@@ -6,7 +6,6 @@ import { validate, validateSchema } from '../../lib/ajv';
 
 import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-dracula';
-import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/ext-language_tools';
 
 const ace = require('ace-builds/src-min-noconflict/ace');
