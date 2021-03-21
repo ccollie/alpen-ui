@@ -168,7 +168,7 @@ const AdvancedPieChart: React.FC<AdvancedPieChartProps> = (props) => {
           radius={outerRadius}
           innerRadius={innerRadius}
           padding="auto"
-          forceFit
+          autoFit
           angleField="value"
           colorField="status"
           color={getColor}

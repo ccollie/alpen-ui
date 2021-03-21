@@ -49,7 +49,7 @@ const MiniBar: React.FC<MiniBarProps> = (props) => {
         <Chart
           scale={scale}
           height={chartHeight}
-          forceFit={forceFit}
+          autoFit={forceFit}
           data={data}
           padding={padding}
         >

@@ -73,7 +73,7 @@ const JobCountsPieChart: React.FC<PieChartDataProps> = (props) => {
           height={height}
           radius={0.8}
           padding="auto"
-          forceFit
+          autoFit
           angleField="value"
           colorField="status"
           label={{

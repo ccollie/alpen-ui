@@ -14,7 +14,7 @@ export interface MiniAreaProps {
   line?: boolean;
   animate?: boolean;
   xAxis?: AxisProps;
-  forceFit?: boolean;
+  autoFit?: boolean;
   opacity?: number;
   smooth?: boolean;
   scale?: {
@@ -37,7 +37,7 @@ const MiniArea: React.FC<MiniAreaProps> = (props) => {
   const {
     height = 60,
     data = [],
-    forceFit = true,
+    autoFit = true,
     color = 'rgba(24, 144, 255, 0.2)',
     borderColor = '#1089ff',
     scale = { x: {}, y: {} },
@@ -86,7 +86,7 @@ const MiniArea: React.FC<MiniAreaProps> = (props) => {
             animate={animate}
             scale={scaleProps}
             height={chartHeight}
-            forceFit={forceFit}
+            autoFit={autoFit}
             data={data}
             padding={padding}
             smooth={smooth}

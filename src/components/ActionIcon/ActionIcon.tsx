@@ -54,7 +54,7 @@ function ActionIcon(props: ActionIconProps) {
 
   async function handleClick() {
     if (disabled) return;
-    if (props.handler && !loading) {
+    if (!loading) {
       return execute()
         .then(() => {
           showMessage(true);

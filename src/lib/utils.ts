@@ -1,4 +1,13 @@
+import React from 'react';
 import { isString } from './assertion';
+
+// utils.ts
+// https://javascript.plainenglish.io/a-cleaner-api-for-react-ts-components-47d0704a508c
+export type GetComponentProps<T> = T extends
+  | React.ComponentType<infer P>
+  | React.Component<infer P>
+  ? P
+  : never;
 
 export function randomId(): string {
   const uint32 = window.crypto.getRandomValues(new Uint32Array(1))[0];

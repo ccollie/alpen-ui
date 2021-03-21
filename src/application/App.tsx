@@ -1,7 +1,4 @@
 import React from 'react';
-import './App.css';
-import 'antd/dist/antd.css';
-import '@ant-design/pro-card/dist/card.css';
 import './App.less';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { StoreProvider } from '../hooks/use-store';

@@ -52,7 +52,7 @@ const StatsLineChart: React.FC<StatsLineChartProps> = (props) => {
       xField="start"
       yField="value"
       seriesField="metric"
-      forceFit
+      autoFit
     />
   );
 };

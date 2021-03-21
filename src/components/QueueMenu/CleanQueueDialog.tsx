@@ -4,7 +4,6 @@ import { FaClock } from 'react-icons/fa';
 import { useDisclosure } from '../../hooks';
 import { parseDuration } from '../../lib/dates';
 import ms from 'ms';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 type CleanQueueDialogProps = {
   queueId: string;

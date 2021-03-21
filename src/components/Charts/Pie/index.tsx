@@ -265,7 +265,7 @@ class Pie extends Component<PieProps, PieState> {
             <Chart
               scale={scale}
               height={height}
-              forceFit={forceFit}
+              autoFit={forceFit}
               data={dv}
               padding={padding}
               animate={animate}

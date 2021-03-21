@@ -8,16 +8,6 @@ import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-dracula';
 import 'ace-builds/src-noconflict/ext-language_tools';
 
-const ace = require('ace-builds/src-min-noconflict/ace');
-ace.config.set(
-  'basePath',
-  'https://cdn.jsdelivr.net/npm/ace-builds@1.4.6/src-noconflict/',
-);
-ace.config.setModuleUrl(
-  'ace/mode/json_worker',
-  'https://cdn.jsdelivr.net/npm/ace-builds@1.4.6/src-noconflict/worker-json.js',
-);
-
 type JsonEditorProps = {
   readOnly?: boolean;
   value?: string | Record<string, any>;

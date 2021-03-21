@@ -2,6 +2,7 @@
     position: relative;
     z-index: 1;
 }
+
 .input-container {
     padding: 12px 10px 10px 12px;
     background: #f5f6f7;
@@ -26,6 +27,15 @@
 .input-container .dropdown-menu {
     font-size: 13px;
 }
+.input {
+    flex-grow: 10;
+    width: 0;
+    border: none;
+    font-family: "Helvetica";
+    font-size: 12px;
+    outline: none;
+}
+
 .input-group {
     display: flex;
     align-items: flex-start;
@@ -47,6 +57,10 @@
 .option-container .CodeMirror-placeholder {
     color: #999999;
 }
+.option-container .has-error {
+    border-color: #C93434;
+}
+
 .has-focus {
     border-color: #43b1e5;
 }
@@ -64,4 +78,28 @@
 }
 .reset-button {
     margin-left: 5px;
+}
+
+.label {
+    white-space: nowrap;
+    border-radius: 14px;
+    padding: 2px 5px;
+    margin-right: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-family: "Akzidenz", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    flex-grow: 0;
+    display: table;
+}
+
+.label .info-sprinkle {
+    margin-left: inherit;
+    margin-right: 3px;
+    font-size: 11px;
+    top: 0px;
+}
+
+.is-string-type {
+    flex-grow: 10;
 }

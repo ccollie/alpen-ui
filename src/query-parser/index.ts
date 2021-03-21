@@ -1,6 +1,5 @@
 import { initExpressionOperators } from './expression';
 import { initQueryOperators } from './query';
-import { initAggregationOperators } from './aggregation';
 import jsep from 'jsep';
 
 let isInit = false;
@@ -10,7 +9,6 @@ function initIfNecessary() {
     isInit = true;
     initExpressionOperators();
     initQueryOperators();
-    initAggregationOperators();
   }
 }
 

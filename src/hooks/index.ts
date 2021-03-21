@@ -16,3 +16,6 @@ export * from './use-effect-only-once';
 export * from './use-unmount-effect';
 export * from './use-session-storage';
 export * from './use-event-emitter';
+export * from './use-debounce';
+export * from './use-debounce-effect';
+export * from './use-why-update';
