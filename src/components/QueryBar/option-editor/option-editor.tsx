@@ -11,11 +11,7 @@ import { getAceInstance } from 'react-ace/lib/editorOptions';
 import 'ace-builds/src-min-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/mode-javascript';
 import 'ace-builds/src-noconflict/theme-xcode';
-import {
-  useDebounceFn,
-  useUnmountEffect,
-  useWhyDidYouUpdate,
-} from '../../../hooks';
+import { useDebounceEffect, useWhyDidYouUpdate } from '../../../hooks';
 import { parseExpression } from '../../../query-parser';
 import { AutocompleteField, createCompleter } from '../query-autocompleter';
 import styles from './option-editor.module.css';
@@ -41,10 +37,10 @@ const OPTIONS = {
 };
 
 interface OptionEditorProps {
-  label: string;
+  label?: string;
   autoPopulated: boolean;
   value?: string;
-  onChange: (value: string, label: string) => void;
+  onChange: (value: string, isValid: boolean) => void;
   onApply: () => void;
   schemaFields?: AutocompleteField[];
   onMounted?: (editor: Ace.Editor) => void;
@@ -58,10 +54,10 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
   EditorRef,
   OptionEditorProps
 >((props, ref) => {
-  const { schemaFields = [], value = '', label = '' } = props;
+  const { schemaFields = [], value = '', label = 'filter' } = props;
   const [completer] = useState(() => createCompleter(schemaFields));
   const [edited, setEdited] = useState<string>(value);
-  const [isValid, setValid] = useState<boolean>(validateExpression(value));
+  const [isValid, setValid] = useState<boolean>(true);
   const _editor = useRef<Ace.Editor>();
 
   useWhyDidYouUpdate('OptionEditor', props);
@@ -76,19 +72,22 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
     },
   }));
 
-  const { run: handleChange, cancel } = useDebounceFn(
+  useEffect(() => {
+    validateExpression(value);
+  }, [value]);
+
+  useDebounceEffect(
     () => {
       const trimmed = (edited ?? '').trim();
       if (trimmed.length) {
         validateExpression(trimmed);
       }
-      props?.onChange(edited, label);
-      focusEditor();
+      props?.onChange(edited, isValid);
+      // focusEditor();
     },
+    [edited],
     { wait: 150 },
   );
-
-  useUnmountEffect(cancel);
 
   function handleApply() {
     props?.onApply();
@@ -96,24 +95,22 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
 
   function validateExpression(expr: string) {
     expr = (expr ?? '').trim();
-    if (!expr.length) return true;
+    if (!expr.length) {
+      setValid(true);
+      return;
+    }
     try {
       parseExpression(expr);
-      return true;
+      setValid(true);
     } catch (e) {
       console.log(e);
-      return false;
+      setValid(false);
     }
   }
 
   function onChangeQuery(newCode: string) {
     setEdited(newCode);
     const trimmed = (newCode ?? '').trim();
-    if (trimmed.length) {
-    }
-    handleChange();
-    // props?.onChange(newCode, label);
-    // focusEditor(); // HACK!!!
   }
 
   function onEditorLoaded(opts: Ace.Editor) {
@@ -145,6 +142,7 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
       onChange={onChangeQuery}
       editorProps={{ $blockScrolling: Infinity }}
       name={`query-bar-option-input-${label}`}
+      key={`query-bar-option-editor-${label}`}
       setOptions={OPTIONS}
       onFocus={onFocus}
       onLoad={onEditorLoaded}
