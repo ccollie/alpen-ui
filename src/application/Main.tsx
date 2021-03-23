@@ -54,7 +54,7 @@ const Main: React.FC = ({ children }) => {
   const [isCollapsed, setCollapsed] = useState(false);
 
   const { data, error, loading } = useQuery(GetHostsDocument, {
-    pollInterval: 5000,
+    pollInterval: 10000,
   });
 
   const { data: appData, error: appError, loading: appLoading } = useQuery(

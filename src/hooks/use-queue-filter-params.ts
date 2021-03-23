@@ -11,8 +11,8 @@ const defaultValues: QueueFilter = {
 export function useQueueFilterParams(props?: QueueFilter): QueueFilter {
   props = props || defaultValues;
   const {
-    active = props.active,
-    paused = props.paused,
+    active = props.isActive,
+    paused = props.isPaused,
     sortBy = props.sortBy,
     sortOrder = props.sortOrder,
     searchText = undefined,
@@ -33,9 +33,9 @@ export function useQueueFilterParams(props?: QueueFilter): QueueFilter {
     sortOrder: order as QueueFilter['sortOrder'],
   };
 
-  if (searchText) result.searchText = searchText;
-  if (prefix) result.prefix = prefix;
-  if (active !== undefined) result.active = toBool(active);
-  if (paused !== undefined) result.paused = toBool(paused);
+  if (searchText && searchText !== 'undefined') result.search = searchText;
+  if (prefix && prefix !== 'undefined') result.prefix = prefix;
+  if (active !== undefined) result.isActive = toBool(active);
+  if (paused !== undefined) result.isPaused = toBool(paused);
   return result;
 }

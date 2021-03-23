@@ -1,4 +1,4 @@
-import { List } from 'antd';
+import { List, Result } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaNotEqual, FaSadTear } from 'react-icons/fa';
 import { Job, JobFragment, JobLogs, JobStatus } from '../api';
@@ -24,12 +24,7 @@ const EmptyMessage: React.FC<EmptyMessageProps> = ({ icon, message }) => {
   };
   return (
     <div style={style}>
-      <div>
-        <span>{icon}</span>
-        <div>
-          <pre>{message}</pre>
-        </div>
-      </div>
+      <Result icon={icon} title={message} />,
     </div>
   );
 };
@@ -85,7 +80,7 @@ const Logs = ({
   if (!logLines.current.length && called) {
     return (
       <EmptyMessage
-        icon={<FaSadTear />}
+        icon={<FaSadTear size={24} />}
         message={`No logs found for job ${job.name + '#' + job.id}.`}
       />
     );
@@ -118,7 +113,10 @@ const ReturnValue: React.FC<ReturnValueProps> = ({ value }) => {
   const code = isObj ? JSON.stringify(value, null, 2) : null;
   if (!hasValue)
     return (
-      <EmptyMessage icon={<FaNotEqual />} message={'No results returned'} />
+      <EmptyMessage
+        icon={<FaNotEqual size={24} />}
+        message={'No results returned'}
+      />
     );
 
   return (
@@ -173,7 +171,7 @@ export function useDetailsTabs(
     })) as DetailTabInfo[],
     selectedTab,
     getTabContent: (job: Job | JobFragment) => {
-      const { data, opts, failedReason, stacktrace } = job;
+      const { data = {}, opts = {}, failedReason, stacktrace } = job;
       switch (selectedTab) {
         case 'Data':
           return (

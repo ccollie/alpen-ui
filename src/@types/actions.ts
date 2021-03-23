@@ -32,6 +32,15 @@ export interface BulkJobActions {
   ) => Promise<number>;
 }
 
+export interface FilteredJobsResult {
+  jobs: JobFragment[];
+  counts: JobCounts;
+  current: number;
+  total: number;
+  cursor: string | undefined;
+  hasNext: boolean;
+}
+
 export interface QueueJobActions extends SingleJobActions, BulkJobActions {
   getJobs: (
     queueId: string,
@@ -43,11 +52,7 @@ export interface QueueJobActions extends SingleJobActions, BulkJobActions {
   getJobsByFilter: (
     queueId: string,
     filter: JobSearchInput,
-  ) => Promise<{
-    jobs: JobFragment[];
-    counts: JobCounts;
-    cursor: string | undefined;
-  }>;
+  ) => Promise<FilteredJobsResult>;
 }
 
 // todo: discover

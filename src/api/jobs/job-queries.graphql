@@ -1,0 +1,47 @@
+
+query GetJobsByFilter($id: ID!, $status: JobStatus, $cursor: String, $criteria: String, $count: Int = 10) {
+    queue(id: $id) {
+        id
+        jobSearch(filter: { cursor: $cursor, count: $count, status: $status, criteria: $criteria }) {
+            cursor
+            total
+            current
+            jobs {
+                ...Job
+            }
+        }
+        ...JobCounts
+    }
+}
+
+query GetJobFilters($queueId: ID!, $ids: [ID!]) {
+    queue(id: $queueId) {
+        jobFilters(ids: $ids) {
+            id
+            name
+            expression
+            createdAt
+        }
+    }
+}
+
+mutation CreateJobFilter($input: JobFilterInput!) {
+    queueJobFilterCreate(input: $input) {
+        id
+        name
+        expression
+        createdAt
+    }
+}
+
+mutation UpdateJobFilter($input: JobFilterUpdateInput!) {
+    queueJobFilterUpdate(input: $input) {
+        isUpdated
+    }
+}
+
+mutation DeleteJobFilter($input: QueueJobFilterDeleteInput!) {
+    queueJobFilterDelete(input: $input) {
+        isDeleted
+    }
+}

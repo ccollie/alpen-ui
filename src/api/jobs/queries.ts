@@ -1,3 +1,4 @@
+import { FilteredJobsResult } from '@/@types';
 import { ApolloQueryResult } from '@apollo/client';
 import { client } from '../../providers/ApolloProvider';
 import {
@@ -54,7 +55,7 @@ export function getJobs(
 export function getJobsByFilter(
   queueId: string,
   { status = JobStatus.Completed, cursor, criteria, count }: JobSearchInput,
-) {
+): Promise<FilteredJobsResult> {
   count = count ?? 10;
   return client
     .query({
@@ -80,6 +81,9 @@ export function getJobsByFilter(
         jobs,
         cursor,
         counts,
+        current: searchResult?.current ?? 0,
+        total: searchResult?.total ?? 0,
+        hasNext: !!(cursor && cursor.length),
       };
     });
 }

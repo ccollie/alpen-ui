@@ -16,8 +16,8 @@ import {
   setJobSchema,
   JobSchema,
 } from '../../api';
-import isEqual from 'lodash/isEqual';
-import isEmpty from 'lodash/isEmpty';
+import isEqual from 'lodash-es/isEqual';
+import isEmpty from 'lodash-es/isEmpty';
 import { JsonEditor } from '../../components';
 import { useJobSchemaActions } from '../../hooks';
 import { useWhyDidYouUpdate } from '../../hooks/use-why-update';

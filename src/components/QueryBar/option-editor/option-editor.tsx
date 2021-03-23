@@ -5,19 +5,13 @@ import React, {
   useImperativeHandle,
   useEffect,
 } from 'react';
-import AceEditor from 'react-ace';
-import { Ace } from 'ace-builds';
-import { getAceInstance } from 'react-ace/lib/editorOptions';
-import 'ace-builds/src-min-noconflict/ext-language_tools';
-import 'ace-builds/src-noconflict/mode-javascript';
-import 'ace-builds/src-noconflict/theme-xcode';
-import { useDebounceEffect, useWhyDidYouUpdate } from '../../../hooks';
-import { parseExpression } from '../../../query-parser';
+import AceEditor, { getTools, Ace, getThemeName } from '@/lib/ace';
+import { useUpdateEffect, useWhyDidYouUpdate } from '../../../hooks';
+import { parseExpression } from '@/query-parser';
 import { AutocompleteField, createCompleter } from '../query-autocompleter';
 import styles from './option-editor.module.css';
 
-const ace = getAceInstance();
-const tools = ace.require('ace/ext/language_tools');
+const tools = getTools();
 
 /**
  * Options for the ACE editor.
@@ -26,8 +20,8 @@ const OPTIONS = {
   enableLiveAutocompletion: true,
   tabSize: 2,
   useSoftTabs: true,
-  fontSize: 11,
-  minLines: 1,
+  fontSize: 12,
+  minLines: 2,
   maxLines: 10,
   highlightActiveLine: false,
   showPrintMargin: false,
@@ -36,28 +30,44 @@ const OPTIONS = {
   useWorker: false,
 };
 
+export interface EditorRef {
+  getEditor: () => Ace.Editor | undefined;
+  focus: () => void;
+  setValue: (value: string) => void;
+  reset: () => void;
+}
+
 interface OptionEditorProps {
   label?: string;
   autoPopulated: boolean;
   value?: string;
+  defaultValue?: string;
+  height?: string;
+  width?: string;
+  theme?: 'light' | 'dark';
   onChange: (value: string, isValid: boolean) => void;
-  onApply: () => void;
+  onApply?: () => void;
   schemaFields?: AutocompleteField[];
   onMounted?: (editor: Ace.Editor) => void;
 }
 
-type EditorRef = {
-  focus: () => void;
-};
-
-const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
-  EditorRef,
-  OptionEditorProps
->((props, ref) => {
-  const { schemaFields = [], value = '', label = 'filter' } = props;
+const OptionEditor: React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<OptionEditorProps> & React.RefAttributes<EditorRef>
+> = forwardRef<EditorRef, OptionEditorProps>((props, ref) => {
+  const {
+    schemaFields = [],
+    height = '45px',
+    width = '100%',
+    value,
+    defaultValue,
+    label = 'filter',
+  } = props;
   const [completer] = useState(() => createCompleter(schemaFields));
-  const [edited, setEdited] = useState<string>(value);
+  const [edited, setEdited] = useState<string | undefined>(
+    value ?? defaultValue,
+  );
   const [isValid, setValid] = useState<boolean>(true);
+  const theme = getThemeName(props.theme);
   const _editor = useRef<Ace.Editor>();
 
   useWhyDidYouUpdate('OptionEditor', props);
@@ -67,33 +77,33 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
   }
 
   useImperativeHandle(ref, () => ({
+    getEditor(): Ace.Editor | undefined {
+      return _editor.current;
+    },
+    setValue(value: string): void {
+      setEdited(value);
+    },
+    reset() {
+      setEdited('');
+    },
     focus() {
       focusEditor();
     },
   }));
 
   useEffect(() => {
-    validateExpression(value);
-  }, [value]);
+    validateExpression(edited);
+  }, [edited]);
 
-  useDebounceEffect(
-    () => {
-      const trimmed = (edited ?? '').trim();
-      if (trimmed.length) {
-        validateExpression(trimmed);
-      }
-      props?.onChange(edited, isValid);
-      // focusEditor();
-    },
-    [edited],
-    { wait: 150 },
-  );
+  useUpdateEffect(() => {
+    props?.onChange(edited ?? '', isValid);
+  }, [edited]);
 
   function handleApply() {
-    props?.onApply();
+    props.onApply?.();
   }
 
-  function validateExpression(expr: string) {
+  function validateExpression(expr: string | undefined) {
     expr = (expr ?? '').trim();
     if (!expr.length) {
       setValid(true);
@@ -103,7 +113,7 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
       parseExpression(expr);
       setValid(true);
     } catch (e) {
-      console.log(e);
+      //console.log(e);
       setValid(false);
     }
   }
@@ -115,6 +125,7 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
 
   function onEditorLoaded(opts: Ace.Editor) {
     _editor.current = opts;
+    props.onMounted?.(opts);
   }
 
   function onFocus() {
@@ -136,16 +147,20 @@ const OptionEditor: React.FC<OptionEditorProps> = forwardRef<
     <AceEditor
       className={styles['option-editor']}
       mode="javascript"
-      theme="xcode"
-      width="80%"
+      theme={theme}
+      width={width}
+      height={height}
       value={edited}
+      defaultValue={defaultValue}
       onChange={onChangeQuery}
+      commands={commands}
       editorProps={{ $blockScrolling: Infinity }}
       name={`query-bar-option-input-${label}`}
       key={`query-bar-option-editor-${label}`}
       setOptions={OPTIONS}
       onFocus={onFocus}
       onLoad={onEditorLoaded}
+      debounceChangePeriod={120}
     />
   );
 });

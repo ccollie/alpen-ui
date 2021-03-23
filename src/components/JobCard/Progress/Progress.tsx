@@ -13,7 +13,7 @@ export const Progress = ({
   return (
     <CircularProgress
       type="circle"
-      width={80}
+      width={70}
       percent={percentage}
       status={JobStatus.Failed === status ? 'exception' : undefined}
       style={{

@@ -1,9 +1,22 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Space, Table, TableProps } from 'antd';
+import { Highlight, JobCard } from '@/components';
+import {
+  LeftOutlined,
+  RightOutlined,
+  ReloadOutlined,
+  TableOutlined,
+  UnorderedListOutlined,
+  IdcardOutlined,
+} from '@ant-design/icons';
+import { Button, Col, Row, Space, Table, TableProps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { QueueJobActions } from '../../@types';
 import { JobFragment, JobStatus } from '../../api';
-import { usePaginationQueryString, useNavigationUpdate } from '../../hooks';
+import {
+  usePaginationQueryString,
+  useNavigationUpdate,
+  useWhyDidYouUpdate,
+} from '../../hooks';
+import './filtered-job-list.scss';
 
 interface FilteredJobListProps {
   queueId: string;
@@ -11,6 +24,7 @@ interface FilteredJobListProps {
   criteria?: string;
   pageSize?: number;
   actions: QueueJobActions;
+  view?: 'list' | 'table' | 'card';
   onClearSelections: () => void;
   extraProps: Partial<TableProps<JobFragment>>;
 }
@@ -28,17 +42,26 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
     extraProps,
   } = props;
 
+  useWhyDidYouUpdate('FilteredJobList', props);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(true);
   const [called, setCalled] = useState(false);
   const [data, setData] = useState<JobFragment[]>([]);
+  const [view, setView] = useState(props.view ?? 'table');
   const pagination = useRef<{
     page: number;
     pageSize: number;
     totalPages: number;
+    current: number;
+    total: number;
+    lastPage: number;
   }>({
     page,
     pageSize,
+    current: 0,
+    total: 0,
+    lastPage: 0,
     totalPages: 0, // todo: read from ss
   });
 
@@ -60,20 +83,26 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
   }, [cursor, pagination.current]);
 
   useEffect(() => {
-    pagination.current.totalPages = 0;
-    pagination.current.page = 0;
     setCalled(false);
-    if (criteria) {
-      try {
-        const t = JSON.parse(criteria);
-        if (typeof t === 'object') {
-          setFilter(filter);
-        }
-      } catch (e) {}
+    clearPagination();
+    const f = props.criteria?.trim() ?? '';
+    if (f) {
+      setFilter(f);
     } else {
+      setData([]);
       setFilter(undefined);
     }
-  }, [criteria]);
+  }, [props.criteria]);
+
+  useEffect(() => {
+    setCursor(undefined);
+    clearPagination();
+    if (filter) {
+      fetchByCriteria();
+    } else {
+      setData([]);
+    }
+  }, [filter, status]);
 
   function updateNav() {
     let { page, pageSize } = pagination.current;
@@ -88,13 +117,29 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
   function getSessionKey(suffix: string): string {
     const rest = cursor ? [cursor] : [];
     rest.push(suffix);
-    return `FILTERED-JOBS-${queueId}:${rest.join(':')}`;
+    return `filtered-jobs-${queueId}:${rest.join(':')}`;
+  }
+
+  function clearPagination() {
+    pagination.current.page = 0;
+    pagination.current.lastPage = 0;
+    pagination.current.pageSize = _pageSize;
+    pagination.current.total = 0;
+    pagination.current.current = 0;
+    pagination.current.totalPages = 0;
+  }
+
+  function recalcPagination(current: number, total: number) {
+    pagination.current.pageSize = _pageSize;
+    pagination.current.total = total;
+    pagination.current.current = current;
+    pagination.current.totalPages =
+      total === 0 ? 0 : Math.floor(total / _pageSize);
   }
 
   function clear() {
     setCursor(undefined);
-    pagination.current.page = 1;
-    pagination.current.pageSize = _pageSize;
+    clearPagination();
     onClearSelections();
   }
 
@@ -119,18 +164,19 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
         cursor,
         criteria: cursor ? undefined : filter,
       })
-      .then(({ jobs, cursor: _cursor }) => {
+      .then(({ jobs, cursor: _cursor, total, current }) => {
         setData(jobs);
         setCalled(true);
         onClearSelections();
         // setExpandedRowKeys([]);
         if (_cursor !== cursor) {
-          pagination.current.totalPages = 1;
-          pagination.current.page = 1;
-        } else {
-          pagination.current.page = ++pagination.current.totalPages;
+          clearPagination();
         }
+        pagination.current.page++;
+        pagination.current.lastPage++;
+        recalcPagination(current, total);
         setCursor(_cursor ?? undefined);
+        storePageInSession(pagination.current.page);
       })
       .catch((err) => {
         console.log(err);
@@ -139,6 +185,20 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
         setLoading(false);
         setRefreshing(false);
       });
+  }
+
+  function storePageInSession(index: number): void {
+    if (index > 0) {
+      const key = getSessionKey(`page:${index}`);
+      if (data && data.length) {
+        try {
+          const items = JSON.stringify(data);
+          sessionStorage.setItem(key, items);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    }
   }
 
   function getPageFromSession(index: number): void {
@@ -161,44 +221,137 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
   }
 
   function getPreviousPage() {
-    const index = (pagination.current.page = Math.min(
+    const index = (pagination.current.page = Math.max(
       0,
-      pagination.current.page--,
+      pagination.current.page - 1,
     ));
     getPageFromSession(index);
+    console.log('goto prev');
   }
 
   function getNextPage() {
-    const { page, totalPages } = pagination.current;
-    if (page === totalPages) {
+    const { page, lastPage } = pagination.current;
+    console.log('goto next, page = ' + page + ', lastPage = ' + lastPage);
+    if (page === lastPage) {
       if (cursor) {
-        fetchByCriteria();
+        console.log('fetching ....');
+        return fetchByCriteria();
       }
     }
-    const index = (pagination.current.page = Math.max(totalPages, page + 1));
+    const index = (pagination.current.page = Math.min(lastPage, page + 1));
     return getPageFromSession(index);
   }
 
-  return (
-    <Space direction="vertical">
+  function CardView() {
+    return (
+      <div className="filter-list-container">
+        <div className="box inner">
+          {data.map((job) => (
+            <JobCard
+              key={'card-' + job.id}
+              job={job}
+              status={status}
+              actions={actions}
+            />
+          ))}
+        </div>
+        <div className="box bottom" />
+      </div>
+    );
+  }
+
+  function ListView() {
+    return (
+      <div className="filter-list-container">
+        <div className="box inner">
+          {data.map((job) => (
+            <Row key={`jr-${job.id}`}>
+              <Col>
+                <Highlight language="json" key={`lv-${job.id}`}>
+                  {JSON.stringify(job, null, 2)}
+                </Highlight>
+              </Col>
+            </Row>
+          ))}
+        </div>
+        <div className="box bottom"></div>
+      </div>
+    );
+  }
+
+  function TableView() {
+    return (
       <Table<JobFragment>
         dataSource={data}
         loading={loading && !refreshing}
         {...extraProps}
       />
+    );
+  }
+
+  function Toolbar() {
+    return (
       <Space>
         <Button
+          size="small"
+          disabled={data?.length == 0 || view === 'table'}
+          icon={<TableOutlined />}
+          onClick={showTable}
+        />
+        <Button
+          size="small"
+          disabled={data?.length == 0 || view === 'list'}
+          icon={<UnorderedListOutlined />}
+          onClick={showList}
+        />
+        <Button
+          size="small"
+          disabled={data?.length == 0 || view === 'card'}
+          icon={<IdcardOutlined />}
+          onClick={showCards}
+        />
+        <Button
+          size="small"
           disabled={pagination.current.page <= 1}
           icon={<LeftOutlined />}
           onClick={getPreviousPage}
         />
         {pagination.current.page}
         <Button
+          size="small"
           disabled={!hasNext}
           icon={<RightOutlined />}
           onClick={getNextPage}
         />
+        <Button
+          size="small"
+          disabled={!!cursor}
+          loading={loading}
+          icon={<ReloadOutlined />}
+          onClick={refresh}
+        />
       </Space>
+    );
+  }
+
+  function showList() {
+    setView('list');
+  }
+
+  function showTable() {
+    setView('table');
+  }
+
+  function showCards() {
+    setView('card');
+  }
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Toolbar />
+      {view === 'list' && <ListView />}
+      {view === 'card' && <CardView />}
+      {view === 'table' && <TableView />}
     </Space>
   );
 };

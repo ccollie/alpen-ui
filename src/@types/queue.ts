@@ -1,10 +1,7 @@
-import { SortOrderEnum } from '../api';
+import { HostQueuesFilter, SortOrderEnum } from '../api';
 
-export interface QueueFilter {
+export interface QueueFilter extends HostQueuesFilter {
   prefix?: string;
-  searchText?: string;
-  active?: boolean;
-  paused?: boolean;
-  sortBy: string;
+  sortBy?: string;
   sortOrder?: SortOrderEnum;
 }

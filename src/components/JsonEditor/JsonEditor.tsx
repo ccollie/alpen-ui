@@ -1,12 +1,9 @@
 import { Alert } from 'antd';
 import React, { useEffect, useState } from 'react';
-import AceEditor, { IMarker } from 'react-ace';
+import { IMarker } from 'react-ace';
 import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
 import { validate, validateSchema } from '../../lib/ajv';
-
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-dracula';
-import 'ace-builds/src-noconflict/ext-language_tools';
+import AceEditor from '../../lib/ace';
 
 type JsonEditorProps = {
   readOnly?: boolean;
@@ -97,11 +94,11 @@ export const JsonEditor: React.FC<JsonEditorProps> = (props) => {
       <AceEditor
         mode="json"
         {...rest}
-        value={json}
+        defaultValue={json}
         theme={theme}
         onChange={handleChange}
         readOnly={readOnly}
-        debounceChangePeriod={380}
+        debounceChangePeriod={100}
         editorProps={{ $blockScrolling: true }}
         setOptions={{
           enableBasicAutocompletion: false,

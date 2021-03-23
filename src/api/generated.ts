@@ -434,7 +434,10 @@ export type JobSearchInput = {
 export type JobSearchPayload = {
   __typename?: 'JobSearchPayload';
   cursor?: Maybe<Scalars['String']>;
+  hasNext: Scalars['Boolean'];
   jobs: Array<Job>;
+  total: Scalars['Int'];
+  current: Scalars['Int'];
 };
 
 export type Job = {
@@ -471,7 +474,7 @@ export type JobOptions = {
   /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
   priority?: Maybe<Scalars['Int']>;
   /**
-   * An amount of milliseconds to wait until this job can be processed. 
+   * An amount of milliseconds to wait until this job can be processed.
    * Note that for accurate delays, worker and producers should have their clocks synchronized.
    */
   delay?: Maybe<Scalars['Int']>;
@@ -885,7 +888,7 @@ export type JobOptionsInput = {
   /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
   priority?: Maybe<Scalars['Int']>;
   /**
-   * An amount of milliseconds to wait until this job can be processed. 
+   * An amount of milliseconds to wait until this job can be processed.
    * Note that for accurate delays, worker and producers should have their clocks synchronized.
    */
   delay?: Maybe<Scalars['Int']>;
@@ -1163,7 +1166,7 @@ export type Mutation = {
   queueDrain: QueueDrainPayload;
   /**
    * Pause the queue.
-   * 
+   *
    * A PAUSED queue will not process new jobs until resumed, but current jobs being processed will continue until they are finalized.
    */
   queuePause: QueuePausePayload;
@@ -1182,6 +1185,8 @@ export type Mutation = {
   queueJobSchemaDelete: QueueJobSchemaDeletePayload;
   /** Delete a job filter */
   queueJobFilterDelete: QueueJobFilterDeletePayload;
+  /** Update a job filter */
+  queueJobFilterUpdate: JobFilterUpdatePayload;
   /** Delete all stats associated with a queue */
   queueStatsDelete: QueueStatsDeletePayload;
   /** Delete a rule alert */
@@ -1381,6 +1386,11 @@ export type MutationQueueJobSchemaDeleteArgs = {
 
 export type MutationQueueJobFilterDeleteArgs = {
   input: QueueJobFilterDeleteInput;
+};
+
+
+export type MutationQueueJobFilterUpdateArgs = {
+  input: JobFilterUpdateInput;
 };
 
 
@@ -1807,7 +1817,7 @@ export type JobFilterInput = {
   queueId: Scalars['ID'];
   name: Scalars['String'];
   status?: Maybe<JobStatus>;
-  expression: Scalars['JSONObject'];
+  expression: Scalars['String'];
 };
 
 export type JobSchemaInput = {
@@ -1837,6 +1847,21 @@ export type QueueJobFilterDeletePayload = {
   __typename?: 'QueueJobFilterDeletePayload';
   filterId: Scalars['String'];
   queue: Queue;
+  isDeleted: Scalars['Boolean'];
+};
+
+export type JobFilterUpdateInput = {
+  queueId: Scalars['ID'];
+  filterId: Scalars['ID'];
+  name?: Maybe<Scalars['String']>;
+  status?: Maybe<JobStatus>;
+  expression: Scalars['String'];
+};
+
+export type JobFilterUpdatePayload = {
+  __typename?: 'JobFilterUpdatePayload';
+  filter?: Maybe<JobFilter>;
+  isUpdated: Scalars['Boolean'];
 };
 
 export type QueueStatsDeleteInput = {
@@ -2511,6 +2536,52 @@ export type UnregisterQueueMutationVariables = Exact<{
 
 export type UnregisterQueueMutation = { __typename?: 'Mutation', queueUnregister: { __typename?: 'QueueUnregisterPayload', isRemoved: boolean, host: { __typename?: 'QueueHost', id: string } } };
 
+export type GetJobsByFilterQueryVariables = Exact<{
+  id: Scalars['ID'];
+  status?: Maybe<JobStatus>;
+  cursor?: Maybe<Scalars['String']>;
+  criteria?: Maybe<Scalars['String']>;
+  count?: Maybe<Scalars['Int']>;
+}>;
+
+
+export type GetJobsByFilterQuery = { __typename?: 'Query', queue?: Maybe<(
+    { __typename?: 'Queue', id: string, jobSearch: { __typename?: 'JobSearchPayload', cursor?: Maybe<string>, total: number, current: number, jobs: Array<(
+        { __typename?: 'Job' }
+        & JobFragment
+      )> } }
+    & JobCountsFragment
+  )> };
+
+export type GetJobFiltersQueryVariables = Exact<{
+  queueId: Scalars['ID'];
+  ids?: Maybe<Array<Scalars['ID']> | Scalars['ID']>;
+}>;
+
+
+export type GetJobFiltersQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', jobFilters: Array<{ __typename?: 'JobFilter', id: string, name: string, expression: string, createdAt?: Maybe<any> }> }> };
+
+export type CreateJobFilterMutationVariables = Exact<{
+  input: JobFilterInput;
+}>;
+
+
+export type CreateJobFilterMutation = { __typename?: 'Mutation', queueJobFilterCreate: { __typename?: 'JobFilter', id: string, name: string, expression: string, createdAt?: Maybe<any> } };
+
+export type UpdateJobFilterMutationVariables = Exact<{
+  input: JobFilterUpdateInput;
+}>;
+
+
+export type UpdateJobFilterMutation = { __typename?: 'Mutation', queueJobFilterUpdate: { __typename?: 'JobFilterUpdatePayload', isUpdated: boolean } };
+
+export type DeleteJobFilterMutationVariables = Exact<{
+  input: QueueJobFilterDeleteInput;
+}>;
+
+
+export type DeleteJobFilterMutation = { __typename?: 'Mutation', queueJobFilterDelete: { __typename?: 'QueueJobFilterDeletePayload', isDeleted: boolean } };
+
 export type GetQueueJobCountsQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -2535,23 +2606,6 @@ export type GetQueueJobsQuery = { __typename?: 'Query', queue?: Maybe<(
       { __typename?: 'Job' }
       & JobFragment
     )> }
-    & JobCountsFragment
-  )> };
-
-export type GetJobsByFilterQueryVariables = Exact<{
-  id: Scalars['ID'];
-  status?: Maybe<JobStatus>;
-  cursor?: Maybe<Scalars['String']>;
-  criteria?: Maybe<Scalars['String']>;
-  count?: Maybe<Scalars['Int']>;
-}>;
-
-
-export type GetJobsByFilterQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string, jobSearch: { __typename?: 'JobSearchPayload', cursor?: Maybe<string>, jobs: Array<(
-        { __typename?: 'Job' }
-        & JobFragment
-      )> } }
     & JobCountsFragment
   )> };
 
@@ -2620,7 +2674,7 @@ export type DeleteRepeatableJobByKeyMutation = { __typename?: 'Mutation', repeat
 
 export type DeleteBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
-  jobIds: Array<Scalars['ID']>;
+  jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
 
@@ -2636,7 +2690,7 @@ export type RetryJobMutation = { __typename?: 'Mutation', jobRetry: { __typename
 
 export type RetryBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
-  jobIds: Array<Scalars['ID']>;
+  jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
 
@@ -2652,7 +2706,7 @@ export type PromoteJobMutation = { __typename?: 'Mutation', jobPromote: { __type
 
 export type PromoteBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
-  jobIds: Array<Scalars['ID']>;
+  jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
 
@@ -3035,9 +3089,13 @@ export const GetRedisStatsDocument: DocumentNode<GetRedisStatsQuery, GetRedisSta
 export const DiscoverQueuesDocument: DocumentNode<DiscoverQueuesQuery, DiscoverQueuesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"discoverQueues"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"unregisteredOnly"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"discoverQueues"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"prefix"},"value":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}}},{"kind":"Argument","name":{"kind":"Name","value":"unregisteredOnly"},"value":{"kind":"Variable","name":{"kind":"Name","value":"unregisteredOnly"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}}]}}]}}]}}]};
 export const RegisterQueueDocument: DocumentNode<RegisterQueueMutation, RegisterQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RegisterQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"checkExists"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}},"defaultValue":{"kind":"BooleanValue","value":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueRegister"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"hostId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"prefix"},"value":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"checkExists"},"value":{"kind":"Variable","name":{"kind":"Name","value":"checkExists"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}},...QueueFragmentDoc.definitions]};
 export const UnregisterQueueDocument: DocumentNode<UnregisterQueueMutation, UnregisterQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnregisterQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueUnregister"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isRemoved"}}]}}]}}]};
+export const GetJobsByFilterDocument: DocumentNode<GetJobsByFilterQuery, GetJobsByFilterQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobsByFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"count"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobSearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"count"},"value":{"kind":"Variable","name":{"kind":"Name","value":"count"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"criteria"},"value":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"total"}},{"kind":"Field","name":{"kind":"Name","value":"current"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobFragmentDoc.definitions,...JobCountsFragmentDoc.definitions]};
+export const GetJobFiltersDocument: DocumentNode<GetJobFiltersQuery, GetJobFiltersQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobFilters"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ids"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobFilters"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ids"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"expression"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]};
+export const CreateJobFilterDocument: DocumentNode<CreateJobFilterMutation, CreateJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JobFilterInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"expression"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]};
+export const UpdateJobFilterDocument: DocumentNode<UpdateJobFilterMutation, UpdateJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JobFilterUpdateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isUpdated"}}]}}]}}]};
+export const DeleteJobFilterDocument: DocumentNode<DeleteJobFilterMutation, DeleteJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueueJobFilterDeleteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isDeleted"}}]}}]}}]};
 export const GetQueueJobCountsDocument: DocumentNode<GetQueueJobCountsQuery, GetQueueJobCountsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueJobCounts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobCountsFragmentDoc.definitions]};
 export const GetQueueJobsDocument: DocumentNode<GetQueueJobsQuery, GetQueueJobsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SortOrderEnum"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"sortOrder"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobFragmentDoc.definitions,...JobCountsFragmentDoc.definitions]};
-export const GetJobsByFilterDocument: DocumentNode<GetJobsByFilterQuery, GetJobsByFilterQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobsByFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"count"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobSearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"count"},"value":{"kind":"Variable","name":{"kind":"Name","value":"count"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"criteria"},"value":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobFragmentDoc.definitions,...JobCountsFragmentDoc.definitions]};
 export const GetRepeatableJobsDocument: DocumentNode<GetRepeatableJobsQuery, GetRepeatableJobsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRepeatableJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SortOrderEnum"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"order"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RepeatableJob"}}]}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobCount"}}]}}]}},...RepeatableJobFragmentDoc.definitions]};
 export const GetJobByIdDocument: DocumentNode<GetJobByIdQuery, GetJobByIdQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},...JobFragmentDoc.definitions]};
 export const GetJobLogsDocument: DocumentNode<GetJobLogsQuery, GetJobLogsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobLogs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"start"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"end"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"-1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"logs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"start"},"value":{"kind":"Variable","name":{"kind":"Name","value":"start"}}},{"kind":"Argument","name":{"kind":"Name","value":"end"},"value":{"kind":"Variable","name":{"kind":"Name","value":"end"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"items"}}]}}]}}]}}]};

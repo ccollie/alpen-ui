@@ -1,22 +1,17 @@
+import { useHostQuery } from '@/pages/Host/useHostQuery';
 import { Button, PageHeader, Space, Tag } from 'antd';
-import React, {
-  Fragment,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
-import { QueueFilter } from '../../@types/queue';
-import { Queue, RedisInfo, HostPageQueryDocument, QueueHost } from '../../api';
+import React, { Fragment, useState, useEffect, useRef } from 'react';
+import { QueueFilter } from '@/@types';
+import { Queue, RedisInfo, QueueHost } from '../../api';
 
 import { useParams } from 'react-router';
-import { useQuery } from '@apollo/client';
-import { QueueFilterToolbar } from '../../components/QueueFilterToolbar';
+import QueueFilterToolbar from './QueueFilterToolbar';
 import QueueCard from './QueueCard';
-import { RedisStats } from '../../components';
+import { RedisStats } from '@/components';
 import RedisIcon from '../../components/Icons/Redis';
 import { PlusOutlined, CloudServerOutlined } from '@ant-design/icons';
 import {
+  useCallbackRef,
   useDisclosure,
   useNavigationUpdate,
   useQueueActions,
@@ -49,31 +44,22 @@ const Host: React.FC = () => {
 
   const updateNavigation = useNavigationUpdate();
 
-  const { loading, data: hostData, error: hostError, called } = useQuery(
-    HostPageQueryDocument,
-    {
-      variables: { id, range },
-      pollInterval: 5000,
-    },
+  const { loading, data: hostData, error: hostError, setFilter } = useHostQuery(
+    id,
+    range,
   );
 
   useEffect(() => {
     if (hostData && !loading) {
-      const _host = hostData?.host || null;
-      setHost(_host as QueueHost);
-      setName(_host?.name || 'host');
-      updateQueues((_host?.queues ?? []) as Queue[]);
+      setHost(hostData.host as QueueHost);
+      setName(hostData.name || 'host');
+      setQueues(hostData.queues);
     }
   }, [loading, hostData]);
 
-  function updateQueues(newItems: Queue[]): void {
-    // todo: filter and sort
-    setQueues(newItems);
-  }
-
   function onQueueAdded(queue: Queue) {
     const newItems = [...queues, queue];
-    updateQueues(newItems);
+    // sortQueues(newItems);
   }
 
   function handleDiscoverQueues() {
@@ -89,7 +75,7 @@ const Host: React.FC = () => {
 
   function onQueueRemoved(id: string) {
     const newItems = queues.filter((q) => q.id !== id);
-    updateQueues(newItems);
+    // refresh;
   }
 
   function handleRemoveQueue(id: string): Promise<boolean> {
@@ -139,20 +125,17 @@ const Host: React.FC = () => {
     return <Tag color={color}>{state}</Tag>;
   }
 
-  const onFilterUpdate = useCallback(function onFilterUpdated(
-    filter: QueueFilter,
-  ) {
-    console.log('Filter updated');
-    updateNavigation({
-      ...filter,
-    });
-  },
-  []);
+  const onFilterUpdate = useCallbackRef((newFilter: QueueFilter) => {
+    setFilter(newFilter);
+    // updateNavigation({
+    //   ...newFilter,
+    // });
+  });
 
   const toolbar = (
     <Space key="header-toolbar">
       <QueueFilterToolbar
-        filter={filter.current}
+        defaultFilter={filter.current}
         onFilterUpdated={onFilterUpdate}
       />
       <Button

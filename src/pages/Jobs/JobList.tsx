@@ -8,7 +8,7 @@ import {
   useInterval,
   useNavigationUpdate,
 } from '../../hooks';
-import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
+import { useWhyDidYouUpdate } from '@/hooks';
 import {
   offBulkJobAction,
   offRefresh,

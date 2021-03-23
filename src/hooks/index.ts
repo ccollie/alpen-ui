@@ -1,4 +1,5 @@
 export * from './use-async';
+export * from './use-callback-ref';
 export * from './use-controllable';
 export * from './use-disclosure';
 export * from './use-interval';

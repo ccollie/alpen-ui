@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import isEmpty from 'lodash-es/isEmpty';
 import { validateQuery } from '../../query-parser';
 
 export function isNumberValid(input: string): number | boolean {

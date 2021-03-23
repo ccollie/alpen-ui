@@ -146,3 +146,38 @@ export function stringify(obj: Record<string, any>): string {
     .replace(/ ?\n ? ?/g, '')
     .replace(/ {2,}/g, ' ');
 }
+
+export const downloadFile = async (
+  data: unknown,
+  filename: string,
+): Promise<void> => {
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: 'application/json' });
+  const href = await URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = filename + '.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+export function exportToJson(objectData: unknown, filename: string) {
+  const contentType = 'application/json;charset=utf-8;';
+  const json = JSON.stringify(objectData);
+  // @ts-ignore
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+    const blob = new Blob([decodeURIComponent(encodeURI(json))], {
+      type: contentType,
+    });
+    navigator.msSaveOrOpenBlob(blob, filename);
+  } else {
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = 'data:' + contentType + ',' + encodeURIComponent(json);
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}

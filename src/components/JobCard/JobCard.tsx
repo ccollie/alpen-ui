@@ -1,5 +1,5 @@
 import React from 'react';
-import { SingleJobActions } from '../../@types/actions';
+import { SingleJobActions } from '@/@types';
 import { Details } from './Details/Details';
 import { JobActions } from '../JobActions/JobActions';
 import { Progress } from './Progress/Progress';

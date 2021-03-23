@@ -1,17 +1,23 @@
-import { TextChangeEvent } from '@/components/CMEditor';
-import { Button, Col, Form, Space } from 'antd';
-import TextArea from 'antd/es/input/TextArea';
+import { EditorRef } from '@/components/QueryBar/option-editor/option-editor';
+import { useQueueJobFilters } from '@/hooks/use-queue-job-filters';
+import { Ace } from '@/lib/ace';
+import { HistoryOutlined } from '@ant-design/icons';
+import QueryHistoryDialog from '../query-history/query-history';
+import { Button, Col, Row, Space } from 'antd';
 import React, {
-  useCallback,
-  useEffect,
-  useRef,
   useState,
-  ChangeEvent,
+  Fragment,
+  useRef,
+  RefAttributes,
+  ForwardRefExoticComponent,
 } from 'react';
 import classnames from 'classnames';
-import { isEqual, isFunction } from 'lodash';
-import { useWhyDidYouUpdate } from '../../../hooks';
-import InfoSprinkle from '../info-sprinkle';
+import isEqual from 'lodash-es/isEqual';
+import {
+  useCallbackRef,
+  useDisclosure,
+  useWhyDidYouUpdate,
+} from '../../../hooks';
 import OptionEditor from '../option-editor';
 import styles from './query-bar.module.css';
 
@@ -24,21 +30,21 @@ import {
 import { AutocompleteField } from '../query-autocompleter';
 import { isFilterValid } from '../utils';
 
-type Query = {
-  filter: string;
-  limit?: number;
-};
-
-type QueryKey = keyof Query;
+// https://gist.github.com/Venryx/7cff24b17867da305fff12c6f8ef6f96
+export type Handle<T> = T extends ForwardRefExoticComponent<
+  RefAttributes<infer T2>
+>
+  ? T2
+  : never;
 
 interface QueryBarProps {
-  filter?: string;
-  limit?: number;
+  queueId: string;
+  defaultFilter?: string;
   autoPopulated?: boolean;
   buttonLabel?: string;
   onReset: () => void;
-  onApply?: (filter: string, limit: number) => void;
-  onChange?: (value: string, label: QueryKey) => void;
+  onApply: (filter: string) => void;
+  onChange?: (value: string) => void;
   schemaFields?: AutocompleteField[];
 }
 
@@ -48,30 +54,26 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
   const [isValid, setValid] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [lastExecutedQuery, setLastExecutedQuery] = useState<string>('');
-  const [filterInput, setFilterInput] = useState<string>(
-    props.filter ?? DEFAULT_FILTER,
+  const [filter, setFilter] = useState<string>(
+    props.defaultFilter ?? DEFAULT_FILTER,
   );
-  const [filterValid, setFilterValid] = useState<boolean>(
-    !filterInput || isFilterValid(filterInput),
-  );
-  const [filter, setFilter] = useState<string>(filterInput);
   const [isEmptyQuery, setIsEmptyQuery] = useState(true);
-  const childRef = useRef();
+  const [editor, setEditor] = useState<Ace.Editor>();
+  let editorRef: EditorRef;
+
+  const {
+    isOpen: isHistoryDialogOpen,
+    onClose: closeHistoryDialog,
+    onToggle: toggleHistoryDialog,
+  } = useDisclosure({
+    defaultIsOpen: false,
+  });
 
   useWhyDidYouUpdate('QueryBar', props);
 
-  useEffect(() => {
-    // todo: validate
-    setFilter(filterInput);
-  }, [filterInput]);
-
-  useEffect(() => {
-    const input = filter;
-    const mt = !(input && input.length);
-    setIsEmptyQuery(mt);
-  }, [filter]);
-
   const { schemaFields = [], buttonLabel = DEFAULT_BUTTON_LABEL } = props;
+
+  const { addQueryToHistory } = useQueueJobFilters(props.queueId);
 
   /**
    * returns true if all components of the query are not false.
@@ -80,26 +82,23 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    *
    * @return {Boolean}  if the full query is valid.
    */
-  function validateQuery() {
-    return isFilterValid(filter);
+  function validateQuery(val?: string) {
+    return isFilterValid(val ?? filter);
   }
 
   /**
-   * Sets `queryString` and `valid`, and if it is a valid input, also set `filter`,
-   * `limit`.
+   * Sets `queryString` and `valid`, and if it is a valid input
    * If it is not a valid query, only set `valid` to `false`.
    * @param {String} input   the query string (i.e. manual user input)
    */
   function setQueryString(input: string): void {
     const toValidate = (input ?? '').trim();
     setIsEmptyQuery(toValidate.length === 0);
-    const _valid = isFilterValid(toValidate);
-    if (_valid) {
-      setFilter(input ?? DEFAULT_FILTER);
+    if (isValid) {
+      setFilter(input);
     }
-    setValid(_valid);
-    setHasError(!_valid && !isEmptyQuery);
-    console.log('here ' + input);
+    setHasError(!isValid && !isEmptyQuery);
+    props.onChange?.(input);
   }
 
   /**
@@ -123,39 +122,45 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     if (isValid) {
       setValid(true);
       setFilter(DEFAULT_FILTER);
-      setFilterInput(DEFAULT_FILTER);
     }
   }
 
   /**
    * apply the current (valid) query, and store it in `lastExecutedQuery`.
    */
-  const handleApply = useCallback(() => {
+  const applyFilter = useCallbackRef(() => {
     if (validateQuery()) {
       setValid(true);
       setQueryState(QueryState.APPLY_STATE);
       setLastExecutedQuery(filter);
-      if (isFunction(props.onApply)) {
-        props.onApply(filter, 10);
+      if (!isEmptyQuery) {
+        addQueryToHistory(filter);
       }
+      props.onApply?.(filter);
     } else {
       setValid(false);
     }
-  }, [props.onApply]);
+  });
 
-  function onChange(value: string, isValid: boolean) {
-    setFilterInput(value);
-    setValid(isValid);
+  function handleApply(evt: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    // No evt when pressing enter from ACE.
+    if (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    applyFilter();
   }
+
+  const onChange = useCallbackRef((value: string, isValid: boolean) => {
+    setValid(isValid);
+    setQueryString(value);
+  });
 
   function onResetButtonClicked() {
     const { onReset } = props;
+    editorRef.reset();
     reset();
     onReset?.();
-  }
-
-  function _queryHasChanges() {
-    return !isEqual(filter, lastExecutedQuery);
   }
 
   function _onFocus() {
@@ -166,75 +171,17 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     setHasFocus(false);
   }
 
-  function onApplyButtonClicked(
-    evt: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) {
-    // No evt when pressing enter from ACE.
-    if (evt) {
-      evt.preventDefault();
-      evt.stopPropagation();
-    }
-    handleApply();
+  function onFilterApply() {}
+
+  function onFilterSelected({ expression }: { expression: string }) {
+    editorRef?.setValue(expression);
+    setQueryString(expression);
+    closeHistoryDialog();
   }
 
-  function handleChange(evt: TextChangeEvent) {
-    setFilterInput(evt.value);
-  }
-
-  function __onChange(evt: ChangeEvent<HTMLTextAreaElement>) {
-    evt.preventDefault();
-    setFilterInput(evt.target.value);
-  }
-
-  /**
-   * renders the rows of the querybar component
-   *
-   * @return {Fragment} array of components, one for each row.
-   */
-  function FilterRow() {
-    const _className = classnames(
-      styles.component,
-      { [styles[`is-string-type`]]: true },
-      { [styles['has-error']]: hasError },
-    );
-
-    return (
-      <div className={_className} key="query-bar-1">
-        <div className={classnames(styles.label)} key="query-bar-option-label">
-          <InfoSprinkle helpLink={'filter'} onClickHandler={() => {}} />
-        </div>
-        <OptionEditor
-          key="filter-editor-3"
-          value={filterInput}
-          onChange={onChange}
-          onApply={handleApply}
-          autoPopulated={true}
-          schemaFields={schemaFields}
-        />
-      </div>
-    );
-  }
-
-  function DoForm() {
-    return (
-      <Form.Item
-        key="form-item-1-1-2-1"
-        name="name"
-        label="Filter"
-        rules={[{ message: 'Please enter job name' }]}
-      >
-        <TextArea
-          key="ed25519A$"
-          value={filter}
-          onChange={__onChange}
-          defaultValue={filterInput}
-          placeholder="Filter"
-          autoSize={{ minRows: 3, maxRows: 5 }}
-          autoFocus={true}
-        />
-      </Form.Item>
-    );
-  }
+  const onEditorMounted = useCallbackRef((editor: Ace.Editor) => {
+    setEditor(editor);
+  });
 
   /**
    * Render Query Bar input form (just the input fields and buttons).
@@ -250,7 +197,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
     const resetDisabled = queryState !== QueryState.APPLY_STATE;
 
     const _queryOptionClassName = classnames(styles['option-container'], {
-      [styles['has-focus']]: hasFocus,
+      // [styles['has-focus']]: hasFocus,
       'has-error': hasError,
     });
 
@@ -262,42 +209,81 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
           onFocus={_onFocus}
           key="filter-level-1-2"
         >
-          <FilterRow />
+          <InputForm />
         </div>
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            id="query-bar-apply-filter-button"
-            key="filter-apply-button"
-            onClick={onApplyButtonClicked}
-            disabled={applyDisabled}
-          >
-            {buttonLabel}
-          </Button>
-          <Button
-            size="small"
-            id="query-bar-reset-filter-button"
-            key="filter-reset-button"
-            disabled={resetDisabled}
-            onClick={onResetButtonClicked}
-          >
-            Reset
-          </Button>
-        </Space>
       </div>
     );
   }
 
+  const applyDisabled = !isValid || isEmptyQuery;
+  const resetDisabled = queryState !== QueryState.APPLY_STATE;
   return (
-    <div className={classnames(styles.component)} key="filter-level">
-      <div
-        className={classnames(styles['input-container'])}
-        key="filter-level-1"
-      >
-        <InputForm />
+    <Fragment>
+      <div className={classnames(styles.component)} key="filter-level">
+        <div
+          className={classnames(styles['input-container'])}
+          key="filter-level-1"
+        >
+          <Row>
+            <Col flex="auto">
+              <OptionEditor
+                key="filter-editor-3"
+                height="50px"
+                width="98%"
+                defaultValue={props.defaultFilter}
+                onChange={onChange}
+                onApply={applyFilter}
+                autoPopulated={true}
+                schemaFields={schemaFields}
+                onMounted={onEditorMounted}
+                ref={(r: Handle<typeof OptionEditor>) => {
+                  editorRef = r;
+                }}
+              />
+            </Col>
+
+            <Col flex="none">
+              <Space align="center">
+                <Button
+                  type="primary"
+                  size="small"
+                  id="query-bar-apply-filter-button"
+                  key="filter-apply-button"
+                  onClick={handleApply}
+                  disabled={applyDisabled}
+                >
+                  {buttonLabel}
+                </Button>
+                <Button
+                  size="small"
+                  id="query-bar-reset-filter-button"
+                  key="filter-reset-button"
+                  disabled={resetDisabled}
+                  onClick={onResetButtonClicked}
+                >
+                  Reset
+                </Button>
+                <Button
+                  size="small"
+                  id="query-bar-extra-button"
+                  key="filter-extra-button"
+                  onClick={toggleHistoryDialog}
+                  icon={<HistoryOutlined />}
+                />
+              </Space>
+            </Col>
+          </Row>
+        </div>
       </div>
-    </div>
+      {isHistoryDialogOpen && (
+        <QueryHistoryDialog
+          queueId={props.queueId}
+          isOpen={isHistoryDialogOpen}
+          onClose={closeHistoryDialog}
+          onFilterClick={onFilterSelected}
+        />
+      )}
+    </Fragment>
   );
 };
 

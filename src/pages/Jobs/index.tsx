@@ -9,9 +9,9 @@ import {
   JobFragment,
   JobStatus,
 } from '../../api';
-import QueryBar, { AutocompleteField } from '../../components/QueryBar';
+import { AutocompleteField } from '../../components/QueryBar';
 import { isEmpty } from '../../lib';
-import { JobBulkActions, StatusMenu } from '../../components';
+import { JobBulkActions, StatusMenu, QueryBar } from '../../components';
 import {
   usePaginationQueryString,
   useQueryString,
@@ -39,7 +39,10 @@ import JobSchemaDialog from './JobSchemaDialog';
 const Jobs: React.FC = () => {
   const { queueId } = useParams();
 
-  const { status: _status } = useQueryString(['status']);
+  const { status: _status, filter: defaultFilter } = useQueryString([
+    'status',
+    'filter',
+  ]);
   const [status, setStatus] = useState<JobStatus>(
     (_status || JobStatus.Active) as JobStatus,
   );
@@ -195,12 +198,10 @@ const Jobs: React.FC = () => {
   }
 
   const onFilterReset = useCallback(() => {
-    console.log('filter reset');
     setFilter(undefined);
   }, []);
 
-  const onFilterApply = useCallback((filter: string, limit: number) => {
-    console.log(`filter apply "${filter}"`);
+  const onFilterApply = useCallback((filter: string) => {
     setFilter(filter);
   }, []);
 
@@ -244,7 +245,7 @@ const Jobs: React.FC = () => {
           onSelectStatus={statusSelected}
         />
       </span>
-      <Space direction="vertical">
+      <Space direction="vertical" style={{ width: '100%' }}>
         <Row justify="end">
           <Col span={12}>
             <JobBulkActions
@@ -277,20 +278,21 @@ const Jobs: React.FC = () => {
         {isFilterOpen && (
           <div>
             <QueryBar
-              filter={filter}
-              limit={pageSize}
+              queueId={queueId}
+              defaultFilter={defaultFilter ?? undefined}
               onReset={onFilterReset}
               onApply={onFilterApply}
               schemaFields={schemaFields}
             />
           </div>
         )}
-        {filter ? (
+        {isFilterOpen && !!filter?.length ? (
           <FilteredJobList
             queueId={queueId}
             status={status}
             actions={actions}
             onClearSelections={clearSelections}
+            criteria={filter}
             extraProps={tableProps}
           />
         ) : (
