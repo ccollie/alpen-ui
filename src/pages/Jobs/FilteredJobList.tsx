@@ -1,13 +1,12 @@
-import { Highlight, JobCard } from '@/components';
+import { JobCard } from '@/components';
 import {
   LeftOutlined,
   RightOutlined,
   ReloadOutlined,
   TableOutlined,
-  UnorderedListOutlined,
   IdcardOutlined,
 } from '@ant-design/icons';
-import { Button, Col, Row, Space, Table, TableProps } from 'antd';
+import { Button, Space, Table, TableProps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { QueueJobActions } from '../../@types';
 import { JobFragment, JobStatus } from '../../api';
@@ -234,7 +233,7 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
     console.log('goto next, page = ' + page + ', lastPage = ' + lastPage);
     if (page === lastPage) {
       if (cursor) {
-        console.log('fetching ....');
+        // console.log('fetching next from cursor....');
         return fetchByCriteria();
       }
     }
@@ -255,26 +254,6 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
             />
           ))}
         </div>
-        <div className="box bottom" />
-      </div>
-    );
-  }
-
-  function ListView() {
-    return (
-      <div className="filter-list-container">
-        <div className="box inner">
-          {data.map((job) => (
-            <Row key={`jr-${job.id}`}>
-              <Col>
-                <Highlight language="json" key={`lv-${job.id}`}>
-                  {JSON.stringify(job, null, 2)}
-                </Highlight>
-              </Col>
-            </Row>
-          ))}
-        </div>
-        <div className="box bottom"></div>
       </div>
     );
   }
@@ -297,12 +276,6 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
           disabled={data?.length == 0 || view === 'table'}
           icon={<TableOutlined />}
           onClick={showTable}
-        />
-        <Button
-          size="small"
-          disabled={data?.length == 0 || view === 'list'}
-          icon={<UnorderedListOutlined />}
-          onClick={showList}
         />
         <Button
           size="small"
@@ -334,10 +307,6 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
     );
   }
 
-  function showList() {
-    setView('list');
-  }
-
   function showTable() {
     setView('table');
   }
@@ -349,7 +318,6 @@ const FilteredJobList: React.FC<FilteredJobListProps> = (props) => {
   return (
     <Space direction="vertical" style={{ width: '100%' }}>
       <Toolbar />
-      {view === 'list' && <ListView />}
       {view === 'card' && <CardView />}
       {view === 'table' && <TableView />}
     </Space>

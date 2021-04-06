@@ -1,92 +1,44 @@
-import { TypingResult } from '@/components/QueryBar/query-autocompleter/types';
-import { useUpdateEffect } from '@/hooks';
-import cn from 'classnames';
-import isEmpty from 'lodash-es/isEmpty';
-import map from 'lodash-es/map';
-import overEvery from 'lodash-es/overEvery';
-import React, { useCallback, useState } from 'react';
+import { Ace } from 'ace-builds';
+import {
+  TypingResult,
+  TypedSuggestion,
+  TypedObject,
+  isMethodType,
+} from './types';
+import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import HttpService from '../../../../../http/HttpService';
-import ValidationLabels from '../../../../modals/ValidationLabels';
-import ExpressionSuggester from './ExpressionSuggester';
+import ExpressionSuggester from './expression-suggester';
 import Position = AceAjax.Position;
-import AceEditor, { getAceInstance } from '@/lib/ace';
-import TokenIterator = AceAjax.TokenIterator;
 
 //to reconsider
 // - respect categories for global variables?
 // - maybe ESC should be allowed to hide suggestions but leave modal open?
 
-let inputExprIdCounter = 0;
-
 const identifierRegexpsWithoutDot = [/[#a-zA-Z0-9-_]/];
 const identifierRegexpsIncludingDot = [/[#a-zA-Z0-9-_.]/];
 
-const humanReadableType = (typingResult: TypingResult): string =>
-  typingResult?.display;
+const humanReadableType = (typingResult: TypingResult | undefined): string =>
+  typingResult?.display ?? '';
 
-function isSpelTokenAllowed(iterator: TokenIterator, modeId: string): boolean {
-  if (modeId === 'ace/mode/javascript') {
-    const token = iterator.getCurrentToken();
-    return token?.type !== 'string';
-  }
-  return true;
-}
-
-interface ExpressionSuggestProps {
-  inputProps: Record<string, any>;
-  processingType?: string;
-  variableTypes?: Record<string, TypingResult>;
-  isMarked?: boolean;
-  validationLabelInfo?: string;
-  showValidation?: string;
-  dataResolved?: boolean;
-  onChange?: (value: string) => void;
-}
-
-const ExpressionSuggest: React.FC<ExpressionSuggestProps> = (props) => {
-  inputExprIdCounter += 1;
-  const { isMarked, showValidation, inputProps } = props;
-  const [value, setValue] = useState<string>();
-  const [editorFocused, setEditorFocused] = useState<boolean>();
-  const [id, setId] = useState(`inputExpr${inputExprIdCounter}`);
-  const expressionSuggester = React.useRef(createExpressionSuggester());
-
-  function createExpressionSuggester() {
-    return new ExpressionSuggester(
-      props.typesInformation,
-      props.variableTypes,
-      props.processingType,
-      HttpService,
-    );
-  }
-
-  useUpdateEffect(() => {
-    props.onChange?.(value ?? '');
-  }, [value]);
+export function createExpressionSuggester(
+  typesInformation: TypedObject[],
+  variableTypes?: Record<string, TypingResult>,
+) {
+  const suggester = new ExpressionSuggester(typesInformation, variableTypes);
 
   const customAceEditorCompleter = {
-    isTokenAllowed: overEvery([isSpelTokenAllowed]),
     getCompletions: (
       editor: any,
-      session: any,
+      session: Ace.EditSession,
       caretPosition2d: Position,
       prefix: string,
-      callback: Function,
+      callback: Ace.CompleterCallback,
     ) => {
       const completer = customAceEditorCompleter;
-      const iterator = new TokenIterator(
-        session,
-        caretPosition2d.row,
-        caretPosition2d.column,
-      );
-      if (!completer.isTokenAllowed(iterator, session.$modeId)) {
-        callback();
-      }
 
-      expressionSuggester.current
-        .suggestionsFor(value ?? '', caretPosition2d)
-        .then((suggestions) => {
+      suggester
+        .suggestionsFor(prefix ?? '', caretPosition2d)
+        .then((suggestions: TypedSuggestion[]) => {
           // This trick enforce autocompletion to invoke getCompletions even if some result found before - in case if list of suggestions will change during typing
           editor.completer.activated = false;
           // We have dot in identifier pattern to enable live autocompletion after dots, but also we remove it from pattern just before callback, because
@@ -95,17 +47,18 @@ const ExpressionSuggest: React.FC<ExpressionSuggestProps> = (props) => {
           try {
             callback(
               null,
-              map(suggestions, (s) => {
-                const methodName = s.methodName;
+              suggestions.map((s) => {
+                const name = s.name;
                 const returnType = humanReadableType(s.refClazz);
+                const params = s.params || [];
                 return {
-                  name: methodName,
-                  value: methodName,
+                  name,
+                  value: name,
                   score: 1,
                   meta: returnType,
                   description: s.description,
-                  parameters: s.parameters,
-                  returnType: returnType,
+                  params,
+                  returnType,
                 };
               }),
             );
@@ -116,57 +69,26 @@ const ExpressionSuggest: React.FC<ExpressionSuggestProps> = (props) => {
     },
     // We adds hash to identifier pattern to start suggestions just after hash is typed
     identifierRegexps: identifierRegexpsIncludingDot,
-    getDocTooltip: (item) => {
-      if (item.description || !isEmpty(item.parameters)) {
-        const paramsSignature = item.parameters
-          .map((p) => `${humanReadableType(p.refClazz)} ${p.name}`)
+    getDocTooltip: (item: Ace.Completion) => {
+      const temp = item as any;
+      if (
+        temp.description ||
+        (Array.isArray(temp.params) && temp.params.length)
+      ) {
+        const paramsSignature = temp.params
+          .map((p: any) => `${humanReadableType(p.refClazz)} ${p.name}`)
           .join(', ');
-        const javaStyleSignature = `${item.returnType} ${item.name}(${paramsSignature})`;
-        item.docHTML = ReactDOMServer.renderToStaticMarkup(
+        const signature = `${item.name}(${paramsSignature}): ${temp.returnType}`;
+        temp.docHTML = ReactDOMServer.renderToStaticMarkup(
           <div className="function-docs">
-            <b>{javaStyleSignature}</b>
+            <b>{signature}</b>
             <hr />
-            <p>{item.description}</p>
+            <p>{temp.description}</p>
           </div>,
         );
       }
     },
   };
 
-  const focus = useCallback(() => setEditorFocused(true), []);
-  const unfocus = useCallback(() => setEditorFocused(false), []);
-
-  return (
-    <React.Fragment>
-      <div
-        className={cn([
-          'row-ace-editor',
-          showValidation &&
-            !allValid(validators, [value]) &&
-            'node-input-with-error',
-          isMarked && 'marked',
-          editorFocused && 'focused',
-          inputProps.readOnly && 'read-only',
-        ])}
-      >
-        <AceEditor
-          value={value}
-          onChange={setValue}
-          onFocus={focus}
-          onBlur={unfocus}
-          options={inputProps}
-          customAceEditorCompleter={customAceEditorCompleter}
-        />
-      </div>
-      {showValidation && (
-        <ValidationLabels
-          validators={validators}
-          values={[value]}
-          validationLabelInfo={this.props.validationLabelInfo}
-        />
-      )}
-    </React.Fragment>
-  );
-};
-
-export default ExpressionSuggest;
+  return customAceEditorCompleter;
+}

@@ -45,7 +45,7 @@ export function buildHumanErrors(
       const property = pointer.get(schema, `/properties/${missingProperty}`);
       return property.title + ' is a required field';
     }
-    const property = pointer.get(schema, '/properties' + error.dataPath);
+    const property = pointer.get(schema, '/properties' + error.instancePath);
     if (error.keyword === 'format' && property.example) {
       return (
         property.title + ' is in an invalid format, e.g: ' + property.example

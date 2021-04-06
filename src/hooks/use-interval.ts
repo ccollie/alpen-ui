@@ -1,12 +1,20 @@
 // https://github.com/beautifulinteractions/beautiful-react-hooks/blob/master/src/useInterval.js
+import { useCallbackRef } from '@/hooks/use-callback-ref';
+import { useUpdateEffect } from '@/hooks/use-update-effect';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Timeout = NodeJS.Timeout;
 
 type Delay = number | null;
 type TimerHandler = (...args: any[]) => void;
 
-const defaultOptions = {
+export interface UseIntervalOptions {
+  cancelOnUnmount?: boolean;
+  immediate?: boolean;
+}
+
+const defaultOptions: UseIntervalOptions = {
   cancelOnUnmount: true,
+  immediate: true,
 };
 
 /**
@@ -20,14 +28,15 @@ const useInterval = (
 ) => {
   const opts = { ...defaultOptions, ...(options || {}) };
   const timeout = useRef<Timeout>();
-  const callback = useRef(fn);
+  const callback = useCallbackRef(fn);
   const [isCleared, setIsCleared] = useState(false);
 
   function setup() {
     if (typeof milliseconds === 'number') {
-      timeout.current = setInterval(() => {
-        callback.current();
-      }, milliseconds);
+      if (timeout.current) {
+        clearInterval(timeout.current);
+      }
+      timeout.current = setInterval(callback, milliseconds);
     }
   }
 
@@ -40,34 +49,30 @@ const useInterval = (
   }, []);
 
   const reset = useCallback(() => {
-    clear();
     setup();
     setIsCleared(false);
   }, []);
 
-  // if the provided function changes, change its reference
-  useEffect(() => {
-    if (typeof fn === 'function') {
-      callback.current = fn;
-    }
-  }, [fn]);
-
   // when the milliseconds change, reset the timeout
-  useEffect(() => {
+  useUpdateEffect(() => {
     reset();
     // cleanup previous interval
     return clear;
   }, [milliseconds]);
 
-  // when component unmount clear the timeout
-  useEffect(
-    () => () => {
+  // see if we need to execute on the leading edge
+  useEffect(() => {
+    if (opts.immediate) {
+      fn();
+    }
+    setup();
+    return () => {
+      // when component unmount clear the timeout
       if (opts.cancelOnUnmount) {
         clear();
       }
-    },
-    [],
-  );
+    };
+  }, []);
 
   return { isCleared, clear, reset };
 };

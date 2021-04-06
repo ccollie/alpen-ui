@@ -1,7 +1,7 @@
-import ProCard from '@ant-design/pro-card';
-import { Col, Divider, Row, Space, Statistic } from 'antd';
+import ProCard, { StatisticCard } from '@ant-design/pro-card';
+import { Card, Col, Divider, Row, Space, Statistic } from 'antd';
 import prettyMilliseconds from 'pretty-ms';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import {
   QueueStatsPageQueryDocument,
   Queue,
@@ -18,7 +18,7 @@ import ErrorRateChart, {
 import TimeRangeToolbar, {
   RangeType,
 } from '../../components/Charts/StatsLineChart/TimeRangeToolbar';
-import { useInterval } from '../../hooks';
+import { useInterval, useUpdateEffect, useWhyDidYouUpdate } from '../../hooks';
 import { calcErrorPercentage } from '../../lib/stats';
 
 const ChartHeight = '340px';
@@ -42,6 +42,8 @@ function getErrorChardData(snaps: StatsSnapshot[]): ErrorDataItem[] {
 }
 
 const POLL_INTERVAL = 60000;
+// granularity of snapshots on server is no finer than 1 minute
+const SNAPSHOT_INTERVAL = 60000;
 
 const Metrics: FC = () => {
   const { queueId } = useParams();
@@ -54,6 +56,10 @@ const Metrics: FC = () => {
   const [pollInterval, setPollInterval] = useState<number | null>(
     POLL_INTERVAL,
   );
+
+  const snaps = useRef<StatsSnapshot[]>([]);
+
+  // useWhyDidYouUpdate('metrics', props);
 
   // todo: use actual date-times so we can cache results
   const [getData, { loading, data: queueData, called, error }] = useLazyQuery(
@@ -73,7 +79,16 @@ const Metrics: FC = () => {
     });
   }
 
-  useEffect(fetch, [queueId, range, granularity]);
+  const { reset: resetInterval } = useInterval(() => {
+    if (called && !loading) {
+      fetch();
+    }
+  }, pollInterval);
+
+  useUpdateEffect(() => {
+    fetch();
+    resetInterval();
+  }, [queueId, range, granularity]);
 
   useEffect(() => {
     if (queueData && !loading) {
@@ -87,12 +102,6 @@ const Metrics: FC = () => {
       }
     }
   }, [queueData, loading]);
-
-  useInterval(() => {
-    if (called && !loading) {
-      fetch();
-    }
-  }, pollInterval);
 
   function onDateRangeChange(type: RangeType, dates: RangePickerValue) {
     console.log('type = ' + type);
@@ -109,63 +118,53 @@ const Metrics: FC = () => {
 
   return (
     <>
-      <ProCard.Group colSpan={24} direction="row" ghost>
-        <ProCard>
+      <StatisticCard.Group colSpan={24}>
+        <StatisticCard>
           <Statistic
             title="Response - Mean"
             value={queue?.statsAggregate?.mean ?? 0}
             formatter={statsFormatter}
           />
-        </ProCard>
+        </StatisticCard>
         <Divider type="vertical" />
-        <ProCard>
+        <StatisticCard>
           <Statistic
             title="Response - 95th"
             value={queue?.statsAggregate?.p95 ?? 0}
             formatter={statsFormatter}
           />
-        </ProCard>
+        </StatisticCard>
         <Divider type="vertical" />
-        <ProCard>
+        <StatisticCard>
           <Statistic
             title="Throughput"
-            value={queue?.throughput.m15Rate}
+            value={queue?.throughput.m1Rate}
             precision={1}
-            suffix="min"
+            suffix="/min"
           />
-        </ProCard>
+        </StatisticCard>
         <Divider type="vertical" />
-        <ProCard>
+        <StatisticCard>
           <Statistic
             title="Error Rate"
-            value={queue?.errorRate.m15Rate}
+            value={queue?.errorRate.m1Rate}
             precision={1}
-            suffix="min"
+            suffix="/min"
           />
-        </ProCard>
+        </StatisticCard>
         <Divider type="vertical" />
-        <ProCard>
+        <StatisticCard>
           <Statistic
             value={errorPercentage}
             title="Error %"
             precision={1}
             suffix="%"
           />
-        </ProCard>
-        <Divider type="vertical" />
-        <ProCard>
-          <Statistic
-            title="Avg Wait Time"
-            value={queue?.waitTimeAvg}
-            formatter={statsFormatter}
-          />
-        </ProCard>
-      </ProCard.Group>
-      <Row gutter={24} style={{ marginBottom: '5px', marginTop: '5px' }}>
-        <Col span={24}>
-          <TimeRangeToolbar onRangeChange={onDateRangeChange} />
-        </Col>
-      </Row>
+        </StatisticCard>
+      </StatisticCard.Group>
+      <Card>
+        <TimeRangeToolbar onRangeChange={onDateRangeChange} />
+      </Card>
       <ProCard title="Runtime" loading={loading && !called}>
         <StatsLineChart
           height={300}

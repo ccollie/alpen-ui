@@ -1,6 +1,6 @@
 import { useHostQuery } from '@/pages/Host/useHostQuery';
 import { Button, PageHeader, Space, Tag } from 'antd';
-import React, { Fragment, useState, useEffect, useRef } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { QueueFilter } from '@/@types';
 import { Queue, RedisInfo, QueueHost } from '../../api';
 
@@ -25,7 +25,7 @@ const Host: React.FC = () => {
   const [queues, setQueues] = useState<Queue[]>([]);
   const [name, setName] = useState('host');
   const [range, setRange] = useState('last_hour');
-  const filter = useRef(useQueueFilterParams());
+  const filter = useQueueFilterParams();
   let actions = useQueueActions();
 
   const {
@@ -47,6 +47,7 @@ const Host: React.FC = () => {
   const { loading, data: hostData, error: hostError, setFilter } = useHostQuery(
     id,
     range,
+    filter,
   );
 
   useEffect(() => {
@@ -135,7 +136,7 @@ const Host: React.FC = () => {
   const toolbar = (
     <Space key="header-toolbar">
       <QueueFilterToolbar
-        defaultFilter={filter.current}
+        defaultFilter={filter}
         onFilterUpdated={onFilterUpdate}
       />
       <Button

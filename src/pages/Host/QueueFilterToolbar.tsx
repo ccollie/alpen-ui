@@ -1,10 +1,12 @@
 import { useWhyDidYouUpdate } from '@/hooks';
-import { LightFilter, ProFormText } from '@ant-design/pro-form';
-import { Checkbox, Form, Input, Space } from 'antd';
+import { LightFilter, ProFormRadio, ProFormText } from '@ant-design/pro-form';
+import { Input, Space } from 'antd';
 import React, { useCallback, useRef, ChangeEvent } from 'react';
 import { QueueFilter } from '../../@types/queue';
 import { Maybe, SortOrderEnum } from '../../api';
 import SortSelect from './SortSelect';
+
+type TriStateValue = true | false | null | undefined;
 
 interface FilterToolbarProps {
   defaultFilter: QueueFilter;
@@ -16,6 +18,9 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
     normalizeFilter(props.defaultFilter),
   );
   const filter = useRef<QueueFilter>(normalizeFilter(props.defaultFilter));
+  const saveFilter = useRef<QueueFilter>({
+    ...filter.current,
+  });
 
   useWhyDidYouUpdate('QueueFilterToolbar', props);
 
@@ -42,40 +47,34 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
   },
   []);
 
-  const onPrefixTextChange = useCallback(function onSearch(
-    e: ChangeEvent<HTMLInputElement>,
-  ) {
-    filter.current.prefix = e.currentTarget.value;
-    return onChange();
-  },
-  []);
-
-  function cycle(val: Maybe<boolean> | undefined) {
-    if (val === undefined) return true;
-    return val ? false : undefined;
-  }
-
-  const onActiveClick = useCallback(() => {
-    filter.current.isActive = cycle(filter.current.isActive);
-    return onChange();
-  }, []);
-
-  const onPausedClick = useCallback(() => {
-    filter.current.isPaused = cycle(filter.current.isPaused);
-    return onChange();
-  }, []);
-
   function toBool(v: undefined): boolean | undefined {
     if (v === true) return true;
     if (v === false) return false;
     return undefined;
   }
 
+  function has(values: Record<string, any>, prop: string): boolean {
+    return values.hasOwnProperty(prop);
+  }
+
+  function updateFromForm(values: Record<string, any>) {
+    if (has(values, 'isActive'))
+      filter.current.isActive = toBool(values['isActive']);
+    if (has(values, 'isPaused'))
+      filter.current.isPaused = toBool(values['isPaused']);
+    if (has(values, 'prefix'))
+      filter.current.prefix = values['prefix'] as string;
+  }
+
   async function handleDropdownUpdate(values: Record<string, any>) {
-    filter.current.isActive = toBool(values['active']);
-    filter.current.isPaused = toBool(values['paused']);
-    filter.current.prefix = values['prefix'] as string;
+    updateFromForm(values);
+    saveFilter.current = { ...filter.current };
+    console.log('Setting filter', filter.current);
     await onChange();
+  }
+
+  function handleReset() {
+    filter.current = { ...saveFilter.current };
   }
 
   function FilterDropdown() {
@@ -87,6 +86,7 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
           isPaused,
           prefix,
         }}
+        title="Queue Filter"
         collapse
         submitter={{
           // Configure the button text
@@ -96,34 +96,59 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
           },
         }}
         onFinish={handleDropdownUpdate}
+        onValuesChange={updateFromForm}
+        onReset={handleReset}
+        onAbort={(e) => handleReset()}
       >
-        <Form.Item
+        <ProFormText
+          name="prefix"
           label="Queue Prefix"
-          tooltip="Queue prefix"
-          labelAlign={'left'}
-        >
-          <Input
-            placeholder="Prefix"
-            allowClear={true}
-            onChange={onPrefixTextChange}
-          />
-        </Form.Item>
-        <Checkbox
-          name="active"
-          indeterminate={isActive === undefined}
-          onClick={onActiveClick}
-          checked={!!isActive}
-        >
-          Active
-        </Checkbox>
-        <Checkbox
-          name="paused"
-          indeterminate={isPaused === undefined}
-          checked={!!isPaused}
-          onClick={onPausedClick}
-        >
-          Paused
-        </Checkbox>
+          placeholder="Queue Prefix"
+          allowClear={true}
+          labelAlign="left"
+        />
+        <ProFormRadio.Group
+          name="isActive"
+          label="Active"
+          tooltip="Show active/inactive queues"
+          labelAlign="left"
+          radioType="button"
+          options={[
+            {
+              label: 'Active',
+              value: true,
+            },
+            {
+              label: 'Inactive',
+              value: false,
+            },
+            {
+              label: 'Both',
+              value: '',
+            },
+          ]}
+        />
+        <ProFormRadio.Group
+          name="isPaused"
+          label="Paused"
+          tooltip="Filter on queue paused status"
+          labelAlign="left"
+          radioType="button"
+          options={[
+            {
+              label: 'Paused',
+              value: true,
+            },
+            {
+              label: 'Unpaused',
+              value: false,
+            },
+            {
+              label: 'Both',
+              value: '',
+            },
+          ]}
+        />
       </LightFilter>
     );
   }

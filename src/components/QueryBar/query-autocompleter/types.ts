@@ -2,7 +2,8 @@ export type DefinitionType = 'method' | 'class' | 'dict' | 'union' | 'unknown';
 
 interface TypingResultBase {
   readonly type: DefinitionType;
-  display: string;
+  display?: string;
+  description?: string;
 }
 
 export type TypedClass = {
@@ -10,10 +11,18 @@ export type TypedClass = {
   params: Array<TypingResult>;
 };
 
-export type TypedMethod = {
-  readonly type: 'method';
+export type MethodParameter = {
+  name?: string;
   refClazzName: string;
-  params: Array<TypingResult>;
+  refClazz?: TypingResult;
+};
+
+export type TypedMethod = TypingResultBase & {
+  readonly type: 'method';
+  methodName: string;
+  returnType: string;
+  refClazz?: TypingResult;
+  params?: Array<MethodParameter>;
 };
 
 export type TypedObject = TypingResultBase &
@@ -28,21 +37,32 @@ export type TypedDict = TypingResultBase & {
   valueType: SingleTypingResult;
 };
 
-export type TypedTaggedValue = (TypedObject | TypedDict | TypedClass) & {
-  tag: string;
-};
-
 export type SingleTypingResult = TypingResultBase &
-  (TypedObject | TypedDict | TypedTaggedValue | TypedClass);
+  (TypedObject | TypedDict | TypedClass);
 
 export type UnknownTyping = TypingResultBase & {
   readonly type: 'unknown';
   params: Array<TypingResult>;
 };
 
-type UnionTyping = TypingResultBase & {
+export type UnionTyping = TypingResultBase & {
   readonly type: 'union';
   union: Array<SingleTypingResult>;
+};
+
+export type TypingResult = UnknownTyping | SingleTypingResult | UnionTyping;
+
+type SuggestionParameter = {
+  name?: string;
+  refClazz?: TypingResult;
+};
+
+export type TypedSuggestion = {
+  name: string;
+  description?: string;
+  display?: string;
+  refClazz?: TypingResult;
+  params?: SuggestionParameter[];
 };
 
 export function isType(x: unknown, t: DefinitionType): boolean {
@@ -60,17 +80,6 @@ export function isMethodType(x: unknown): x is TypedMethod {
 export function isClassType(x: unknown): x is TypedObject {
   return isType(x, 'class');
 }
-
-export function isDictType(x: unknown): x is TypedDict {
-  return isType(x, 'dict');
-}
-
-export type TypingResult = UnknownTyping | SingleTypingResult | UnionTyping;
-
-export type TypingSuggestion = {
-  value: string;
-  refClazz: TypingResult;
-};
 
 export interface BaseDefinition {
   clazz: string;
@@ -95,7 +104,6 @@ export interface TypeInformation extends BaseDefinition {
   methods?: Record<string, MethodDefinition>;
   fields?: Record<string, PropertyDefinition>;
   union?: BaseDefinition[];
-  dict?: Record<string, BaseDefinition>;
 }
 
 const StringDefinition: TypeInformation = {
@@ -496,7 +504,7 @@ export const typesInformation = [
     },
   },
   {
-    clazzName: { refClazzName: 'org.Util' },
+    clazzName: 'org.Util',
     methods: { now: { refClazz: { refClazzName: 'java.util.LocalDateTime' } } },
   },
 ];

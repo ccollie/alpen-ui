@@ -54,7 +54,7 @@ export const JobListDetail: React.FC<JobListDetailProps> = (props) => {
           }
           key={tab.title}
         >
-          <div>{tab.isActive ? getTabContent(job) : <span></span>}</div>
+          <div>{tab.isActive ? getTabContent(job) : <span />}</div>
         </TabPane>
       ))}
     </Tabs>

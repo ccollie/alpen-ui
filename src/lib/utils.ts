@@ -147,37 +147,52 @@ export function stringify(obj: Record<string, any>): string {
     .replace(/ {2,}/g, ' ');
 }
 
-export const downloadFile = async (
-  data: unknown,
-  filename: string,
-): Promise<void> => {
-  const json = JSON.stringify(data);
-  const blob = new Blob([json], { type: 'application/json' });
-  const href = await URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = href;
-  link.download = filename + '.json';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 export function exportToJson(objectData: unknown, filename: string) {
   const contentType = 'application/json;charset=utf-8;';
   const json = JSON.stringify(objectData);
-  // @ts-ignore
-  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-    const blob = new Blob([decodeURIComponent(encodeURI(json))], {
-      type: contentType,
-    });
-    navigator.msSaveOrOpenBlob(blob, filename);
+  download(json, filename, contentType);
+}
+
+// https://github.com/kennethjiang/js-file-download
+export function download(
+  data: string | ArrayBuffer | ArrayBufferView | Blob,
+  filename: string,
+  mime?: string,
+  bom?: string | Uint8Array,
+): void {
+  const blobData = typeof bom !== 'undefined' ? [bom, data] : [data];
+  const blob = new Blob(blobData, { type: mime || 'application/octet-stream' });
+  if (typeof window.navigator.msSaveBlob !== 'undefined') {
+    // IE workaround for "HTML7007: One or more blob URLs were
+    // revoked by closing the blob for which they were created.
+    // These URLs will no longer resolve as the data backing
+    // the URL has been freed."
+    window.navigator.msSaveBlob(blob, filename);
   } else {
-    const a = document.createElement('a');
-    a.download = filename;
-    a.href = 'data:' + contentType + ',' + encodeURIComponent(json);
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const blobURL =
+      window.URL && window.URL.createObjectURL
+        ? window.URL.createObjectURL(blob)
+        : window.webkitURL.createObjectURL(blob);
+    const tempLink = document.createElement('a');
+    tempLink.style.display = 'none';
+    tempLink.href = blobURL;
+    tempLink.setAttribute('download', filename);
+
+    // Safari thinks _blank anchor are pop ups. We only want to set _blank
+    // target if the browser does not support the HTML5 download attribute.
+    // This allows you to download files in desktop safari if pop up blocking
+    // is enabled.
+    if (typeof tempLink.download === 'undefined') {
+      tempLink.setAttribute('target', '_blank');
+    }
+
+    document.body.appendChild(tempLink);
+    tempLink.click();
+
+    // Fixes "webkit blob resource error 1"
+    setTimeout(function () {
+      document.body.removeChild(tempLink);
+      window.URL.revokeObjectURL(blobURL);
+    }, 200);
   }
 }

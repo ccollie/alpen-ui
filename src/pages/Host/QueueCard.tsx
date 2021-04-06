@@ -134,7 +134,7 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
       extra={headerActions}
     >
       <Row>
-        <Col span={6}>
+        <Col span={8}>
           <Statistic
             value={queue.throughput.m15Rate}
             title="Throughput"
@@ -142,7 +142,7 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
             suffix="/min"
           />
         </Col>
-        <Col span={6}>
+        <Col span={8}>
           <Statistic
             value={queue.errorRate.m15Rate}
             title="Errors"
@@ -150,20 +150,12 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
             suffix="/min"
           />
         </Col>
-        <Col span={6}>
+        <Col span={8}>
           <Statistic
             value={errorPercentage}
             title="Error %"
             precision={1}
             suffix="%"
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            value={queue.waitTimeAvg}
-            title="Avg Wait"
-            precision={1}
-            formatter={statsFormatter}
           />
         </Col>
       </Row>

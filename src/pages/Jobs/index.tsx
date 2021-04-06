@@ -1,4 +1,10 @@
-import { FilterOutlined, PlusOutlined, FilterTwoTone } from '@ant-design/icons';
+import ExportJobsDialog from './ExportJobsDialog';
+import {
+  FilterOutlined,
+  PlusOutlined,
+  FilterTwoTone,
+  CloudDownloadOutlined,
+} from '@ant-design/icons';
 import { useQuery } from '@apollo/client';
 import { Button, Col, Row, Space, Table } from 'antd';
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
@@ -70,6 +76,12 @@ const Jobs: React.FC = () => {
   });
 
   const [counts, setCounts] = useState(EmptyJobCounts);
+  const [currentCount, setCurrentCount] = useState(0);
+
+  useEffect(() => {
+    const cnt = counts[status] || 0;
+    setCurrentCount(cnt);
+  }, [status, counts]);
 
   useEffect(() => {
     if (_jobCountData) {
@@ -90,6 +102,14 @@ const Jobs: React.FC = () => {
     isOpen: isAddDialogOpen,
     onClose: closeAddDialog,
     onToggle: toggleAddDialog,
+  } = useDisclosure({
+    defaultIsOpen: false,
+  });
+
+  const {
+    isOpen: isExportDialogOpen,
+    onClose: closeExportDialog,
+    onToggle: toggleExportDialog,
   } = useDisclosure({
     defaultIsOpen: false,
   });
@@ -254,6 +274,14 @@ const Jobs: React.FC = () => {
               actions={actions}
               onBulkAction={handleBulkAction}
             />
+            <Button
+              style={{ marginLeft: '10px' }}
+              onClick={toggleExportDialog}
+              disabled={!currentCount}
+              icon={<CloudDownloadOutlined />}
+            >
+              Export
+            </Button>
           </Col>
           <Col span={12}>
             <div
@@ -317,6 +345,15 @@ const Jobs: React.FC = () => {
           queueId={queueId}
           isOpen={isAddDialogOpen}
           onClose={closeAddDialog}
+        />
+      )}
+      {isExportDialogOpen && (
+        <ExportJobsDialog
+          queueId={queueId}
+          onClose={closeExportDialog}
+          status={status}
+          visible={isExportDialogOpen}
+          filter={filter || ''}
         />
       )}
     </div>

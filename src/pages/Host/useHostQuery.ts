@@ -4,7 +4,8 @@ import { useDebounceFn, useInterval, useUnmountEffect } from '@/hooks';
 import { isEmpty } from '@/lib';
 import { ApolloError, useApolloClient } from '@apollo/client';
 import orderBy from 'lodash-es/orderBy';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Timeout = NodeJS.Timeout;
 
 export interface HostData {
   name: string;
@@ -12,9 +13,13 @@ export interface HostData {
   queues: Queue[];
 }
 
-export const useHostQuery = (id: string, statsRange = 'last_hour') => {
+export const useHostQuery = (
+  id: string,
+  statsRange = 'last_hour',
+  filter?: QueueFilter,
+) => {
   const [range, setRange] = useState(statsRange);
-  const queueFilter = useRef<QueueFilter | undefined>();
+  const queueFilter = useRef<QueueFilter | undefined>(filter);
   const hostData = useRef<HostData | undefined>();
   const [error, setError] = useState<ApolloError | undefined>();
   const [loading, setLoading] = useState(false);
@@ -35,7 +40,6 @@ export const useHostQuery = (id: string, statsRange = 'last_hour') => {
     if (sortBy !== 'name') {
       fields.push('name');
     }
-    console.log('Sorting "' + fields.join(',') + ', ' + orders.join(', '));
     if (hostData.current) {
       hostData.current.queues = orderBy(
         hostData.current.queues,
@@ -81,18 +85,24 @@ export const useHostQuery = (id: string, statsRange = 'last_hour') => {
   }
 
   const { run: fetch, cancel: cancelDebounce } = useDebounceFn(
-    () => getHostData(),
-    { wait: 100 },
+    () => {
+      return getHostData();
+    },
+    { wait: 80 },
   );
 
   useUnmountEffect(cancelDebounce);
 
-  const { reset: resetInterval } = useInterval(fetch, 5000);
+  const { reset: resetInterval, clear: clearInterval } = useInterval(
+    fetch,
+    5000,
+    { immediate: true },
+  );
 
-  function refresh() {
+  const refresh = useCallback(() => {
     resetInterval();
-    fetch().then(console.log);
-  }
+    fetch().catch(console.log);
+  }, []);
 
   function setFilter(filter: QueueFilter) {
     const sortChanged =
@@ -110,8 +120,8 @@ export const useHostQuery = (id: string, statsRange = 'last_hour') => {
       queueFilter.current = {
         search: filter.search,
         prefix: filter.prefix,
-        isActive: filter.isActive ?? true,
-        isPaused: filter.isPaused ?? true,
+        isActive: filter.isActive,
+        isPaused: filter.isPaused,
       };
       if (sortChanged && queueFilter.current) {
         queueFilter.current.sortBy = filter.sortBy;

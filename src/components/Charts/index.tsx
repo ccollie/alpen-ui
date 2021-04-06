@@ -1,6 +1,4 @@
 import Bar from './Bar';
-import MiniChartCard from './MiniChartCard';
-import Field from './Field';
 import MiniArea from './MiniArea';
 import MiniBar from './MiniBar';
 import MiniProgress from './MiniProgress';
@@ -14,8 +12,6 @@ const Charts = {
   MiniBar,
   MiniArea,
   MiniProgress,
-  MiniChartCard,
-  Field,
   JobCountsPieChart,
   StatsLineChart,
 };
@@ -27,8 +23,6 @@ export {
   MiniBar,
   MiniArea,
   MiniProgress,
-  MiniChartCard,
-  Field,
   JobCountsPieChart,
   StatsLineChart,
 };

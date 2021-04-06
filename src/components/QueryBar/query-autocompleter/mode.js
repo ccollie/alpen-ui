@@ -52,7 +52,6 @@ ace.define(function (require, exports, module) {
         keyword: 'function|in|instanceof|typeof|escape|unescape',
         'storage.type': 'var|function',
         'constant.language': 'null|Infinity|NaN|undefined',
-        'support.function': 'alert',
         'constant.language.boolean': 'true|false',
       },
       'identifier',

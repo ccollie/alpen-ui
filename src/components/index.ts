@@ -20,6 +20,5 @@ export * from './ReturnValue';
 export { default as QueryBar } from './QueryBar';
 export { default as DatePicker } from './DatePicker';
 export { default as RangePicker } from './RangePicker';
-export { default as CMEditor } from './CMEditor';
 export type { RangePickerValue } from './RangePicker';
 export * from './QueueStateTag';

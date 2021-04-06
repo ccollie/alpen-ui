@@ -14,6 +14,7 @@ SyntaxHighlighter.registerLanguage('stacktrace', stacktraceJS);
 type HighlighterProps = {
   language?: 'js' | 'json' | 'diff' | 'stacktrace';
   style?: any;
+  theme?: 'dark' | 'light';
   [key: string]: any;
 };
 

@@ -16,6 +16,7 @@ import {
   onRefresh,
   JOB_DELETED_EVENT,
   JOB_PROMOTED_EVENT,
+  JOB_RETRIED_EVENT,
   subscribe,
   unsubscribe,
 } from './events';
@@ -98,14 +99,24 @@ const JobList: React.FC<JobListProps> = (props) => {
     manualRefresh();
   }
 
+  const RefreshEvents = [
+    JOB_RETRIED_EVENT,
+    JOB_DELETED_EVENT,
+    JOB_PROMOTED_EVENT,
+  ];
+
   useEffect(() => {
     onRefresh(manualRefresh);
     onBulkJobAction(handleBulkAction);
-    subscribe(JOB_DELETED_EVENT, manualRefresh);
+    RefreshEvents.forEach((evt) => {
+      subscribe(evt, manualRefresh);
+    });
     return () => {
       offRefresh(manualRefresh);
       offBulkJobAction(handleBulkAction);
-      unsubscribe(JOB_DELETED_EVENT, manualRefresh);
+      RefreshEvents.forEach((evt) => {
+        unsubscribe(evt, manualRefresh);
+      });
     };
   }, []);
 

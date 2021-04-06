@@ -14,7 +14,6 @@ import { getJobSchema, JobSchema } from '../../api';
 import isEmpty from 'lodash-es/isEmpty';
 import { JsonEditor } from '../../components';
 import { useJobSchemaActions } from '../../hooks';
-import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
 import { stringify } from '../../lib';
 
 interface AddJobDialogOpts {

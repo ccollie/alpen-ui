@@ -5,7 +5,6 @@ query QueueStatsPageQuery($id: ID!, $range: String!, $granularity: StatsGranular
     hostId
     prefix
     isPaused
-    ...JobCounts
     jobNames
     workerCount
     throughput {
@@ -18,13 +17,11 @@ query QueueStatsPageQuery($id: ID!, $range: String!, $granularity: StatsGranular
       m5Rate
       m15Rate
     }
-    ruleAlertCount
     stats(input: { range: $range, granularity: $granularity }) {
       ...StatsSnapshot
     }
     statsAggregate(input: { range: $range, granularity: $granularity }) {
       ...StatsSnapshot
     }
-    waitTimeAvg(limit: 500)
   }
 }

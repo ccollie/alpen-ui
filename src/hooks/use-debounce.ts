@@ -1,6 +1,6 @@
+import { useCallbackRef } from '@/hooks/use-callback-ref';
+import { useUnmountEffect } from '@/hooks/use-unmount-effect';
 import debounce from 'lodash.debounce';
-import { useRef } from 'react';
-import useCreation from './use-creation';
 
 export interface DebounceOptions {
   wait?: number;
@@ -11,22 +11,11 @@ export interface DebounceOptions {
 type Fn = (...args: any) => any;
 
 export function useDebounceFn<T extends Fn>(fn: T, options?: DebounceOptions) {
-  const fnRef = useRef<T>(fn);
-  fnRef.current = fn;
+  const callback = useCallbackRef(fn);
 
   const wait = options?.wait ?? 1000;
-
-  const debounced = useCreation(
-    () =>
-      debounce<T>(
-        ((...args: any[]) => {
-          return fnRef.current(...args);
-        }) as T,
-        wait,
-        options,
-      ),
-    [],
-  );
+  const debounced = debounce(callback, wait, options);
+  useUnmountEffect(debounced.cancel);
 
   return {
     run: (debounced as unknown) as T,
