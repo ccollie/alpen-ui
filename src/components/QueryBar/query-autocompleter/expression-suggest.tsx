@@ -2,15 +2,15 @@ import { Ace } from 'ace-builds';
 import {
   TypingResult,
   TypedSuggestion,
-  TypedObject,
-  isMethodType,
+  Variables,
+  VariableDict,
 } from './types';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import ExpressionSuggester from './expression-suggester';
 import Position = AceAjax.Position;
 
-//to reconsider
+// to reconsider
 // - respect categories for global variables?
 // - maybe ESC should be allowed to hide suggestions but leave modal open?
 
@@ -20,11 +20,9 @@ const identifierRegexpsIncludingDot = [/[#a-zA-Z0-9-_.]/];
 const humanReadableType = (typingResult: TypingResult | undefined): string =>
   typingResult?.display ?? '';
 
-export function createExpressionSuggester(
-  typesInformation: TypedObject[],
-  variableTypes?: Record<string, TypingResult>,
-) {
-  const suggester = new ExpressionSuggester(typesInformation, variableTypes);
+export function createExpressionSuggester(variableTypes?: VariableDict) {
+  variableTypes = variableTypes || Variables;
+  const suggester = new ExpressionSuggester(variableTypes);
 
   const customAceEditorCompleter = {
     getCompletions: (
@@ -92,3 +90,5 @@ export function createExpressionSuggester(
 
   return customAceEditorCompleter;
 }
+
+export default createExpressionSuggester;

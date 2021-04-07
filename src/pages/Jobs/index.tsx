@@ -109,6 +109,7 @@ const Jobs: React.FC = () => {
   const {
     isOpen: isExportDialogOpen,
     onClose: closeExportDialog,
+    onOpen: openExportDialog,
     onToggle: toggleExportDialog,
   } = useDisclosure({
     defaultIsOpen: false,
@@ -276,7 +277,7 @@ const Jobs: React.FC = () => {
             />
             <Button
               style={{ marginLeft: '10px' }}
-              onClick={toggleExportDialog}
+              onClick={openExportDialog}
               disabled={!currentCount}
               icon={<CloudDownloadOutlined />}
             >

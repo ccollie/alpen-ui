@@ -7,16 +7,27 @@ import merge from 'lodash-es/merge';
 import take from 'lodash-es/take';
 import uniqWith from 'lodash-es/uniqWith';
 import {
+  Functions,
   isClassType,
   isMethodType,
   isUnionType,
   TypedMethod,
   TypedObject,
   TypedSuggestion,
+  TypeRef,
+  TypesInformation,
   TypingResult,
   UnionTyping,
+  VariableDict,
 } from './types';
 import Position = AceAjax.Position;
+
+const typeCache = new Map<string, TypedObject>();
+const typeInfoCache = new Map<
+  TypingResult | TypeRef,
+  TypingResult | undefined
+>();
+const methodsCache = new Map<TypingResult, TypedMethod[] | undefined>();
 
 // before indexer['last indexer key
 const INDEXER_REGEX = /^(.*)\['([^\[]*)$/;
@@ -32,24 +43,15 @@ const EmptyMethod = {
 } as TypedMethod;
 
 export default class ExpressionSuggester {
-  private readonly typeCache = new Map<string, TypedObject>();
-  private readonly typeInfoCache = new Map<
-    TypingResult,
-    TypingResult | undefined
-  >();
-  private readonly methodsCache = new Map<
-    TypingResult,
-    TypedMethod[] | undefined
-  >();
-  private readonly _variables: Record<string, TypingResult>;
+  private readonly _variables: VariableDict;
 
-  constructor(
-    typesInformation: TypedObject[],
-    variables: Record<string, TypingResult> = {},
-  ) {
-    typesInformation.forEach((info) => {
-      this.typeCache.set(info.refClazzName, info);
-    });
+  constructor(variables: VariableDict = {}) {
+    if (typeCache.size === 0) {
+      TypesInformation.forEach((info) => {
+        typeCache.set(info.refClazzName, info);
+      });
+      this.fixupFunctions();
+    }
     this._variables = variables;
   }
 
@@ -70,7 +72,9 @@ export default class ExpressionSuggester {
       properties,
       variablesIncludingSelectionOrProjection,
     );
-    if (!focusedClazz) return [];
+    if (!focusedClazz) {
+      return this.suggestFunctions(normalized.input);
+    }
     return this._getSuggestions(
       lastExpressionPart,
       focusedClazz,
@@ -110,7 +114,7 @@ export default class ExpressionSuggester {
   private async _getSuggestions(
     value: string,
     focusedClazz: TypedObject,
-    variables: Record<string, TypingResult>,
+    variables: VariableDict,
   ): Promise<TypedSuggestion[]> {
     const variableNames = Object.keys(variables);
     const variableAlreadySelected = variableNames.some((variable) => {
@@ -146,20 +150,20 @@ export default class ExpressionSuggester {
   }
 
   private getAllowedMethods(currentType: TypingResult) {
-    let result: TypedMethod[] | undefined = this.methodsCache.get(currentType);
+    let result: TypedMethod[] | undefined = methodsCache.get(currentType);
 
     if (!result) {
       if (isUnionType(currentType)) {
-        const allMethods = flatMap(currentType.union, (subType) =>
-          isClassType(subType) ? this.getAllowedMethodsForClass(subType) : [],
-        );
+        const allMethods = flatMap(this.resolveUnion(currentType), (clazz) => {
+          return this.getAllowedMethodsForClass(clazz);
+        });
         // TODO: compute union of extracted methods types
         result = uniqWith(allMethods, (typeA, typeB) => isEqual(typeA, typeB));
       } else if (isClassType(currentType)) {
         result = this.getAllowedMethodsForClass(currentType);
       }
       result = result || [];
-      this.methodsCache.set(currentType, result);
+      methodsCache.set(currentType, result);
     }
     return result;
   }
@@ -168,9 +172,8 @@ export default class ExpressionSuggester {
     const keys = Object.keys(currentType.methods);
     return keys.map((key) => {
       const val = currentType.methods[key];
-      if (!val.refClazz) {
-        val.refClazz = this.getClassFromGlobalTypeInfo(val.returnType);
-      }
+      val.refClazz =
+        val.refClazz || this.getClassFromGlobalTypeInfo(val.returnType);
       return { ...val, methodName: key };
     });
   }
@@ -182,16 +185,36 @@ export default class ExpressionSuggester {
     const value = inputValue.toLowerCase();
     const result: TypedSuggestion[] = [];
     variables.forEach((variable) => {
-      const lower = variable.methodName.toLowerCase();
+      const lower = (variable.methodName ?? '').toLowerCase();
       if (lower.includes(value)) result.push(convertSuggestion(variable));
     });
     return result;
   }
 
-  private findRootClazz(
-    properties: string[],
-    variables: Record<string, TypingResult>,
-  ) {
+  private suggestFunctions(name: string) {
+    const lower = (name ?? '').toLowerCase();
+    let result: TypedSuggestion[] = [];
+    for (let functionsKey in Functions) {
+      if (functionsKey.toLowerCase().includes(lower)) {
+        const suggestion = convertSuggestion(Functions[functionsKey]);
+        if (suggestion) {
+          suggestion.name = functionsKey;
+        }
+        result.push(suggestion);
+      }
+    }
+    return result;
+  }
+
+  private fixupFunctions() {
+    for (let functionsKey in Functions) {
+      const fn = Functions[functionsKey];
+      fn.methodName = functionsKey;
+      fn.refClazz = this.getClassFromGlobalTypeInfo(fn.returnType);
+    }
+  }
+
+  private findRootClazz(properties: string[], variables: VariableDict) {
     const variableName = properties[0];
     if (variables[variableName]) {
       let clazz: TypedObject | undefined;
@@ -215,7 +238,7 @@ export default class ExpressionSuggester {
 
   private extractMethod(type: TypingResult, prop: string) {
     if (isUnionType(type)) {
-      const foundedTypes = type.union
+      const foundedTypes = this.resolveUnion(type)
         .map((clazz) => this._extractMethodFromClass(clazz, prop))
         .filter((i) => i != null);
       // TODO: compute union of extracted methods types
@@ -226,31 +249,39 @@ export default class ExpressionSuggester {
   }
 
   private _extractMethodFromClass(clazz: TypingResult, prop: string) {
+    if (!isClassType(clazz)) {
+      const found = this.getClassFromGlobalTypeInfo(clazz);
+      if (!found) return null;
+      clazz = found;
+    }
     const methods = isClassType(clazz) ? clazz.methods : {};
     return get(methods, `${prop}.refClazzName`) as TypedMethod;
   }
 
-  private getTypeInfo(type: TypingResult): TypingResult {
-    let result: TypingResult | undefined = this.typeInfoCache.get(type);
+  private getTypeInfo(type: TypingResult | TypeRef): TypingResult {
+    let result: TypingResult | undefined = typeInfoCache.get(type);
     if (!result) {
       if (isUnionType(type)) {
-        const unionOfTypeInfos = type.union.map((clazz) =>
-          this.getTypeInfoFromClass(clazz),
-        );
-        result = {
-          ...type,
-          type: 'union',
-          union: unionOfTypeInfos,
-        } as UnionTyping;
+        this.resolveUnion(type);
+        result = type;
       } else {
         result = this.getTypeInfoFromClass(type);
       }
-      this.typeInfoCache.set(type, result);
+      typeInfoCache.set(type, result);
     }
     return result;
   }
 
-  private getTypeInfoFromClass(clazz: TypingResult): TypedObject {
+  private resolveUnion(type: UnionTyping) {
+    if (!Array.isArray(type.resolved)) {
+      type.resolved = type.union.map((clazz) =>
+        this.getTypeInfoFromClass(clazz),
+      );
+    }
+    return type.resolved || [];
+  }
+
+  private getTypeInfoFromClass(clazz: TypingResult | TypeRef): TypedObject {
     const methodsFromInfo = this._getMethodsFromGlobalTypeInfo(clazz);
     let methods = methodsFromInfo;
     if (isClassType(clazz)) {
@@ -267,26 +298,26 @@ export default class ExpressionSuggester {
       params: [],
       ...clazz,
       type: 'class',
-      fields: [],
+      fields: {},
       methods,
     } as unknown) as TypedObject;
   }
 
   private _getMethodsFromGlobalTypeInfo(
-    clazz: TypingResult | string,
+    clazz: TypingResult | TypeRef | string,
   ): Record<string, TypedMethod> {
     let clazzInfo = this.getClassFromGlobalTypeInfo(clazz);
     return clazzInfo?.methods ?? {};
   }
 
   private getClassFromGlobalTypeInfo(
-    clazz: TypingResult | string,
+    clazz: TypingResult | TypeRef | string,
   ): TypedObject | undefined {
     let clazzInfo = undefined;
     if (isClassType(clazz)) {
       clazzInfo = clazz;
     } else if (isMethodType(clazz)) {
-      clazzInfo = this.typeCache.get(clazz.returnType);
+      clazzInfo = typeCache.get(clazz.returnType);
     } else {
       let name: string;
       if (typeof clazz === 'string') {
@@ -294,7 +325,7 @@ export default class ExpressionSuggester {
       } else {
         name = (clazz as any).refClazzName;
       }
-      clazzInfo = this.typeCache.get(name);
+      clazzInfo = typeCache.get(name);
     }
     return clazzInfo;
   }
@@ -335,7 +366,7 @@ export default class ExpressionSuggester {
     const withSafeNavigationIgnored = valueCleaned.replace(/\?\./g, '.');
     return isEmpty(value)
       ? ''
-      : `#${last((withSafeNavigationIgnored ?? '').split('#'))}`;
+      : `${last((withSafeNavigationIgnored ?? '').split('#'))}`; ///???
   }
 
   private _lastNonClosedParenthesisIndex(value: string): number {
@@ -427,13 +458,13 @@ export default class ExpressionSuggester {
 
 function convertSuggestion(variable: TypedMethod): TypedSuggestion {
   const suggestion: TypedSuggestion = {
-    name: variable.methodName,
-    display: variable.display,
+    name: variable.methodName || '',
+    //  display: variable.display,
     description: variable.description,
     refClazz: variable.refClazz,
     params: [],
   };
-  if (isMethodType(variable.refClazz) && !!variable.params) {
+  if (!!variable.params) {
     suggestion.params = variable.params?.map((x) => {
       return {
         name: x.name,

@@ -6,9 +6,13 @@ interface TypingResultBase {
   description?: string;
 }
 
+export interface TypeRef {
+  refClazzName: string;
+}
+
 export type TypedClass = {
   refClazzName: string;
-  params: Array<TypingResult>;
+  params?: Array<TypingResult>;
 };
 
 export type MethodParameter = {
@@ -17,18 +21,24 @@ export type MethodParameter = {
   refClazz?: TypingResult;
 };
 
-export type TypedMethod = TypingResultBase & {
-  readonly type: 'method';
-  methodName: string;
+export type TypedMethod = {
+  methodName?: string;
   returnType: string;
+  description?: string;
   refClazz?: TypingResult;
   params?: Array<MethodParameter>;
 };
 
+interface TypedField {
+  refClazzName: string;
+  refClazz?: TypedObject;
+  description?: string;
+}
+
 export type TypedObject = TypingResultBase &
   TypedClass & {
     readonly type: 'class';
-    fields: Record<string, TypingResult>;
+    fields: Record<string, TypedField>;
     methods: Record<string, TypedMethod>;
   };
 
@@ -47,7 +57,8 @@ export type UnknownTyping = TypingResultBase & {
 
 export type UnionTyping = TypingResultBase & {
   readonly type: 'union';
-  union: Array<SingleTypingResult>;
+  union: Array<SingleTypingResult | TypeRef>;
+  resolved?: TypedObject[];
 };
 
 export type TypingResult = UnknownTyping | SingleTypingResult | UnionTyping;
@@ -74,461 +85,709 @@ export function isUnionType(x: unknown): x is UnionTyping {
 }
 
 export function isMethodType(x: unknown): x is TypedMethod {
-  return isType(x, 'method');
+  return !!x && typeof (x as any).returnType === 'string';
 }
 
 export function isClassType(x: unknown): x is TypedObject {
   return isType(x, 'class');
 }
 
-export interface BaseDefinition {
-  clazz: string;
-  description?: string;
-}
-
-export interface ParamDefinition extends BaseDefinition {
-  name?: string;
-}
-
-export interface MethodDefinition extends BaseDefinition {
-  refClazz?: string;
-  params?: ParamDefinition[];
-}
-
-export interface PropertyDefinition extends BaseDefinition {
-  union?: BaseDefinition[];
-}
-
-export interface TypeInformation extends BaseDefinition {
-  clazzName: string;
-  methods?: Record<string, MethodDefinition>;
-  fields?: Record<string, PropertyDefinition>;
-  union?: BaseDefinition[];
-}
-
-const StringDefinition: TypeInformation = {
-  clazz: 'string',
-  clazzName: 'string',
+const StringDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'string',
   fields: {
-    length: { clazz: 'number', description: 'the length of the string' },
+    length: { refClazzName: 'number', description: 'the length of the string' },
   },
   methods: {
     charAt: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'return the character at a given position in a string.',
-      params: [{ name: 'x', clazz: 'number' }],
+      params: [{ name: 'x', refClazzName: 'number' }],
     },
     concat: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'combines one or more strings(argv1,v2 etc) into this existing one.',
-      params: [{ name: 'x', clazz: 'number' }],
+      params: [{ name: 'x', refClazzName: 'number' }],
     },
     toUpperCase: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'return the string with all of its characters converted to uppercase.',
     },
     toLowerCase: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'return the string with all of its characters converted to lowercase.',
     },
     includes: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'checks whether a string contains specified string or characters',
-      params: [{ name: 'needle', clazz: 'string' }],
+      params: [{ name: 'needle', refClazzName: 'string' }],
     },
     indexOf: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the index of a substring in a string, optionally ' +
         'starting at "start"',
       params: [
-        { name: 'needle', clazz: 'string' },
-        { name: 'start', clazz: 'number' },
+        { name: 'needle', refClazzName: 'string' },
+        { name: 'start', refClazzName: 'number' },
       ],
     },
     lastIndexOf: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the last index of a substring in a string, optionally ' +
         'starting at "start"',
       params: [
-        { name: 'needle', clazz: 'string' },
-        { name: 'start', clazz: 'number' },
+        { name: 'needle', refClazzName: 'string' },
+        { name: 'start', refClazzName: 'number' },
       ],
     },
     replace: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'replaces a substring in a string',
       params: [
-        { name: 'substr', clazz: 'string' },
-        { name: 'replacement', clazz: 'string' },
+        { name: 'substr', refClazzName: 'string' },
+        { name: 'replacement', refClazzName: 'string' },
       ],
     },
     startsWith: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'checks whether a string starts with specified string or characters',
-      params: [{ name: 'needle', clazz: 'string' }],
+      params: [{ name: 'needle', refClazzName: 'string' }],
     },
     strcasecmp: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'compare with another string ignoring case',
-      params: [{ name: 'needle', clazz: 'string' }],
+      params: [{ name: 'needle', refClazzName: 'string' }],
     },
     endsWith: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'checks whether a string ends with specified string or characters',
-      params: [{ name: 'needle', clazz: 'string' }],
+      params: [{ name: 'needle', refClazzName: 'string' }],
     },
     substr: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'returns the characters in a string beginning at "start" and includes ' +
         'the specified number of characters specified by "length". If "length" ' +
         'is omitted, all characters up to the end of the string are returned.',
       params: [
-        { name: 'start', clazz: 'number' },
-        { name: 'length', clazz: 'number' },
+        { name: 'start', refClazzName: 'number' },
+        { name: 'length', refClazzName: 'number' },
       ],
     },
     substring: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'returns the characters in a string between “from” and “to” indexes, ' +
         'NOT including “to” itself. “To” is optional, and if omitted, up to ' +
         'the end of the string is assumed.',
       params: [
-        { name: 'from', clazz: 'number' },
-        { name: 'to', clazz: 'number' },
+        { name: 'from', refClazzName: 'number' },
+        { name: 'to', refClazzName: 'number' },
       ],
     },
     split: {
-      clazz: 'string',
+      returnType: 'string',
       description:
         'splits a string according to a delimiter, returning an array with each element. ' +
         'The optional “limit” is an integer that lets you specify the maximum number ' +
         'of elements to return..',
       params: [
-        { name: 'delimiter', clazz: 'string' },
-        { name: 'limit', clazz: 'number' },
+        { name: 'delimiter', refClazzName: 'string' },
+        { name: 'limit', refClazzName: 'number' },
       ],
     },
     slice: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'extracts parts of a string',
       params: [
-        { name: 'start', clazz: 'number' },
-        { name: 'end', clazz: 'number' },
+        { name: 'start', refClazzName: 'number' },
+        { name: 'end', refClazzName: 'number' },
       ],
     },
     trim: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'removes whitespace from both ends of a string',
     },
     trimStart: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'removes whitespace from the start of a string',
     },
     trimEnd: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'removes whitespace from the ends of a string',
     },
   },
 };
 
-const ArrayDefinition: TypeInformation = {
-  clazz: 'array',
-  clazzName: 'array',
+const NumberDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'number',
+  fields: {},
+  methods: {
+    toString: {
+      returnType: 'string',
+      description: 'return the value as a string.',
+      params: [],
+    },
+  },
+};
+
+const BooleanDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'boolean',
+  fields: {},
+  methods: {
+    toString: {
+      returnType: 'string',
+      description: 'return the value as a string.',
+      params: [],
+    },
+  },
+};
+
+const ArrayDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'array',
   methods: {
     pop: {
-      clazz: 'any',
+      returnType: 'any',
       description: 'removes and returns the last element from an array',
     },
     push: {
-      clazz: 'any',
+      returnType: 'any',
       description:
         'adds one or more elements to the end of an array and returns the new length of the array.',
-      params: [{ name: 'element', clazz: 'any' }],
+      params: [{ name: 'element', refClazzName: 'any' }],
     },
     concat: {
-      clazz: 'array',
+      returnType: 'array',
       description:
         'combines one or more elements(argv1,v2 etc) into this array.',
-      params: [{ name: 'x', clazz: 'any' }],
+      params: [{ name: 'x', refClazzName: 'any' }],
     },
     join: {
-      clazz: 'string',
+      returnType: 'string',
       description: 'creates a string by concatenating all elements in an array',
-      params: [{ name: 'glue', clazz: 'string' }],
+      params: [{ name: 'glue', refClazzName: 'string' }],
     },
     shift: {
-      clazz: 'any',
+      returnType: 'any',
       description: 'removes and returns the first element from an array',
     },
     unshift: {
-      clazz: 'array',
+      returnType: 'array',
       description:
         'adds one or more elements to the beginning of an array and returns the array.',
     },
     keys: {
-      clazz: 'array',
+      returnType: 'array',
       description: 'return the keys for each index in the array',
     },
     includes: {
-      clazz: 'boolean',
+      returnType: 'boolean',
       description:
         'checks whether a string contains specified string or characters',
-      params: [{ name: 'needle', clazz: 'string' }],
+      params: [{ name: 'needle', refClazzName: 'string' }],
     },
     indexOf: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the index of an element in an array, optionally ' +
         'starting at "start"',
       params: [
-        { name: 'needle', clazz: 'any' },
-        { name: 'start', clazz: 'number' },
+        { name: 'needle', refClazzName: 'any' },
+        { name: 'start', refClazzName: 'number' },
       ],
     },
     lastIndexOf: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the last index of an element in an array, optionally ' +
         'starting at "start"',
       params: [
-        { name: 'needle', clazz: 'any' },
-        { name: 'start', clazz: 'number' },
+        { name: 'needle', refClazzName: 'any' },
+        { name: 'start', refClazzName: 'number' },
       ],
     },
     min: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the minimum value of the numeric elements in the array',
     },
     max: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the maximum value of the numeric elements in the array',
     },
     avg: {
-      clazz: 'number',
+      returnType: 'number',
       description:
         'returns the average value of the numeric elements in the array',
     },
   },
   fields: {
-    length: { clazz: 'number', description: 'the length of the array' },
+    length: { refClazzName: 'number', description: 'the length of the array' },
   },
 };
 
-const JobDefinition: TypeInformation = {
-  clazz: 'Job',
-  clazzName: 'Job',
+const DateDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'Date',
+  fields: {},
+  methods: {
+    getFullYear: {
+      returnType: 'number',
+    },
+    getMonth: {
+      returnType: 'number',
+    },
+    getDate: {
+      returnType: 'number',
+    },
+    getDay: {
+      returnType: 'number',
+    },
+    getHours: {
+      returnType: 'number',
+    },
+    getMinutes: {
+      returnType: 'number',
+    },
+    getSeconds: {
+      returnType: 'number',
+    },
+    getMilliseconds: {
+      returnType: 'number',
+    },
+
+    /////////////// UTC //////////////////
+    getUTCFullYear: {
+      returnType: 'number',
+    },
+    getUTCMonth: {
+      returnType: 'number',
+    },
+    getUTCDate: {
+      returnType: 'number',
+    },
+    getUTCDay: {
+      returnType: 'number',
+    },
+    getUTCHours: {
+      returnType: 'number',
+    },
+    getUTCMinutes: {
+      returnType: 'number',
+    },
+    getUTCSeconds: {
+      returnType: 'number',
+    },
+    getUTCMilliseconds: {
+      returnType: 'number',
+    },
+
+    //////////////////////////////////
+
+    getTime: {
+      returnType: 'number',
+    },
+    getDayOfYear: {
+      returnType: 'array',
+      description:
+        'adds one or more elements to the beginning of an array and returns the array.',
+    },
+    rfc3339: {
+      returnType: 'string',
+      description: 'return the date as a string in RFC3339 format',
+    },
+  },
+};
+
+const MathVarargParams = [
+  { name: 'x0', refClazzName: 'number' },
+  { name: 'x1', refClazzName: 'number' },
+  { name: 'x2', refClazzName: 'number' },
+  { name: 'x3', refClazzName: 'number' },
+  { name: 'x4', refClazzName: 'number' },
+  { name: 'x5', refClazzName: 'number' },
+  { name: 'x6', refClazzName: 'number' },
+  { name: 'x7', refClazzName: 'number' },
+];
+
+const MathGlobalDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'Math',
   fields: {
-    id: { clazz: 'string', description: 'the job id' },
-    name: { clazz: 'string', description: 'the job name' },
-    timestamp: { clazz: 'number', description: 'the job creation timestamp' },
+    PI: { refClazzName: 'number', description: '3.124...' },
+  },
+  methods: {
+    abs: {
+      returnType: 'number',
+      description: 'return the absolute value of a number.',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    acos: {
+      returnType: 'number',
+      description: 'returns the arc cosine of the argument',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    atan: {
+      returnType: 'number',
+      description: 'return the arc tangent of the argument.',
+    },
+    ceil: {
+      returnType: 'number',
+    },
+    cos: {
+      returnType: 'number',
+      description: 'returns the cosine of the argument',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    floor: {
+      returnType: 'number',
+      params: [{ name: 'n', refClazzName: 'number' }],
+    },
+    pow: {
+      returnType: 'number',
+      description: 'returns a number raised to a power',
+      params: [
+        { name: 'n', refClazzName: 'string' },
+        { name: 'places', refClazzName: 'number' },
+      ],
+    },
+    sin: {
+      returnType: 'number',
+      description: 'calculate the sin of a number',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    sqrt: {
+      returnType: 'number',
+      description: 'Calculates the square root of a number',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    tan: {
+      returnType: 'number',
+      description: 'calculate the tan of a number',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    log: {
+      returnType: 'number',
+      description: 'returns the log of a number',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    log10: {
+      returnType: 'number',
+      description: 'returns the log10 of a number',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    round: {
+      returnType: 'number',
+      description: 'rounds a number to a given number of decimal places',
+      params: [
+        { name: 'n', refClazzName: 'string' },
+        { name: 'places', refClazzName: 'number' },
+      ],
+    },
+    trunc: {
+      returnType: 'number',
+      description: 'truncates a number to a given number of decimal places',
+      params: [
+        { name: 'n', refClazzName: 'string' },
+        { name: 'places', refClazzName: 'number' },
+      ],
+    },
+    sign: {
+      returnType: 'number',
+      description:
+        'returns the sign of a number: ' +
+        '  -1 for numbers below zero, ' +
+        '  1 for positive numbers, and ' +
+        '  0 for zero',
+      params: [{ name: 'x', refClazzName: 'number' }],
+    },
+    min: {
+      returnType: 'array',
+      description: 'returns the minimum of a series of numbers',
+      params: MathVarargParams,
+    },
+    max: {
+      returnType: 'array',
+      description: 'returns the maximum of a series of numbers',
+      params: MathVarargParams,
+    },
+    avg: {
+      returnType: 'array',
+      description: 'returns the average of a series of numbers',
+      params: MathVarargParams,
+    },
+  },
+};
+
+const DateGlobal: TypedObject = {
+  type: 'class',
+  refClazzName: 'DateGlobal',
+  fields: {},
+  methods: {
+    parse: {
+      returnType: 'Date',
+      params: [{ name: 'dateString', refClazzName: 'string' }],
+    },
+    UTC: {
+      returnType: 'number',
+      params: [
+        { name: 'year', refClazzName: 'number' },
+        { name: 'month', refClazzName: 'number' },
+        { name: 'day', refClazzName: 'number' },
+        { name: 'hour', refClazzName: 'number' },
+        { name: 'minutes', refClazzName: 'number' },
+        { name: 'seconds', refClazzName: 'number' },
+        { name: 'milliseconds', refClazzName: 'number' },
+      ],
+    },
+  },
+};
+
+const JSONGlobalDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'JSON',
+  methods: {
+    parse: {
+      returnType: 'object',
+      params: [{ name: 'str', refClazzName: 'string' }],
+    },
+    stringify: {
+      returnType: 'string',
+      description: 'converts an object to a string.',
+      params: [{ name: 'obj', refClazzName: 'string' }],
+    },
+  },
+  fields: {},
+};
+
+const JobDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'Job',
+  fields: {
+    id: { refClazzName: 'string', description: 'the job id' },
+    name: { refClazzName: 'string', description: 'the job name' },
+    timestamp: {
+      refClazzName: 'number',
+      description: 'the job creation timestamp',
+    },
     processedOn: {
-      clazz: 'number',
+      refClazzName: 'number',
       description: 'timestamp when job started processing',
     },
     finishedOn: {
-      clazz: 'number',
+      refClazzName: 'number',
       description: 'timestamp when job finished processing',
     },
-    latency: { clazz: 'number', description: 'the runtime of the job' },
-    waitTime: { clazz: 'number', description: 'the length of the string' },
-    attemptsMade: { clazz: 'number', description: 'job attempts' },
-    stacktrace: { clazz: 'array' },
+    latency: { refClazzName: 'number', description: 'the runtime of the job' },
+    waitTime: {
+      refClazzName: 'number',
+      description: 'the length of the string',
+    },
+    attemptsMade: { refClazzName: 'number', description: 'job attempts' },
+    stacktrace: { refClazzName: 'array' },
     progress: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     returnvalue: {
-      clazz: 'any', // todo:
+      refClazzName: 'any', // todo:
     },
     failedReason: {
-      clazz: 'object',
+      refClazzName: 'object',
     },
     data: {
-      clazz: 'object',
+      refClazzName: 'object',
     },
   },
   methods: {},
 };
 
-const JobRepeatOptions: TypeInformation = {
-  clazzName: 'JobRepeatOptions',
-  clazz: 'JobRepeatOptions',
+const JobRepeatOptions: TypedObject = {
+  type: 'class',
+  refClazzName: 'JobRepeatOptions',
+  methods: {},
   fields: {
     tz: {
-      clazz: 'string',
+      refClazzName: 'string',
     },
     endDate: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     limit: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     count: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     prevMillis: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     jobId: {
-      clazz: 'string',
+      refClazzName: 'string',
     },
     startDate: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     cron: {
-      clazz: 'string',
+      refClazzName: 'string',
     },
     every: {
-      clazz: 'string',
+      refClazzName: 'string',
     },
   },
 };
 
-const JobRemoveOptionDefinition: TypeInformation = {
-  clazz: 'JobRemoveOption',
-  clazzName: 'JobRemoveOption',
-  union: [{ clazz: 'boolean' }, { clazz: 'number' }],
-};
+// const JobRemoveOptionDefinition: UnionTyping = {
+//   type: 'union',
+//   refClazzName: 'JobRemoveOption',
+//   union: [{ refClazzName: 'boolean' }, { refClazzName: 'number' }],
+// };
 
-const JobOptionsDefinition: TypeInformation = {
-  clazzName: '',
-  clazz: 'JobOptions',
+const JobOptionsDefinition: TypedObject = {
+  type: 'class',
+  refClazzName: 'JobOptions',
+  methods: {},
   fields: {
     timestamp: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     priority: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     delay: {
-      clazz: 'number',
+      refClazzName: 'number',
     },
     attempts: {
-      clazz: 'number',
+      refClazzName: 'number',
       description:
         'The total number of attempts to try the job until it completes.',
     },
     lifo: {
-      clazz: 'boolean',
+      refClazzName: 'boolean',
       description:
         'if true, adds the job to the right of the queue instead of the left (default false)',
     },
     timeout: {
-      clazz: 'number',
+      refClazzName: 'number',
       description:
         // eslint-disable-next-line max-len
         'The number of milliseconds after which the job should be fail with a timeout error [optional]',
     },
     repeat: {
-      clazz: 'JobRepeatOptions',
+      refClazzName: 'JobRepeatOptions',
     },
     rateLimiterKey: {
-      clazz: 'string',
+      refClazzName: 'string',
     },
     jobId: {
-      clazz: 'string',
+      refClazzName: 'string',
       description: 'Overridden job ID.',
     },
     removeOnComplete: {
-      clazz: 'JobRemoveOption',
+      refClazzName: 'boolean',
       description:
         'If true, removes the job when it successfully completes.' +
         '  A number specify the max amount of jobs to keep.' +
         '  Default behavior is to keep the job in the COMPLETED set.',
     },
     removeOnFail: {
-      clazz: 'JobRemoveOption',
+      refClazzName: 'JobRemoveOption',
       description:
         'If true, removes the job when it fails after all attempts.' +
         '  A number specify the max amount of jobs to keep.' +
         '  Default behavior is to keep the job in the FAILED set.',
     }, //bool | int
     stackTraceLimit: {
-      clazz: 'number',
+      refClazzName: 'number',
       description:
         'Limits the amount of stack trace lines that will be recorded in the stacktrace.',
     },
   },
 };
 
-export const typesInformation = [
+export const TypesInformation = [
   StringDefinition,
+  BooleanDefinition,
+  NumberDefinition,
   ArrayDefinition,
+  DateDefinition,
   JobDefinition,
   JobOptionsDefinition,
-  JobRemoveOptionDefinition,
+  // JobRemoveOptionDefinition,
   JobRepeatOptions,
-  {
-    clazzName: 'org.A',
-    methods: {
-      fooString: { refClazz: { refClazzName: 'java.lang.String' } },
-      barB: { refClazz: { refClazzName: 'org.B' } },
-    },
-  },
-  {
-    clazzName: 'org.AA',
-    methods: {
-      fooString: { refClazz: { refClazzName: 'java.lang.String' } },
-      barB: { refClazz: { refClazzName: 'org.C' } },
-    },
-  },
-  {
-    clazzName: 'org.WithList',
-    methods: {
-      listField: {
-        refClazz: {
-          refClazzName: 'java.util.List',
-          params: [{ refClazzName: 'org.A' }],
-        },
-      },
-    },
-  },
-  {
-    clazzName: { refClazzName: 'java.util.LocalDateTime' },
-    methods: {
-      isBefore: {
-        refClazz: { refClazzName: 'java.lang.Boolean' },
-        params: { name: 'arg0', refClazz: 'java.util.LocalDateTime' },
-      },
-    },
-  },
-  {
-    clazzName: 'org.Util',
-    methods: { now: { refClazz: { refClazzName: 'java.util.LocalDateTime' } } },
-  },
+  MathGlobalDefinition,
+  JSONGlobalDefinition,
+  DateGlobal,
 ];
 
-const variables = {
-  input: { refClazzName: 'org.A' },
-  other: { refClazzName: 'org.C' },
-  ANOTHER: { refClazzName: 'org.A' },
+export const Functions: Record<string, TypedMethod> = {
+  parseBoolean: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  parseDate: {
+    returnType: 'Date',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  parseInt: {
+    returnType: 'number',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  toString: {
+    returnType: 'string',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  isString: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  isNumber: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  isArray: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  isEmpty: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  isNaN: {
+    returnType: 'boolean',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  ms: {
+    returnType: 'string',
+    params: [{ name: 'value', refClazzName: 'any' }],
+  },
+  strcasecmp: {
+    returnType: 'string',
+    params: [
+      { name: 'str1', refClazzName: 'string' },
+      { name: 'str2', refClazzName: 'string' },
+    ],
+  },
+};
+
+export type VariableDict = Record<string, TypeRef | TypingResult>;
+
+export const Variables: VariableDict = {
   job: {
     refClazzName: 'Job',
   },
-  listVar: { refClazzName: 'org.WithList' },
-  util: { refClazzName: 'org.Util' },
-  union: {
-    union: [
-      { refClazzName: 'org.A' },
-      { refClazzName: 'org.B' },
-      { refClazzName: 'org.AA' },
-    ],
-  },
-  dict: {
-    dict: {
-      id: 'fooDict',
-      valueType: { refClazzName: 'org.A' },
-    },
-  },
+  Math: { refClazzName: 'Math' },
+  JSON: { refClazzName: 'JSON' },
+  Date: { refClazzName: 'Date' },
 };

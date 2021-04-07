@@ -1,70 +1,94 @@
-import { DeleteTwoTone } from '@ant-design/icons';
-import React from 'react';
+import { removeTypename } from '@/lib';
+import { Space, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useClipboard } from 'use-clipboard-copy';
+import { SingleJobActions } from '../../@types';
+import { Job, JobFragment, JobStatus, isJobFinished } from '../../api';
 import { ActionIcon } from '../ActionIcon';
-import { PromoteIcon } from '../Icons/Promote';
-import { RetryIcon } from '../Icons/Retry';
-import { Space } from 'antd';
-import { JobStatus } from '../../api';
+import { ArrowUpOutlined, CopyOutlined, RedoOutlined } from '@ant-design/icons';
+import { TrashIcon } from '../Icons/Trash';
 
 interface JobActionsProps {
-  status: JobStatus;
-  actions: {
-    promoteJob: () => Promise<void>;
-    retryJob: () => Promise<void>;
-    deleteJob: () => Promise<void>;
-  };
+  job: Job | JobFragment;
+  status?: JobStatus;
+  actions: SingleJobActions;
+  shouldConfirmDelete?: boolean;
 }
 
-interface ButtonType {
-  title: string;
-  Icon: React.ReactNode;
-  actionKey: 'promoteJob' | 'deleteJob' | 'retryJob';
-  danger: boolean | undefined;
-}
+export const JobActions: React.FC<JobActionsProps> = (props) => {
+  const { job, actions, status = props.job.state } = props;
+  const [clipboardSupported, setClipboardSupported] = useState(true);
+  const isFinished = isJobFinished(job);
+  const isDelayed = status === JobStatus.Delayed;
+  const shortDescription = `Job ${job.name}#${job.id}`;
 
-const buttonTypes: Record<string, ButtonType> = {
-  promote: {
-    title: 'Promote',
-    Icon: <PromoteIcon />,
-    actionKey: 'promoteJob',
-    danger: false,
-  },
-  clean: {
-    title: 'Clean',
-    Icon: <DeleteTwoTone twoToneColor="#eb2f96" />,
-    actionKey: 'deleteJob',
-    danger: true,
-  },
-  retry: {
-    title: 'Retry',
-    Icon: <RetryIcon />,
-    actionKey: 'retryJob',
-    danger: false,
-  },
-};
+  const clipboard = useClipboard({
+    copiedTimeout: 600, // timeout duration in milliseconds
+    onSuccess() {
+      message.success(`${shortDescription} copied to clipboard`);
+    },
+    onError() {
+      message.error(`Failed to copy ${shortDescription} to clipboard`);
+    },
+  });
 
-const statusToButtonsMap: Record<string, ButtonType[]> = {
-  [JobStatus.Failed]: [buttonTypes.retry, buttonTypes.clean],
-  [JobStatus.Delayed]: [buttonTypes.promote, buttonTypes.clean],
-  [JobStatus.Completed]: [buttonTypes.clean],
-  [JobStatus.Waiting]: [buttonTypes.clean],
-};
+  useEffect(() => {
+    setClipboardSupported(clipboard.isSupported());
+  }, []);
 
-export const JobActions = ({ actions, status }: JobActionsProps) => {
-  const buttons = statusToButtonsMap[status];
-  if (!buttons) {
-    return null;
+  function handleError(err: Error) {
+    const msg = err.message;
+    message.error(msg).then(() => {});
   }
 
+  function handleDelete() {
+    return actions
+      .deleteJob(job.id)
+      .then(() => message.success(`Job #${job.id} successfully deleted`))
+      .catch(handleError);
+  }
+
+  function handlePromote(): Promise<void> {
+    return actions
+      .promoteJob(job.id)
+      .then(() => message.success(`Job #${job.id} successfully promoted`))
+      .catch(handleError);
+  }
+
+  function handleRetry(): Promise<void> {
+    return actions
+      .retryJob(job.id)
+      .then(() => message.success(`Job #${job.id} is being retried`))
+      .catch(handleError);
+  }
+
+  async function handleCopy() {
+    const data = removeTypename(job);
+    const str = JSON.stringify(data);
+    clipboard.copy(str);
+  }
+
+  const ConfirmPrompt = 'Are you sure you want to delete this job?';
+  const deleteProps = {
+    confirmPrompt: !!props.shouldConfirmDelete ? ConfirmPrompt : undefined,
+  };
+
   return (
-    <Space>
-      {buttons.map((type) => (
-        <ActionIcon
-          key={type.title}
-          baseIcon={type.Icon}
-          handler={actions[type.actionKey]}
-        />
-      ))}
+    <Space className="actions">
+      {isDelayed && (
+        <ActionIcon baseIcon={<ArrowUpOutlined />} handler={handlePromote} />
+      )}
+      {isFinished && (
+        <ActionIcon baseIcon={<RedoOutlined />} handler={handleRetry} />
+      )}
+      <ActionIcon
+        baseIcon={<TrashIcon />}
+        handler={handleDelete}
+        {...deleteProps}
+      />
+      {clipboardSupported && (
+        <ActionIcon baseIcon={<CopyOutlined />} handler={handleCopy} />
+      )}
     </Space>
   );
 };

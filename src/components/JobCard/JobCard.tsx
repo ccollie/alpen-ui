@@ -18,12 +18,6 @@ const JobCard = ({ job, status, actions }: JobCardProps) => {
   const { attemptsMade: attempts = 0 } = job;
   const id = job.id;
 
-  const jobActions = {
-    promoteJob: () => actions.promoteJob(id),
-    retryJob: () => actions.retryJob(id),
-    deleteJob: () => actions.deleteJob(id),
-  };
-
   const getLogs = (start?: number, end?: number) =>
     actions.getJobLogs(id, start, end);
 
@@ -39,7 +33,7 @@ const JobCard = ({ job, status, actions }: JobCardProps) => {
             {job.name}
             {attempts > 0 && <span>attempt #{attempts + 1}</span>}
           </h4>
-          <JobActions status={status} actions={jobActions} />
+          <JobActions job={job} status={status} actions={actions} />
         </div>
         <div className={s.content}>
           <Details status={status} job={job} getJobLogs={getLogs} />

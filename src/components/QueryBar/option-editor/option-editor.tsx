@@ -1,3 +1,4 @@
+import { createExpressionSuggester } from '../query-autocompleter/expression-suggest';
 import React, {
   useRef,
   useState,
@@ -8,7 +9,6 @@ import React, {
 import AceEditor, { getTools, Ace, getThemeName } from '@/lib/ace';
 import { useUpdateEffect, useWhyDidYouUpdate } from '../../../hooks';
 import { parseExpression } from '@/query-parser';
-import { AutocompleteField, createCompleter } from '../query-autocompleter';
 import styles from './option-editor.module.css';
 
 const tools = getTools();
@@ -47,7 +47,6 @@ interface OptionEditorProps {
   theme?: 'light' | 'dark';
   onChange: (value: string, isValid: boolean) => void;
   onApply?: () => void;
-  schemaFields?: AutocompleteField[];
   onMounted?: (editor: Ace.Editor) => void;
 }
 
@@ -55,14 +54,13 @@ const OptionEditor: React.ForwardRefExoticComponent<
   React.PropsWithoutRef<OptionEditorProps> & React.RefAttributes<EditorRef>
 > = forwardRef<EditorRef, OptionEditorProps>((props, ref) => {
   const {
-    schemaFields = [],
     height = '45px',
     width = '100%',
     value,
     defaultValue,
     label = 'filter',
   } = props;
-  const [completer] = useState(() => createCompleter(schemaFields));
+  const [completer] = useState(() => createExpressionSuggester());
   const [edited, setEdited] = useState<string | undefined>(
     value ?? defaultValue,
   );

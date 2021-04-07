@@ -190,7 +190,7 @@ export function useDetailsTabs(
             <>
               {!failedReason && <div className="error">{'NA'}</div>}
               <Highlight language="stacktrace" key="stacktrace">
-                {stacktrace}
+                {stacktrace || ''}
               </Highlight>
             </>
           );

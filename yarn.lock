@@ -54,13 +54,13 @@
     classnames "^2.2.6"
     omit.js "^2.0.2"
 
-"@ant-design/pro-card@^1.11.6":
-  version "1.11.6"
-  resolved "https://registry.yarnpkg.com/@ant-design/pro-card/-/pro-card-1.11.6.tgz#46284057d057ee4c6c426077b04917c27051d3df"
-  integrity sha512-+8gBjIAA4YYDlYlNJsHN39ctnPrIGF9b7GW4eTJHJTlFZkXxz3XiQ3mG88/pU+JA10p6kfCQc947PzyttkovvA==
+"@ant-design/pro-card@^1.11.7":
+  version "1.11.7"
+  resolved "https://registry.yarnpkg.com/@ant-design/pro-card/-/pro-card-1.11.7.tgz#768f16ab181dbdf7a19d104c85b83bb51ea47098"
+  integrity sha512-DUCTAEU5Vhm9Mt+O//3Ri0lBQynBGL1C6xf6U7g5OUb+11kcbv5hGKbYP7ZOt0Rl7VGEUG3WXI/Br4lhYBGKhQ==
   dependencies:
     "@ant-design/icons" "^4.2.1"
-    "@ant-design/pro-utils" "1.15.2"
+    "@ant-design/pro-utils" "1.15.3"
     classnames "^2.2.6"
     omit.js "^2.0.2"
 
@@ -149,10 +149,10 @@
     moment "^2.27.0"
     rc-util "^5.0.6"
 
-"@ant-design/pro-utils@1.15.2":
-  version "1.15.2"
-  resolved "https://registry.yarnpkg.com/@ant-design/pro-utils/-/pro-utils-1.15.2.tgz#22f2855719c1d76385c6d91f4c3ff69840119a9c"
-  integrity sha512-FQ4Qs2uF7x7Lfa1RCG4xAWZtGloixoK0c+dMYvdMUmoBI776e+OcSF0bXrdhd4z0PWMw3Rku9ybOdB0BqPmGTg==
+"@ant-design/pro-utils@1.15.3":
+  version "1.15.3"
+  resolved "https://registry.yarnpkg.com/@ant-design/pro-utils/-/pro-utils-1.15.3.tgz#7623e6c19a7711ed50c9f12c29e8e0910753ea70"
+  integrity sha512-W2S97gopF4pGYdg0Uc81lCo9XanXkYYGk3B5zK3ulwBXra/0fupMwtj5bP4B+/U2S4Qk+cbeLQpVXP+vApZM6w==
   dependencies:
     "@ant-design/icons" "^4.3.0"
     "@ant-design/pro-provider" "1.4.9"
@@ -442,10 +442,10 @@
   dependencies:
     tslib "^2.0.3"
 
-"@apollo/client@^3.3.13":
-  version "3.3.13"
-  resolved "https://registry.yarnpkg.com/@apollo/client/-/client-3.3.13.tgz#0aadde13b80ce129d1261161413a9de2b0dec70e"
-  integrity sha512-usiVmXiOq0J/GpyIOIhlF8ItHpiPJObC7zoxLYPoOYj3G3OB0hCIcUKs3aTJ3ATW7u8QxvYgRaJg72NN7E1WOg==
+"@apollo/client@^3.3.14":
+  version "3.3.14"
+  resolved "https://registry.yarnpkg.com/@apollo/client/-/client-3.3.14.tgz#b077f42e17941dbf4c62c4f41bf83c0828872d09"
+  integrity sha512-z7YwMvF9grmpWUG+26e3gPcBAOA/r/Ci5gwK7JVm3bGYG9kKqG8MF6sMXEbuwTsFseE4duSp0icJ6tdzxJhhlA==
   dependencies:
     "@graphql-typed-document-node/core" "^3.0.0"
     "@types/zen-observable" "^0.8.0"
@@ -3109,6 +3109,11 @@ cli-width@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-3.0.0.tgz#a2f48437a2caa9a22436e794bf071ec9e61cedf6"
   integrity sha512-FxqpkPPwu1HjuN93Omfm4h8uIanXofW0RxVEW3k5RKx+mJJYSthzNhp32Kzxxy3YAEZ/Dc/EWN1vZRY0+kOhbw==
+
+clipboard-copy@^3.0.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/clipboard-copy/-/clipboard-copy-3.2.0.tgz#3c5b8651d3512dcfad295d77a9eb09e7fac8d5fb"
+  integrity sha512-vooFaGFL6ulEP1liiaWFBmmfuPm3cY3y7T9eB83ZTnYc/oFeAKsq3NcDrOkBC8XaauEE8zHQwI7k0+JSYiVQSQ==
 
 clipboard@^2.0.0:
   version "2.0.6"
@@ -7733,6 +7738,13 @@ url-parse@^1.4.3:
   dependencies:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
+
+use-clipboard-copy@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/use-clipboard-copy/-/use-clipboard-copy-0.1.2.tgz#83b16292dfa8ea262be714252022a8b4ad1c28c5"
+  integrity sha512-EkauxqyX+us4+Mfif/f61ew89EAOWIArqFpHR0jSG4SwwuDZzDAOeqO7gkK0vi+DQVADeB1RB3xqU3U0oOO3NQ==
+  dependencies:
+    clipboard-copy "^3.0.0"
 
 use-json-comparison@^1.0.5:
   version "1.0.5"

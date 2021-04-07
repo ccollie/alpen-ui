@@ -14,7 +14,7 @@ import {
   normalizeJobName,
 } from '../../api';
 import { JobId, RelativeDateFormat } from '../../components';
-import { JobActions } from '@/components/JobList/JobActions';
+import { JobActions } from '@/components/JobActions/JobActions';
 import { formatDuration, parseDate, relativeFormat } from '../../lib/dates';
 import { JobProgress } from './JobProgress';
 
