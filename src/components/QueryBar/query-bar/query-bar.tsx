@@ -27,7 +27,6 @@ import {
   DEFAULT_STATE,
   QueryState,
 } from '../constants';
-import { AutocompleteField } from '../query-autocompleter';
 import { isFilterValid } from '../utils';
 
 // https://gist.github.com/Venryx/7cff24b17867da305fff12c6f8ef6f96
@@ -45,7 +44,6 @@ interface QueryBarProps {
   onReset: () => void;
   onApply: (filter: string) => void;
   onChange?: (value: string) => void;
-  schemaFields?: AutocompleteField[];
 }
 
 const QueryBar: React.FC<QueryBarProps> = (props) => {
@@ -71,7 +69,7 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
 
   useWhyDidYouUpdate('QueryBar', props);
 
-  const { schemaFields = [], buttonLabel = DEFAULT_BUTTON_LABEL } = props;
+  const { buttonLabel = DEFAULT_BUTTON_LABEL } = props;
 
   const { addQueryToHistory } = useQueueJobFilters(props.queueId);
 
@@ -234,7 +232,6 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
                 onChange={onChange}
                 onApply={applyFilter}
                 autoPopulated={true}
-                schemaFields={schemaFields}
                 onMounted={onEditorMounted}
                 ref={(r: Handle<typeof OptionEditor>) => {
                   editorRef = r;

@@ -1,6 +1,6 @@
 import { ScaleLinear, scaleLinear } from 'd3-scale';
 import React, { useEffect, useState } from 'react';
-import { RadialBar } from '@ant-design/charts';
+import { RangeColumnChart } from 'bizcharts';
 import {
   ColorHelper,
   ColorMapper,
@@ -255,7 +255,7 @@ const Gauge: React.FC<GaugeProps> = (props) => {
             tickFormatter={axisTickFormatter}
           />
         )}
-        <RadialBar {...chartConfig} />
+        {/*<RadialBar {...chartConfig} />*/}
         {showText && (
           <div>
             {displayValue} {units}

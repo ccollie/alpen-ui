@@ -8,6 +8,8 @@ import { RangePickerValue } from '../../RangePicker';
 import addMilliseconds from 'date-fns/addMilliseconds';
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+// make this part of a store
+import locale from 'antd/es/date-picker/locale/en_US';
 
 export type RangeType = 'hour' | 'day' | 'week' | 'month' | 'custom';
 
@@ -95,10 +97,17 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
     setCustom(false);
     switch (type) {
       case 'day':
-        return <DatePicker value={dateValue} onChange={handleDateChange} />;
+        return (
+          <DatePicker
+            locale={locale}
+            value={dateValue}
+            onChange={handleDateChange}
+          />
+        );
       case 'week':
         return (
           <DatePicker
+            locale={locale}
             value={dateValue}
             picker="week"
             onChange={handleDateChange}
@@ -107,6 +116,7 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
       case 'month':
         return (
           <DatePicker
+            locale={locale}
             picker="month"
             format="MMM - YYYY"
             value={dateValue}
@@ -117,6 +127,7 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
         setCustom(true);
         return (
           <RangePicker
+            locale={locale}
             value={range}
             showTime={{ format: 'HH:mm' }}
             onChange={handleRangeChange}

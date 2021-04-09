@@ -15,7 +15,6 @@ import {
   JobFragment,
   JobStatus,
 } from '../../api';
-import { AutocompleteField } from '../../components/QueryBar';
 import { isEmpty } from '../../lib';
 import { JobBulkActions, StatusMenu, QueryBar } from '../../components';
 import {
@@ -120,7 +119,6 @@ const Jobs: React.FC = () => {
   });
 
   const [filter, setFilter] = useState<string>();
-  const [schemaFields, setSchemaFields] = useState<AutocompleteField[]>([]);
 
   const updateNavigation = useNavigationUpdate();
   const { page, pageSize = 10 } = usePaginationQueryString();
@@ -311,7 +309,6 @@ const Jobs: React.FC = () => {
               defaultFilter={defaultFilter ?? undefined}
               onReset={onFilterReset}
               onApply={onFilterApply}
-              schemaFields={schemaFields}
             />
           </div>
         )}

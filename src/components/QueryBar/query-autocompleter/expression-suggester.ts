@@ -42,6 +42,13 @@ const EmptyMethod = {
   returnType: '',
 } as TypedMethod;
 
+const EmptyClass: TypedObject = {
+  type: 'class',
+  refClazzName: '',
+  fields: {},
+  methods: {},
+};
+
 export default class ExpressionSuggester {
   private readonly _variables: VariableDict;
 
@@ -226,7 +233,7 @@ export default class ExpressionSuggester {
         const prop = properties[i];
         const parentType = this.getTypeInfo(parentClazz);
         method = this.extractMethod(parentType, prop);
-        clazz = this.getClassFromGlobalTypeInfo(method.returnType);
+        clazz = method && this.getClassFromGlobalTypeInfo(method.returnType);
         if (!clazz) return null;
         parentClazz = clazz;
       }
@@ -242,7 +249,7 @@ export default class ExpressionSuggester {
         .map((clazz) => this._extractMethodFromClass(clazz, prop))
         .filter((i) => i != null);
       // TODO: compute union of extracted methods types
-      return (first(foundedTypes) as TypedMethod) || EmptyMethod;
+      return first(foundedTypes) || EmptyMethod;
     } else {
       return this._extractMethodFromClass(type, prop) || EmptyMethod;
     }
@@ -250,12 +257,12 @@ export default class ExpressionSuggester {
 
   private _extractMethodFromClass(clazz: TypingResult, prop: string) {
     if (!isClassType(clazz)) {
-      const found = this.getClassFromGlobalTypeInfo(clazz);
+      const found = this.getTypeInfo(clazz);
       if (!found) return null;
       clazz = found;
     }
-    const methods = isClassType(clazz) ? clazz.methods : {};
-    return get(methods, `${prop}.refClazzName`) as TypedMethod;
+    const methods = clazz && isClassType(clazz) ? clazz.methods : {};
+    return get(methods, prop) as TypedMethod;
   }
 
   private getTypeInfo(type: TypingResult | TypeRef): TypingResult {
@@ -475,9 +482,8 @@ function convertSuggestion(variable: TypedMethod): TypedSuggestion {
   return suggestion;
 }
 
-function first(items: unknown[]): unknown {
-  const [head, ...tail] = items;
-  return head;
+function first<T>(items: T[]): T | undefined {
+  return items.length ? items[0] : undefined;
 }
 
 function last<T>(items: T[]): T {
