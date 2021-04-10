@@ -10,7 +10,7 @@ import {
 } from '../api';
 
 export function useJobSchemaActions(queueId: string): JobSchemaActions {
-  const actions: JobSchemaActions = {
+  return {
     deleteSchema(jobName: string): Promise<void> {
       return deleteJobSchema(queueId, jobName);
     },
@@ -31,6 +31,4 @@ export function useJobSchemaActions(queueId: string): JobSchemaActions {
       return setJobSchema(queueId, jobName, schema, opts);
     },
   };
-
-  return actions;
 }

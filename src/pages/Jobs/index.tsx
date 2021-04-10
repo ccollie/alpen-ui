@@ -68,26 +68,26 @@ const Jobs: React.FC = () => {
     setSelectedIds(items);
   }, [selectedRowKeys]);
 
-  const { data: _jobCountData } = useQuery(GetQueueJobCountsDocument, {
-    variables: { id: queueId },
-    fetchPolicy: 'cache-first',
-    pollInterval: 5000,
-  });
+  const { data: _jobCountData, loading: jobDataLoading } = useQuery(
+    GetQueueJobCountsDocument,
+    {
+      variables: { id: queueId },
+      fetchPolicy: 'cache-first',
+      pollInterval: 5000,
+    },
+  );
 
   const [counts, setCounts] = useState(EmptyJobCounts);
   const [currentCount, setCurrentCount] = useState(0);
 
   useEffect(() => {
-    const cnt = counts[status] || 0;
-    setCurrentCount(cnt);
-  }, [status, counts]);
-
-  useEffect(() => {
-    if (_jobCountData) {
+    if (_jobCountData && !jobDataLoading) {
       const _counts = _jobCountData.queue?.jobCounts ?? EmptyJobCounts;
+      const cnt = _counts[status] || 0;
       setCounts(_counts);
+      setCurrentCount(cnt);
     }
-  }, [_jobCountData]);
+  }, [_jobCountData, jobDataLoading]);
 
   const {
     isOpen: isSchemaDialogOpen,
@@ -109,7 +109,6 @@ const Jobs: React.FC = () => {
     isOpen: isExportDialogOpen,
     onClose: closeExportDialog,
     onOpen: openExportDialog,
-    onToggle: toggleExportDialog,
   } = useDisclosure({
     defaultIsOpen: false,
   });
@@ -268,6 +267,7 @@ const Jobs: React.FC = () => {
         <Row justify="end">
           <Col span={12}>
             <JobBulkActions
+              count={currentCount}
               status={status}
               selectedIds={selectedIds}
               actions={actions}

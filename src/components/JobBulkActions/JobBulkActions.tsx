@@ -5,9 +5,9 @@ import {
 } from '@ant-design/icons';
 import { message, Button, Space } from 'antd';
 import React, { Fragment } from 'react';
-import { QueueJobActions } from '../../@types';
+import { QueueJobActions } from '@/@types';
 import { BulkStatusItem, JobStatus } from '../../api';
-import { useDisclosure } from '../../hooks';
+import { useDisclosure } from '@/hooks';
 import { AsyncButton } from '../AsyncButton';
 import { TrashIcon } from '../Icons/Trash';
 import CleanJobsDialog from './CleanJobsDialog';
@@ -23,6 +23,7 @@ const ActionPastTense: Record<BulkActionType, string> = {
 
 interface BulkJobActionsProps {
   status: JobStatus;
+  count: number;
   selectedIds: string[];
   actions: QueueJobActions;
   onBulkAction?: (
@@ -33,7 +34,7 @@ interface BulkJobActionsProps {
 }
 
 export const JobBulkActions: React.FC<BulkJobActionsProps> = (props) => {
-  const { status, actions, selectedIds = [] } = props;
+  const { status, actions, selectedIds = [], count } = props;
   const {
     isOpen: isCleanDialogOpen,
     onOpen: openCleanDialog,
@@ -94,7 +95,8 @@ export const JobBulkActions: React.FC<BulkJobActionsProps> = (props) => {
     return !!selectedIds.length && statuses.includes(status);
   }
 
-  const canClear = validState([JobStatus.Completed, JobStatus.Failed]);
+  const canClear =
+    !!count && validState([JobStatus.Completed, JobStatus.Failed]);
   const canRetry = validState([JobStatus.Completed, JobStatus.Failed]);
   const canPromote = validState([JobStatus.Delayed]);
 

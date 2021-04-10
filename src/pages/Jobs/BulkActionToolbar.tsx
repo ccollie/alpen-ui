@@ -1,11 +1,12 @@
 import { Col, Row } from 'antd';
 import React from 'react';
-import { QueueJobActions } from '../../@types/actions';
+import { QueueJobActions } from '@/@types';
 import { JobStatus } from '../../api';
-import { JobBulkActions } from '../../components/JobBulkActions';
+import { JobBulkActions } from '@/components';
 
 interface BulkActionToolbarOpts {
   status: JobStatus;
+  count: number;
   actions: QueueJobActions;
   selectedItems: string[];
   onCleanSelected: () => void;
@@ -19,19 +20,20 @@ const BulkActionToolbar: React.FC<BulkActionToolbarOpts> = (props) => {
     onCleanSelected,
     status,
     actions,
+    count,
   } = props;
-  const count = selectedItems.length;
+  const selectedCount = selectedItems.length;
 
   return (
     <Row>
       <Col flex="none">
-        {count > 0 && (
+        {selectedCount > 0 && (
           <span
             style={{
               textAlign: 'left',
             }}
           >
-            Selected {count} Item{count ? 's' : ''}
+            Selected {selectedCount} Item{selectedCount ? 's' : ''}
             <a style={{ marginLeft: 8 }} onClick={onCleanSelected}>
               Clear
             </a>
@@ -40,6 +42,7 @@ const BulkActionToolbar: React.FC<BulkActionToolbarOpts> = (props) => {
       </Col>
       <Col flex="auto">
         <JobBulkActions
+          count={count}
           status={status}
           selectedIds={selectedItems}
           actions={actions}

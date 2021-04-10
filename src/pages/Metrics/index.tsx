@@ -19,7 +19,7 @@ import TimeRangeToolbar, {
   RangeType,
 } from '../../components/Charts/StatsLineChart/TimeRangeToolbar';
 import { useInterval, useUpdateEffect, useWhyDidYouUpdate } from '../../hooks';
-import { calcErrorPercentage } from '../../lib/stats';
+import { calcErrorPercentage } from '@/lib/stats';
 
 const ChartHeight = '340px';
 
@@ -103,7 +103,11 @@ const Metrics: FC = () => {
     }
   }, [queueData, loading]);
 
-  function onDateRangeChange(type: RangeType, dates: RangePickerValue) {
+  function onDateRangeChange(
+    type: RangeType,
+    dates: RangePickerValue,
+    granularity: StatsGranularity,
+  ) {
     console.log('type = ' + type);
     console.log(dates);
     const [start, end] = dates || [null, null];

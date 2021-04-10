@@ -25,11 +25,11 @@ import endOfMinute from 'date-fns/endOfMinute';
 import endOfSecond from 'date-fns/endOfSecond';
 
 const ONE_SECOND = 1000;
-const ONE_MINUTE = ONE_SECOND * 60;
-const ONE_HOUR = ONE_MINUTE * 60;
-const ONE_DAY = ONE_HOUR * 24;
-const ONE_WEEK = ONE_DAY * 7;
-const ONE_MONTH = ONE_WEEK * 4;
+export const ONE_MINUTE = ONE_SECOND * 60;
+export const ONE_HOUR = ONE_MINUTE * 60;
+export const ONE_DAY = ONE_HOUR * 24;
+export const ONE_WEEK = ONE_DAY * 7;
+export const ONE_MONTH = ONE_WEEK * 4;
 
 export interface Timespan {
   start: Date;

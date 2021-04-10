@@ -1,5 +1,6 @@
+import { toPrecision } from '@/lib';
 import React, { useCallback, useEffect, useState } from 'react';
-import { StatsGranularity } from '../../../api';
+import { StatsGranularity } from '@/api';
 import {
   BackgroundColor,
   formatDate,
@@ -24,7 +25,7 @@ interface ErrorChartProps {
 
 export function calcErrorPercentage(completed: number, failed: number): number {
   const count = completed + failed || 0;
-  return failed / count;
+  return (failed / count) * 100;
 }
 
 const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
@@ -67,9 +68,15 @@ const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
     granularity,
   ]);
 
+  const valueFormatter = useCallback(
+    (value) => toPrecision(value, 1) + ' %',
+    [],
+  );
+
   const scale = {
     value: {
       nice: true,
+      formatter: valueFormatter,
     },
     start: {
       alias: 'Time',
@@ -81,8 +88,8 @@ const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
 
   return (
     <Chart scale={scale} height={height} data={chartData} autoFit>
-      <Area position="start*value" />
-      <Line position="start*value" />
+      <Area position="start*value" color="#e74c3c" />
+      <Line position="start*value" color="red" />
     </Chart>
   );
 };

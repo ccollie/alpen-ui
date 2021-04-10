@@ -11,121 +11,20 @@ export type Scalars = {
   Int: number;
   Float: number;
   Date: any;
-  /** The `JSONSchema` scalar type represents JSONSchema values as specified by https://json-schema.org/draft/2019-09/json-schema-validation.html. */
-  JSONSchema: { [key: string]: any };
-  /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSONObject: { [key: string]: any };
-  /** Job process. Either a number (percentage) or user specified data */
-  JobProgress: string | number | Record<string, any>;
-  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSON: any;
-  /** Specifies the number of jobs to keep after an operation (e.g. complete or fail).A bool(true) causes a job to be removed after the action */
-  JobRemoveOption: boolean | number;
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   DateTime: number;
   /** Specifies a duration in milliseconds - either as an int or a string specification e.g. "2 min", "3 hr" */
   Duration: string | number;
-};
-
-export type Query = {
-  __typename?: 'Query';
-  /** Get the list of aggregate types available for metrics */
-  aggregates: Array<Maybe<AggregateInfo>>;
-  /** Get general app info */
-  appInfo: AppInfo;
-  /** Get a queue by id */
-  queue?: Maybe<Queue>;
-  job: Job;
-  /** Validate job data against a schema previously defined on a queue */
-  jobDataValidate: JobDataValidatePayload;
-  /** Validate BullMQ job options structure */
-  jobOptionsValidate: ValidateJobOptionsPayload;
-  /** Find a queue by name */
-  findQueue?: Maybe<Queue>;
-  /** Get a Host by id */
-  host?: Maybe<QueueHost>;
-  /** Get the list of hosts managed by the server instance */
-  hosts: Array<QueueHost>;
-  /** Get a Host by name */
-  hostByName?: Maybe<QueueHost>;
-  notificationChannel?: Maybe<NotificationChannel>;
-  /** Get the list of metrics available */
-  metrics: Array<MetricInfo>;
-  /** Get a queue JobFilter by id */
-  queueJobFilter?: Maybe<JobFilter>;
-  /** Returns the JSON Schema for the BullMq JobOptions type */
-  jobOptionsSchema: Scalars['JSONSchema'];
-  rule?: Maybe<Rule>;
-  ruleAlert?: Maybe<RuleAlert>;
-  /** Get a JSONSchema document previously set for a job name on a queue */
-  queueJobSchema?: Maybe<JobSchema>;
-};
-
-
-export type QueryQueueArgs = {
-  id: Scalars['ID'];
-};
-
-
-export type QueryJobArgs = {
-  queueId: Scalars['ID'];
-  id: Scalars['ID'];
-};
-
-
-export type QueryJobDataValidateArgs = {
-  input: JobDataValidateInput;
-};
-
-
-export type QueryJobOptionsValidateArgs = {
-  input: JobOptionsInput;
-};
-
-
-export type QueryFindQueueArgs = {
-  hostName: Scalars['String'];
-  prefix?: Maybe<Scalars['String']>;
-  queueName: Scalars['String'];
-};
-
-
-export type QueryHostArgs = {
-  id: Scalars['ID'];
-};
-
-
-export type QueryHostByNameArgs = {
-  name: Scalars['String'];
-};
-
-
-export type QueryNotificationChannelArgs = {
-  hostId: Scalars['ID'];
-  id: Scalars['ID'];
-};
-
-
-export type QueryQueueJobFilterArgs = {
-  input?: Maybe<QueueJobFilterInput>;
-};
-
-
-export type QueryRuleArgs = {
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-};
-
-
-export type QueryRuleAlertArgs = {
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-  alertId: Scalars['ID'];
-};
-
-
-export type QueryQueueJobSchemaArgs = {
-  input?: Maybe<QueueJobSchemaInput>;
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  JSON: any;
+  /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  JSONObject: { [key: string]: any };
+  /** The `JSONSchema` scalar type represents JSONSchema values as specified by https://json-schema.org/draft/2019-09/json-schema-validation.html. */
+  JSONSchema: { [key: string]: any };
+  /** Job process. Either a number (percentage) or user specified data */
+  JobProgress: string | number | Record<string, any>;
+  /** Specifies the number of jobs to keep after an operation (e.g. complete or fail).A bool(true) causes a job to be removed after the action */
+  JobRemoveOption: boolean | number;
 };
 
 export type AggregateInfo = {
@@ -146,164 +45,97 @@ export type AppInfo = {
   author?: Maybe<Scalars['String']>;
 };
 
-export type Queue = {
-  __typename?: 'Queue';
-  id: Scalars['String'];
-  prefix: Scalars['String'];
+export type BulkJobActionInput = {
+  queueId: Scalars['ID'];
+  jobIds: Array<Scalars['ID']>;
+};
+
+export type BulkJobActionPayload = {
+  __typename?: 'BulkJobActionPayload';
+  queue: Queue;
+  status: Array<Maybe<BulkStatusItem>>;
+};
+
+export type BulkJobItemInput = {
   name: Scalars['String'];
-  /** Compute the histogram of job data. */
-  histogram: HistogramPayload;
-  host: Scalars['String'];
-  hostId: Scalars['ID'];
-  isPaused: Scalars['Boolean'];
-  jobCounts: JobCounts;
-  jobNames: Array<Scalars['String']>;
-  jobFilters: Array<JobFilter>;
-  /** Get JSONSchema documents and job defaults previously set for a job names on a queue */
-  jobSchemas: Array<JobSchema>;
-  /** Incrementally iterate over a list of jobs filtered by query criteria */
-  jobSearch: JobSearchPayload;
-  /** Fetch jobs based on a previously stored filter */
-  jobsByFilter: JobSearchPayload;
-  /** Get the average runtime duration of completed jobs in the queue */
-  jobDurationAvg: Scalars['Int'];
-  /** Get the average memory used by jobs in the queue */
-  jobMemoryAvg: Scalars['Int'];
-  /** Gets the last recorded queue stats snapshot for a metric */
-  lastStatsSnapshot?: Maybe<StatsSnapshot>;
-  /** Returns the number of jobs waiting to be processed. */
-  pendingJobCount: Scalars['Int'];
-  /** Compute a percentile distribution. */
-  percentileDistribution: PercentileDistribution;
-  repeatableJobs: Array<RepeatableJob>;
-  /** Returns the number of repeatable jobs */
-  repeatableJobCount: Scalars['Int'];
-  /** Returns the count of rule alerts associated with a Queue */
-  ruleAlertCount: Scalars['Int'];
-  /** Gets rule alerts associated with the queue */
-  ruleAlerts: Array<RuleAlert>;
-  jobs: Array<Job>;
-  rules: Array<Rule>;
-  /** Queries for queue stats snapshots within a range */
-  stats: Array<StatsSnapshot>;
-  /** Aggregates queue statistics within a range */
-  statsAggregate?: Maybe<StatsSnapshot>;
-  /** Gets the time range of recorded stats for a queue/host */
-  statsDateRange?: Maybe<StatsSpanPayload>;
-  /** Gets the current job Throughput rates based on an exponential moving average */
-  throughput: Meter;
-  /** Gets the current job Errors rates based on an exponential moving average */
-  errorRate: Meter;
-  /** Gets the current job ErrorPercentage rates based on an exponential moving average */
-  errorPercentageRate: Meter;
-  /** Get the average time a job spends in the queue before being processed */
-  waitTimeAvg: Scalars['Int'];
-  workers: Array<QueueWorker>;
-  workerCount: Scalars['Int'];
+  data: Scalars['JSONObject'];
+  options?: Maybe<JobOptionsInput>;
+};
+
+export type BulkStatusItem = {
+  __typename?: 'BulkStatusItem';
+  id: Scalars['ID'];
+  success: Scalars['Boolean'];
+  reason?: Maybe<Scalars['String']>;
+};
+
+export enum ChangeAggregation {
+  Avg = 'AVG',
+  Max = 'MAX',
+  Min = 'MIN',
+  Sum = 'SUM',
+  P90 = 'P90',
+  P95 = 'P95',
+  P99 = 'P99'
+}
+
+/** A condition based on a simple threshold condition */
+export type ChangeCondition = RuleCondition & {
+  __typename?: 'ChangeCondition';
+  /** The value needed to trigger an error notification */
+  errorThreshold: Scalars['Float'];
+  /** The value needed to trigger an warning notification */
+  warningThreshold?: Maybe<Scalars['Float']>;
+  /** The comparison operator */
+  operator?: Maybe<RuleOperator>;
+  /** The sliding window for metric measurement */
+  timeWindow?: Maybe<Scalars['Duration']>;
+  /** Lookback period (ms). How far back are we going to compare eg 1 hour means we're comparing now vs 1 hour ago */
+  timeShift?: Maybe<Scalars['Duration']>;
+  changeType?: Maybe<ChangeType>;
+  aggregationType?: Maybe<ChangeAggregation>;
+};
+
+export enum ChangeType {
+  Value = 'VALUE',
+  Pct = 'PCT'
+}
+
+
+
+export type DiscoverQueuesPayload = {
+  __typename?: 'DiscoverQueuesPayload';
+  /** The queue name */
+  name: Scalars['String'];
+  /** The queue prefix */
+  prefix: Scalars['String'];
 };
 
 
-export type QueueHistogramArgs = {
-  input: HistogramInput;
+export enum ErrorLevel {
+  Critical = 'CRITICAL',
+  Warning = 'WARNING',
+  None = 'NONE'
+}
+
+export type HistogramBin = {
+  __typename?: 'HistogramBin';
+  count: Scalars['Int'];
+  /** Lower bound of the bin */
+  x0: Scalars['Float'];
+  /** Upper bound of the bin */
+  x1: Scalars['Float'];
 };
 
-
-export type QueueJobFiltersArgs = {
-  ids?: Maybe<Array<Scalars['ID']>>;
-};
-
-
-export type QueueJobSchemasArgs = {
-  jobNames?: Maybe<Array<Scalars['String']>>;
-};
-
-
-export type QueueJobSearchArgs = {
-  filter: JobSearchInput;
-};
-
-
-export type QueueJobsByFilterArgs = {
-  filter: JobsByFilterIdInput;
-};
-
-
-export type QueueJobDurationAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
-};
-
-
-export type QueueJobMemoryAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
-};
-
-
-export type QueueLastStatsSnapshotArgs = {
-  input?: Maybe<StatsLatestInput>;
-};
-
-
-export type QueuePercentileDistributionArgs = {
-  input: PercentileDistributionInput;
-};
-
-
-export type QueueRepeatableJobsArgs = {
-  input?: Maybe<RepeatableJobsInput>;
-};
-
-
-export type QueueRuleAlertsArgs = {
-  input?: Maybe<QueueRuleAlertsInput>;
-};
-
-
-export type QueueJobsArgs = {
-  input?: Maybe<QueueJobsInput>;
-};
-
-
-export type QueueStatsArgs = {
-  input: StatsQueryInput;
-};
-
-
-export type QueueStatsAggregateArgs = {
-  input: StatsQueryInput;
-};
-
-
-export type QueueStatsDateRangeArgs = {
-  input: StatsSpanInput;
-};
-
-
-export type QueueThroughputArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
-
-export type QueueErrorRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
-
-export type QueueErrorPercentageRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
-
-export type QueueWaitTimeAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
-};
-
-
-export type QueueWorkersArgs = {
-  limit?: Maybe<Scalars['Int']>;
-};
+/** The method used to calculate the optimal bin width (and consequently number of bins) for a histogram */
+export enum HistogramBinningMethod {
+  /** Maximum of the ‘Sturges’ and ‘Freedman’ estimators. Provides good all around performance. */
+  Auto = 'Auto',
+  /** Calculate the number of bins based on the Sturges method */
+  Sturges = 'Sturges',
+  /** Calculate the number of histogram bins based on Freedman-Diaconis method */
+  Freedman = 'Freedman'
+}
 
 /** Records histogram binning data */
 export type HistogramInput = {
@@ -327,29 +159,6 @@ export type HistogramInput = {
   maxValue?: Maybe<Scalars['Float']>;
 };
 
-export enum StatsMetricType {
-  Latency = 'Latency',
-  Wait = 'Wait'
-}
-
-export enum StatsGranularity {
-  Day = 'day',
-  Hour = 'hour',
-  Minute = 'minute',
-  Month = 'month',
-  Week = 'week'
-}
-
-/** The method used to calculate the optimal bin width (and consequently number of bins) for a histogram */
-export enum HistogramBinningMethod {
-  /** Maximum of the ‘Sturges’ and ‘Freedman’ estimators. Provides good all around performance. */
-  Auto = 'Auto',
-  /** Calculate the number of bins based on the Sturges method */
-  Sturges = 'Sturges',
-  /** Calculate the number of histogram bins based on Freedman-Diaconis method */
-  Freedman = 'Freedman'
-}
-
 /** Records histogram binning data */
 export type HistogramPayload = {
   __typename?: 'HistogramPayload';
@@ -364,81 +173,24 @@ export type HistogramPayload = {
   bins: Array<Maybe<HistogramBin>>;
 };
 
-export type HistogramBin = {
-  __typename?: 'HistogramBin';
-  count: Scalars['Int'];
-  /** Lower bound of the bin */
-  x0: Scalars['Float'];
-  /** Upper bound of the bin */
-  x1: Scalars['Float'];
+export type HostQueuesFilter = {
+  /** Regex pattern for queue name matching */
+  search?: Maybe<Scalars['String']>;
+  /** Queue prefix */
+  prefix?: Maybe<Scalars['String']>;
+  /** Filter based on paused state */
+  isPaused?: Maybe<Scalars['Boolean']>;
+  /** Filter based on "active" status (true if the queue has at least one worker)  */
+  isActive?: Maybe<Scalars['Boolean']>;
 };
 
-/** The count of jobs according to status */
-export type JobCounts = {
-  __typename?: 'JobCounts';
-  completed: Scalars['Int'];
-  failed: Scalars['Int'];
-  delayed: Scalars['Int'];
-  active: Scalars['Int'];
-  waiting: Scalars['Int'];
-  paused: Scalars['Int'];
-};
-
-/** Options for filtering queue jobs */
-export type JobFilter = {
-  __typename?: 'JobFilter';
-  id: Scalars['ID'];
-  /** A descriptive name of the filter */
-  name: Scalars['String'];
-  /** Optional job status to filter jobs by */
-  status?: Maybe<JobStatus>;
-  /** The job filter query */
-  expression: Scalars['String'];
-  /** The date this filter was created */
-  createdAt?: Maybe<Scalars['Date']>;
-};
-
-export enum JobStatus {
-  Completed = 'completed',
-  Waiting = 'waiting',
-  Active = 'active',
-  Delayed = 'delayed',
-  Failed = 'failed',
-  Paused = 'paused'
+export enum HttpMethodEnum {
+  Get = 'GET',
+  Post = 'POST'
 }
 
 
-/** Options for validating job data */
-export type JobSchema = {
-  __typename?: 'JobSchema';
-  jobName: Scalars['String'];
-  /** The JSON schema associated with the job name */
-  schema?: Maybe<Scalars['JSONSchema']>;
-  /** Default options for jobs off this type created through the API */
-  defaultOpts?: Maybe<Scalars['JSONObject']>;
-};
 
-
-
-export type JobSearchInput = {
-  /** Search for jobs having this status */
-  status?: Maybe<JobStatus>;
-  /** The job filter expression */
-  criteria?: Maybe<Scalars['String']>;
-  /** The iterator cursor. Iteration starts when the cursor is set to null, and terminates when the cursor returned by the server is null */
-  cursor?: Maybe<Scalars['String']>;
-  /** The maximum number of jobs to return per iteration */
-  count: Scalars['Int'];
-};
-
-export type JobSearchPayload = {
-  __typename?: 'JobSearchPayload';
-  cursor?: Maybe<Scalars['String']>;
-  hasNext: Scalars['Boolean'];
-  jobs: Array<Job>;
-  total: Scalars['Int'];
-  current: Scalars['Int'];
-};
 
 export type Job = {
   __typename?: 'Job';
@@ -466,7 +218,158 @@ export type JobLogsArgs = {
   end?: Scalars['Int'];
 };
 
+export type JobAddBulkPayload = {
+  __typename?: 'JobAddBulkPayload';
+  jobs: Array<Maybe<Job>>;
+};
 
+export type JobAddCronInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['ID'];
+  data?: Maybe<Scalars['JSONObject']>;
+  options?: Maybe<JobOptionsInput>;
+};
+
+export type JobAddCronPayload = {
+  __typename?: 'JobAddCronPayload';
+  job?: Maybe<Job>;
+};
+
+export type JobAddEveryInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['ID'];
+  data?: Maybe<Scalars['JSONObject']>;
+  options?: Maybe<JobOptionsInput>;
+};
+
+export type JobAddEveryPayload = {
+  __typename?: 'JobAddEveryPayload';
+  job: Job;
+};
+
+export type JobAddInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['String'];
+  data?: Maybe<Scalars['JSONObject']>;
+  options?: Maybe<JobOptionsInput>;
+};
+
+/** The count of jobs according to status */
+export type JobCounts = {
+  __typename?: 'JobCounts';
+  completed: Scalars['Int'];
+  failed: Scalars['Int'];
+  delayed: Scalars['Int'];
+  active: Scalars['Int'];
+  waiting: Scalars['Int'];
+  paused: Scalars['Int'];
+};
+
+export type JobDataValidateInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['String'];
+  data?: Maybe<Scalars['JSONObject']>;
+  opts?: Maybe<JobOptionsInput>;
+};
+
+export type JobDataValidatePayload = {
+  __typename?: 'JobDataValidatePayload';
+  queueId: Scalars['ID'];
+  jobName: Scalars['String'];
+};
+
+export type JobDiscardPayload = {
+  __typename?: 'JobDiscardPayload';
+  job: Job;
+};
+
+/** Options for filtering queue jobs */
+export type JobFilter = {
+  __typename?: 'JobFilter';
+  id: Scalars['ID'];
+  /** A descriptive name of the filter */
+  name: Scalars['String'];
+  /** Optional job status to filter jobs by */
+  status?: Maybe<JobStatus>;
+  /** The job filter query */
+  expression: Scalars['String'];
+  /** The date this filter was created */
+  createdAt?: Maybe<Scalars['Date']>;
+};
+
+export type JobFilterInput = {
+  queueId: Scalars['ID'];
+  name: Scalars['String'];
+  status?: Maybe<JobStatus>;
+  expression: Scalars['String'];
+};
+
+export type JobFilterUpdateInput = {
+  queueId: Scalars['ID'];
+  filterId: Scalars['ID'];
+  name?: Maybe<Scalars['String']>;
+  status?: Maybe<JobStatus>;
+  expression: Scalars['String'];
+};
+
+export type JobFilterUpdatePayload = {
+  __typename?: 'JobFilterUpdatePayload';
+  filter?: Maybe<JobFilter>;
+  isUpdated: Scalars['Boolean'];
+};
+
+export type JobLocatorInput = {
+  queueId: Scalars['ID'];
+  jobId: Scalars['ID'];
+};
+
+export type JobLogAddPayload = {
+  __typename?: 'JobLogAddPayload';
+  /** The job id */
+  id: Scalars['String'];
+  /** The number of log entries after adding */
+  count: Scalars['Int'];
+  state?: Maybe<JobStatus>;
+};
+
+export type JobLogs = {
+  __typename?: 'JobLogs';
+  count: Scalars['Int'];
+  items: Array<Scalars['String']>;
+};
+
+export type JobMoveToCompletedPayload = {
+  __typename?: 'JobMoveToCompletedPayload';
+  queue: Queue;
+  job?: Maybe<Job>;
+};
+
+export type JobMoveToDelayedInput = {
+  queueId: Scalars['ID'];
+  jobId: Scalars['String'];
+  /** The amount of time to delay execution (in ms) */
+  delay?: Maybe<Scalars['Duration']>;
+};
+
+export type JobMoveToDelayedPayload = {
+  __typename?: 'JobMoveToDelayedPayload';
+  job: Job;
+  delay: Scalars['Int'];
+  /** Estimated date/time of execution */
+  executeAt: Scalars['Date'];
+};
+
+export type JobMoveToFailedInput = {
+  queueId: Scalars['String'];
+  jobId: Scalars['String'];
+  failedReason?: Maybe<Scalars['String']>;
+};
+
+export type JobMoveToFailedPayload = {
+  __typename?: 'JobMoveToFailedPayload';
+  job: Job;
+  queue: Queue;
+};
 
 export type JobOptions = {
   __typename?: 'JobOptions';
@@ -498,391 +401,6 @@ export type JobOptions = {
   repeat?: Maybe<JobRepeatOptions>;
 };
 
-
-export type JobRepeatOptions = {
-  __typename?: 'JobRepeatOptions';
-  tz?: Maybe<Scalars['String']>;
-  endDate?: Maybe<Scalars['Date']>;
-  limit?: Maybe<Scalars['Int']>;
-  count?: Maybe<Scalars['Int']>;
-  prevMillis?: Maybe<Scalars['Int']>;
-  jobId?: Maybe<Scalars['String']>;
-  startDate?: Maybe<Scalars['Date']>;
-  cron?: Maybe<Scalars['String']>;
-  every?: Maybe<Scalars['String']>;
-};
-
-export type JobLogs = {
-  __typename?: 'JobLogs';
-  count: Scalars['Int'];
-  items: Array<Scalars['String']>;
-};
-
-export type JobsByFilterIdInput = {
-  /** The id of the filter */
-  filterId: Scalars['ID'];
-  /** The iterator cursor. Iteration starts when the cursor is set to 0, and terminates when the cursor returned by the server is 0 */
-  cursor?: Maybe<Scalars['Int']>;
-  /** The maximum number of jobs to return per iteration */
-  count: Scalars['Int'];
-};
-
-/** Queue stats filter to getting latest snapshot. */
-export type StatsLatestInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
-  /** Stats snapshot granularity */
-  granularity?: Maybe<StatsGranularity>;
-};
-
-/** Queue job stats snapshot. */
-export type StatsSnapshot = JobStatsInterface & {
-  __typename?: 'StatsSnapshot';
-  /** The sample size */
-  count: Scalars['Int'];
-  /** The number of failed jobs in the sample interval */
-  failed: Scalars['Int'];
-  /** The number of completed jobs in the sample interval */
-  completed: Scalars['Int'];
-  /** The start of the interval */
-  startTime: Scalars['Date'];
-  /** The end of the interval */
-  endTime: Scalars['Date'];
-  /** The average of values during the period */
-  mean: Scalars['Float'];
-  /** The standard deviation of the dataset over the sample period */
-  stddev: Scalars['Float'];
-  /** The minimum value in the data set */
-  min: Scalars['Float'];
-  /** The maximum value in the data set */
-  max: Scalars['Float'];
-  /** The median value of the data set */
-  median: Scalars['Float'];
-  /** The 25th percentile */
-  p90: Scalars['Float'];
-  /** The 95th percentile */
-  p95: Scalars['Float'];
-  /** The 99th percentile */
-  p99: Scalars['Float'];
-  /** The 99.5th percentile */
-  p995: Scalars['Float'];
-  /** The average rate of events over the entire lifetime of measurement (e.g., the total number of requests handled, divided by the number of seconds the process has been running), it doesn’t offer a sense of recency. */
-  meanRate: Scalars['Float'];
-  /** One minute exponentially weighted moving average */
-  m1Rate: Scalars['Float'];
-  /** Five minute exponentially weighted moving average */
-  m5Rate: Scalars['Float'];
-  /** Fifteen minute exponentially weighted moving average */
-  m15Rate: Scalars['Float'];
-};
-
-/** Base implementation for job stats information. */
-export type JobStatsInterface = {
-  /** The sample size */
-  count: Scalars['Int'];
-  /** The number of failed jobs in the sample interval */
-  failed: Scalars['Int'];
-  /** The number of completed jobs in the sample interval */
-  completed: Scalars['Int'];
-  /** The start of the interval */
-  startTime: Scalars['Date'];
-  /** The end of the interval */
-  endTime: Scalars['Date'];
-};
-
-/** Records histogram binning data */
-export type PercentileDistributionInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
-  /** Stats snapshot granularity */
-  granularity: StatsGranularity;
-  /** An expression specifying the range to query e.g. yesterday, last_7days */
-  range: Scalars['String'];
-  /** The percentiles to get frequencies for */
-  percentiles: Array<Scalars['Float']>;
-};
-
-/** Percentile distribution of metric values */
-export type PercentileDistribution = {
-  __typename?: 'PercentileDistribution';
-  /** The total number of values. */
-  totalCount: Scalars['Int'];
-  /** The minimum value in the data range. */
-  min: Scalars['Float'];
-  /** The maximum value in the data range. */
-  max: Scalars['Float'];
-  percentiles: Array<Maybe<PercentileCount>>;
-};
-
-export type PercentileCount = {
-  __typename?: 'PercentileCount';
-  count: Scalars['Int'];
-  /** The percentile value */
-  value: Scalars['Float'];
-};
-
-export type RepeatableJobsInput = {
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  order?: Maybe<SortOrderEnum>;
-};
-
-export enum SortOrderEnum {
-  Asc = 'ASC',
-  Desc = 'DESC'
-}
-
-export type RepeatableJob = {
-  __typename?: 'RepeatableJob';
-  key: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  /** Date when the repeat job should stop repeating (only with cron). */
-  endDate?: Maybe<Scalars['Date']>;
-  /** The timezone for the job */
-  tz?: Maybe<Scalars['String']>;
-  cron?: Maybe<Scalars['String']>;
-  /** Human readable description of the cron expression */
-  descr?: Maybe<Scalars['String']>;
-  next?: Maybe<Scalars['Date']>;
-};
-
-/** Options for retrieving queue rule alerts */
-export type QueueRuleAlertsInput = {
-  /** Consider alerts starting on or after this date */
-  startDate?: Maybe<Scalars['Date']>;
-  /** Consider alerts ending on or before this date */
-  endDate?: Maybe<Scalars['Date']>;
-  /** The sort order of the results. Alerts are sorted by creation date. */
-  sortOrder?: Maybe<SortOrderEnum>;
-  /** The maximum number of alerts to return */
-  limit: Scalars['Int'];
-};
-
-/** An event recording the occurrence of an rule violation or reset */
-export type RuleAlert = {
-  __typename?: 'RuleAlert';
-  id: Scalars['ID'];
-  /** The event that raised this alert */
-  event: Scalars['String'];
-  /** Timestamp of when this alert was raised */
-  start: Scalars['DateTime'];
-  /** Timestamp of when this alert was reset */
-  end?: Maybe<Scalars['DateTime']>;
-  /** The value of the alert threshold set in the rule’s alert conditions. */
-  threshold: Scalars['Float'];
-  /** The metric value that crossed the threshold. */
-  value: Scalars['Float'];
-  /** The metric value that reset the threshold. */
-  resetValue?: Maybe<Scalars['Float']>;
-  /** State that triggered alert */
-  state?: Maybe<Scalars['JSONObject']>;
-  /** The number of violations before this alert was generated */
-  violations: Scalars['Int'];
-  /** Optional rule specific data. Corresponds to Rule.payload */
-  payload?: Maybe<Scalars['JSONObject']>;
-  /** Error level */
-  errorLevel?: Maybe<ErrorLevel>;
-  /** A categorization of the severity of the rule type */
-  severity?: Maybe<Severity>;
-};
-
-
-export enum ErrorLevel {
-  Critical = 'CRITICAL',
-  Warning = 'WARNING',
-  None = 'NONE'
-}
-
-export enum Severity {
-  Warning = 'WARNING',
-  Critical = 'CRITICAL',
-  Error = 'ERROR',
-  Info = 'INFO'
-}
-
-export type QueueJobsInput = {
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  status?: Maybe<JobStatus>;
-  sortOrder?: Maybe<SortOrderEnum>;
-};
-
-export type Rule = {
-  __typename?: 'Rule';
-  /** The rule id */
-  id: Scalars['ID'];
-  /** The names of the rule */
-  name: Scalars['String'];
-  /** A helpful description of the rule */
-  description?: Maybe<Scalars['String']>;
-  /** The rule creation timestamp */
-  createdAt: Scalars['Date'];
-  /** The timestamp of last update */
-  updatedAt: Scalars['Date'];
-  /** The current rule states */
-  state?: Maybe<RuleState>;
-  severity?: Maybe<Severity>;
-  /** Is this rule active or not */
-  isActive: Scalars['Boolean'];
-  metric: RuleMetric;
-  condition: RuleCondition;
-  /** Optional text for message when an alert is raised. Markdown and handlebars supported */
-  message?: Maybe<Scalars['String']>;
-  /** channels for alert notifications. */
-  channels: Array<Scalars['String']>;
-  /** Optional data passed on to alerts */
-  payload?: Maybe<Scalars['JSONObject']>;
-  /** Options controlling the generation of events */
-  options?: Maybe<RuleAlertOptions>;
-  alerts: Array<Maybe<RuleAlert>>;
-  /** The total number of alerts raised for this rule */
-  alertCount: Scalars['Int'];
-};
-
-
-export type RuleAlertsArgs = {
-  input: RuleAlertsInput;
-};
-
-export enum RuleState {
-  Warning = 'WARNING',
-  Normal = 'NORMAL',
-  Error = 'ERROR',
-  Muted = 'MUTED'
-}
-
-export type RuleMetric = {
-  __typename?: 'RuleMetric';
-  type: Scalars['String'];
-  options?: Maybe<Scalars['JSONObject']>;
-};
-
-/** Describes a queue condition were monitoring. */
-export type RuleCondition = {
-  /** The value needed to trigger an error notification */
-  errorThreshold: Scalars['Float'];
-  /** The value needed to trigger an warning notification */
-  warningThreshold?: Maybe<Scalars['Float']>;
-};
-
-/** Options for raising alerts for a Rule */
-export type RuleAlertOptions = {
-  __typename?: 'RuleAlertOptions';
-  /** a timeout after startup (in ms) during which no alerts are raised, irrespective of the truthiness of the rule condition. */
-  warmupWindow?: Maybe<Scalars['Duration']>;
-  /** The minimum number of violations before an alert can be raised */
-  minViolations?: Maybe<Scalars['Int']>;
-  /**
-   * The max number of alerts to receive per event trigger in case the condition is met.
-   *  In this case the "event" is a single period between the rule VIOLATION and RESET states.
-   */
-  maxAlertsPerEvent?: Maybe<Scalars['Int']>;
-  /**
-   * Duration (ms) for which a metric is anomalous before triggering a violation.
-   * After a rule violation is encountered, no alerts are dispatched until this period has passed. This is useful for events which are normally transient by may periodically persist longer than usual, or for not sending notifications out too quickly.
-   */
-  triggerWindow?: Maybe<Scalars['Duration']>;
-  /** How long an anomalous metric must be normal before resetting an alert's states to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
-  recoveryWindow?: Maybe<Scalars['Duration']>;
-  /** If specified, the minimum time between alerts for the same incident */
-  renotifyInterval?: Maybe<Scalars['Duration']>;
-  /** Raise an alert after an event trigger when the situation returns to normal */
-  alertOnReset?: Maybe<Scalars['Boolean']>;
-};
-
-
-export type RuleAlertsInput = {
-  start?: Maybe<Scalars['Int']>;
-  end?: Maybe<Scalars['Int']>;
-  sortOrder?: Maybe<SortOrderEnum>;
-};
-
-/** Queue stats filter. */
-export type StatsQueryInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
-  /** Stats snapshot granularity */
-  granularity: StatsGranularity;
-  /** An expression specifying the range to query e.g. yesterday, last_7days */
-  range: Scalars['String'];
-};
-
-export type StatsSpanInput = {
-  /** The host/queue to query */
-  id: Scalars['ID'];
-  jobName?: Maybe<Scalars['String']>;
-  granularity?: Maybe<StatsGranularity>;
-};
-
-export type StatsSpanPayload = {
-  __typename?: 'StatsSpanPayload';
-  start: Scalars['Date'];
-  end: Scalars['Date'];
-};
-
-/** Queue stats rates filter. */
-export type StatsRateQueryInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** Stats snapshot granularity */
-  granularity: StatsGranularity;
-  /** An expression specifying the range to query e.g. yesterday, last_7days */
-  range: Scalars['String'];
-};
-
-/** Records the rate of events over an interval using an exponentially moving average */
-export type Meter = {
-  __typename?: 'Meter';
-  /** The number of samples. */
-  count: Scalars['Int'];
-  /** The average rate since the meter was started. */
-  meanRate: Scalars['Float'];
-  /** The 1 minute average */
-  m1Rate: Scalars['Float'];
-  /** The 5 minute average */
-  m5Rate: Scalars['Float'];
-  /** The 15 minute average */
-  m15Rate: Scalars['Float'];
-};
-
-export type QueueWorker = {
-  __typename?: 'QueueWorker';
-  id?: Maybe<Scalars['String']>;
-  /** address of the client */
-  addr: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  /** total duration of the connection (in seconds) */
-  age: Scalars['Int'];
-  /** Idle time of the connection (in seconds) */
-  idle: Scalars['Int'];
-  /** Date/time when the connection started */
-  started?: Maybe<Scalars['DateTime']>;
-  /** the current database number */
-  db: Scalars['Int'];
-  role?: Maybe<Scalars['String']>;
-  sub: Scalars['Int'];
-  multi: Scalars['Int'];
-  qbuf: Scalars['Int'];
-  qbufFree: Scalars['Int'];
-  obl: Scalars['Int'];
-  oll: Scalars['Int'];
-  omem: Scalars['Int'];
-};
-
-export type JobDataValidateInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['String'];
-  data?: Maybe<Scalars['JSONObject']>;
-  opts?: Maybe<JobOptionsInput>;
-};
-
 export type JobOptionsInput = {
   timestamp?: Maybe<Scalars['Date']>;
   /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
@@ -911,6 +429,33 @@ export type JobOptionsInput = {
   repeat?: Maybe<JobRepeatOptionsCronInput>;
 };
 
+
+export type JobPromotePayload = {
+  __typename?: 'JobPromotePayload';
+  job: Job;
+  queue: Queue;
+};
+
+
+export type JobRemovePayload = {
+  __typename?: 'JobRemovePayload';
+  queue: Queue;
+  job: Job;
+};
+
+export type JobRepeatOptions = {
+  __typename?: 'JobRepeatOptions';
+  tz?: Maybe<Scalars['String']>;
+  endDate?: Maybe<Scalars['Date']>;
+  limit?: Maybe<Scalars['Int']>;
+  count?: Maybe<Scalars['Int']>;
+  prevMillis?: Maybe<Scalars['Int']>;
+  jobId?: Maybe<Scalars['String']>;
+  startDate?: Maybe<Scalars['Date']>;
+  cron?: Maybe<Scalars['String']>;
+  every?: Maybe<Scalars['String']>;
+};
+
 export type JobRepeatOptionsCronInput = {
   tz?: Maybe<Scalars['String']>;
   endDate?: Maybe<Scalars['Date']>;
@@ -922,135 +467,101 @@ export type JobRepeatOptionsCronInput = {
   cron: Scalars['String'];
 };
 
-export type JobDataValidatePayload = {
-  __typename?: 'JobDataValidatePayload';
+export type JobRetryPayload = {
+  __typename?: 'JobRetryPayload';
+  job: Job;
+  queue: Queue;
+};
+
+/** Options for validating job data */
+export type JobSchema = {
+  __typename?: 'JobSchema';
+  jobName: Scalars['String'];
+  /** The JSON schema associated with the job name */
+  schema?: Maybe<Scalars['JSONSchema']>;
+  /** Default options for jobs off this type created through the API */
+  defaultOpts?: Maybe<Scalars['JSONObject']>;
+};
+
+export type JobSchemaInput = {
   queueId: Scalars['ID'];
   jobName: Scalars['String'];
+  schema: Scalars['JSONSchema'];
+  defaultOpts?: Maybe<JobOptionsInput>;
 };
 
-export type ValidateJobOptionsPayload = {
-  __typename?: 'ValidateJobOptionsPayload';
-  isValid: Scalars['Boolean'];
-  errors: Array<Scalars['String']>;
+export type JobSearchInput = {
+  /** Search for jobs having this status */
+  status?: Maybe<JobStatus>;
+  /** The job filter expression */
+  criteria?: Maybe<Scalars['String']>;
+  /** The iterator cursor. Iteration starts when the cursor is set to null, and terminates when the cursor returned by the server is null */
+  cursor?: Maybe<Scalars['String']>;
+  /** The maximum number of jobs to return per iteration */
+  count?: Scalars['Int'];
 };
 
-export type QueueHost = {
-  __typename?: 'QueueHost';
-  id: Scalars['ID'];
-  /** The name of the host */
-  name: Scalars['String'];
-  /** An optional description of the host */
-  description?: Maybe<Scalars['String']>;
-  /** The queues registered for this host */
-  queues: Array<Queue>;
-  /** The count of queues registered for this host */
-  queueCount: Scalars['Int'];
-  /** Notification channels for alerts */
-  channels: Array<NotificationChannel>;
-  /** Discover Bull queues on the given host */
-  discoverQueues: Array<DiscoverQueuesPayload>;
-  /** Gets the current job ErrorPercentage rates for a host based on an exponential moving average */
-  errorPercentageRate: Meter;
-  /** Gets the current job Errors rates for a host based on an exponential moving average */
-  errorRate: Meter;
-  /** Compute the histogram of job data. */
-  histogram: HistogramPayload;
-  /** Get job counts for a host */
-  jobCounts: JobCounts;
-  /** Gets the last recorded queue stats snapshot for a metric */
-  lastStatsSnapshot?: Maybe<StatsSnapshot>;
-  /** Compute a percentile distribution. */
-  percentileDistribution: PercentileDistribution;
-  ping: PingPayload;
-  redis: RedisInfo;
-  /** Queries for queue stats snapshots within a range */
-  stats: Array<StatsSnapshot>;
-  /** Aggregates queue statistics within a range */
-  statsAggregate?: Maybe<StatsSnapshot>;
-  /** Gets the time range of recorded stats for a queue/host */
-  statsDateRange?: Maybe<StatsSpanPayload>;
-  /** Gets the current job Throughput rates for a host based on an exponential moving average */
-  throughput: Meter;
-  uri: Scalars['String'];
-  /** Returns the number of workers associated with managed queues on this host */
-  workerCount: Scalars['Int'];
-  workers: Array<QueueWorker>;
+export type JobSearchPayload = {
+  __typename?: 'JobSearchPayload';
+  cursor?: Maybe<Scalars['String']>;
+  hasNext: Scalars['Boolean'];
+  jobs: Array<Job>;
+  total: Scalars['Int'];
+  current: Scalars['Int'];
 };
 
-
-export type QueueHostQueuesArgs = {
-  filter?: Maybe<HostQueuesFilter>;
+/** Base implementation for job stats information. */
+export type JobStatsInterface = {
+  /** The sample size */
+  count: Scalars['Int'];
+  /** The number of failed jobs in the sample interval */
+  failed: Scalars['Int'];
+  /** The number of completed jobs in the sample interval */
+  completed: Scalars['Int'];
+  /** The start of the interval */
+  startTime: Scalars['Date'];
+  /** The end of the interval */
+  endTime: Scalars['Date'];
 };
 
+export enum JobStatus {
+  Completed = 'completed',
+  Waiting = 'waiting',
+  Active = 'active',
+  Delayed = 'delayed',
+  Failed = 'failed',
+  Paused = 'paused'
+}
 
-export type QueueHostDiscoverQueuesArgs = {
-  prefix?: Maybe<Scalars['String']>;
-  unregisteredOnly?: Maybe<Scalars['Boolean']>;
+export type JobUpdateDelta = {
+  __typename?: 'JobUpdateDelta';
+  id: Scalars['String'];
+  delta: Scalars['JSONObject'];
 };
 
-
-export type QueueHostErrorPercentageRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+export type JobUpdateInput = {
+  queueId: Scalars['String'];
+  jobId: Scalars['String'];
+  data: Scalars['JSONObject'];
 };
 
-
-export type QueueHostErrorRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+export type JobUpdatePayload = {
+  __typename?: 'JobUpdatePayload';
+  job: Job;
 };
 
-
-export type QueueHostHistogramArgs = {
-  input: HistogramInput;
+export type JobsByFilterIdInput = {
+  /** The id of the filter */
+  filterId: Scalars['ID'];
+  /** The iterator cursor. Iteration starts when the cursor is set to 0, and terminates when the cursor returned by the server is 0 */
+  cursor?: Maybe<Scalars['Int']>;
+  /** The maximum number of jobs to return per iteration */
+  count: Scalars['Int'];
 };
 
-
-export type QueueHostLastStatsSnapshotArgs = {
-  input?: Maybe<StatsLatestInput>;
-};
-
-
-export type QueueHostPercentileDistributionArgs = {
-  input: PercentileDistributionInput;
-};
-
-
-export type QueueHostStatsArgs = {
-  input: StatsQueryInput;
-};
-
-
-export type QueueHostStatsAggregateArgs = {
-  input: StatsQueryInput;
-};
-
-
-export type QueueHostStatsDateRangeArgs = {
-  input: StatsSpanInput;
-};
-
-
-export type QueueHostThroughputArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
-
-export type QueueHostWorkersArgs = {
-  limit?: Maybe<Scalars['Int']>;
-};
-
-export type HostQueuesFilter = {
-  /** Regex pattern for queue name matching */
-  search?: Maybe<Scalars['String']>;
-  /** Queue prefix */
-  prefix?: Maybe<Scalars['String']>;
-  /** Filter based on paused state */
-  isPaused?: Maybe<Scalars['Boolean']>;
-  /** Filter based on "active" status (true if the queue has at least one worker)  */
-  isActive?: Maybe<Scalars['Boolean']>;
-};
-
-/** NotificationChannels provide a consistent ways for users to be notified about incidents. */
-export type NotificationChannel = {
+/** A channel which sends notifications through email */
+export type MailNotificationChannel = NotificationChannel & {
+  __typename?: 'MailNotificationChannel';
   id: Scalars['ID'];
   /** The type of the channel, e.g. slack, email, webhook etc */
   type: Scalars['String'];
@@ -1062,40 +573,43 @@ export type NotificationChannel = {
   createdAt?: Maybe<Scalars['Date']>;
   /** Timestamp of last channel update */
   updatedAt?: Maybe<Scalars['Date']>;
+  /** Emails of notification recipients */
+  recipients: Array<Scalars['String']>;
 };
 
-export type DiscoverQueuesPayload = {
-  __typename?: 'DiscoverQueuesPayload';
-  /** The queue name */
+export type MailNotificationChannelInput = {
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The name of the channel */
   name: Scalars['String'];
-  /** The queue prefix */
-  prefix: Scalars['String'];
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Emails of notification recipients */
+  recipients: Array<Scalars['String']>;
+  /** the host to add the channel to */
+  hostId: Scalars['ID'];
 };
 
-export type PingPayload = {
-  __typename?: 'PingPayload';
-  latency: Scalars['Int'];
+/** Records the rate of events over an interval using an exponentially moving average */
+export type Meter = {
+  __typename?: 'Meter';
+  /** The number of samples. */
+  count: Scalars['Int'];
+  /** The average rate since the meter was started. */
+  meanRate: Scalars['Float'];
+  /** The 1 minute average */
+  m1Rate: Scalars['Float'];
+  /** The 5 minute average */
+  m5Rate: Scalars['Float'];
+  /** The 15 minute average */
+  m15Rate: Scalars['Float'];
 };
 
-export type RedisInfo = {
-  __typename?: 'RedisInfo';
-  redis_version: Scalars['String'];
-  tcp_port?: Maybe<Scalars['Int']>;
-  uptime_in_seconds: Scalars['Int'];
-  uptime_in_days: Scalars['Int'];
-  connected_clients: Scalars['Int'];
-  blocked_clients: Scalars['Int'];
-  total_system_memory: Scalars['Int'];
-  used_memory: Scalars['Int'];
-  used_memory_peak: Scalars['Int'];
-  used_memory_lua: Scalars['Int'];
-  used_cpu_sys: Scalars['Float'];
-  maxmemory: Scalars['Int'];
-  number_of_cached_scripts: Scalars['Int'];
-  instantaneous_ops_per_sec: Scalars['Int'];
-  mem_fragmentation_ratio?: Maybe<Scalars['Float']>;
-  role?: Maybe<Scalars['String']>;
-};
+export enum MetricCategory {
+  Host = 'HOST',
+  Redis = 'REDIS',
+  Queue = 'QUEUE'
+}
 
 export type MetricInfo = {
   __typename?: 'MetricInfo';
@@ -1107,27 +621,11 @@ export type MetricInfo = {
   isPolling: Scalars['Boolean'];
 };
 
-export enum MetricCategory {
-  Host = 'HOST',
-  Redis = 'REDIS',
-  Queue = 'QUEUE'
-}
-
 export enum MetricType {
   Gauge = 'Gauge',
   Rate = 'Rate',
   Count = 'Count'
 }
-
-export type QueueJobFilterInput = {
-  queueId: Scalars['ID'];
-  fieldId: Scalars['ID'];
-};
-
-export type QueueJobSchemaInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['String'];
-};
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -1428,22 +926,8 @@ export type MutationRuleDeactivateArgs = {
   input: RuleDeactivateInput;
 };
 
-export type MailNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** Emails of notification recipients */
-  recipients: Array<Scalars['String']>;
-  /** the host to add the channel to */
-  hostId: Scalars['ID'];
-};
-
-/** A channel which sends notifications through email */
-export type MailNotificationChannel = NotificationChannel & {
-  __typename?: 'MailNotificationChannel';
+/** NotificationChannels provide a consistent ways for users to be notified about incidents. */
+export type NotificationChannel = {
   id: Scalars['ID'];
   /** The type of the channel, e.g. slack, email, webhook etc */
   type: Scalars['String'];
@@ -1455,121 +939,6 @@ export type MailNotificationChannel = NotificationChannel & {
   createdAt?: Maybe<Scalars['Date']>;
   /** Timestamp of last channel update */
   updatedAt?: Maybe<Scalars['Date']>;
-  /** Emails of notification recipients */
-  recipients: Array<Scalars['String']>;
-};
-
-export type SlackNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** The slack webhook to post messages to */
-  webhook: Scalars['String'];
-  /** The slack webhook to post messages to */
-  channel?: Maybe<Scalars['String']>;
-  /** A valid slack auth token. Not needed if a webhook is specified */
-  token?: Maybe<Scalars['String']>;
-  /** the host to add the channel to */
-  hostId: Scalars['ID'];
-};
-
-/** A channel which sends notifications through slack */
-export type SlackNotificationChannel = NotificationChannel & {
-  __typename?: 'SlackNotificationChannel';
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** Timestamp of channel creation */
-  createdAt?: Maybe<Scalars['Date']>;
-  /** Timestamp of last channel update */
-  updatedAt?: Maybe<Scalars['Date']>;
-  /** The slack webhook to post messages to */
-  webhook: Scalars['String'];
-  /** The slack webhook to post messages to */
-  channel?: Maybe<Scalars['String']>;
-  /** A valid slack auth token. Not needed if a webhook is specified */
-  token?: Maybe<Scalars['String']>;
-};
-
-export type WebhookNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** Url to send data to */
-  url: Scalars['String'];
-  /** The HTTP method to use */
-  method?: Maybe<HttpMethodEnum>;
-  /** Optional request headers */
-  headers?: Maybe<Scalars['JSONObject']>;
-  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
-  timeout?: Maybe<Scalars['Duration']>;
-  /** The number of times to retry the client */
-  retry?: Maybe<Scalars['Int']>;
-  /** Defines if redirect responses should be followed automatically. */
-  followRedirect?: Maybe<Scalars['Boolean']>;
-  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
-  allowGetBody?: Maybe<Scalars['Boolean']>;
-  /** Optional success http status codes. Defaults to http codes 200 - 206 */
-  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
-  /** the host to add the channel to */
-  hostId: Scalars['ID'];
-};
-
-export enum HttpMethodEnum {
-  Get = 'GET',
-  Post = 'POST'
-}
-
-/** A channel that posts notifications to a webhook */
-export type WebhookNotificationChannel = NotificationChannel & {
-  __typename?: 'WebhookNotificationChannel';
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** Timestamp of channel creation */
-  createdAt?: Maybe<Scalars['Date']>;
-  /** Timestamp of last channel update */
-  updatedAt?: Maybe<Scalars['Date']>;
-  /** Url to send data to */
-  url: Scalars['String'];
-  /** The HTTP method to use */
-  method?: Maybe<HttpMethodEnum>;
-  /** Optional request headers */
-  headers?: Maybe<Scalars['JSONObject']>;
-  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
-  timeout?: Maybe<Scalars['Duration']>;
-  /** The number of times to retry the client */
-  retry?: Maybe<Scalars['Int']>;
-  /** Defines if redirect responses should be followed automatically. */
-  followRedirect?: Maybe<Scalars['Boolean']>;
-  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
-  allowGetBody?: Maybe<Scalars['Boolean']>;
-  /** Optional success http status codes. Defaults to http codes 200 - 206 */
-  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
-};
-
-export type NotificationChannelEnablePayload = {
-  __typename?: 'NotificationChannelEnablePayload';
-  updated: Scalars['Boolean'];
-};
-
-export type NotificationChannelDisablePayload = {
-  __typename?: 'NotificationChannelDisablePayload';
-  updated: Scalars['Boolean'];
 };
 
 export type NotificationChannelDeletePayload = {
@@ -1579,168 +948,495 @@ export type NotificationChannelDeletePayload = {
   deleted: Scalars['Boolean'];
 };
 
-export type JobAddInput = {
-  queueId: Scalars['ID'];
+export type NotificationChannelDisablePayload = {
+  __typename?: 'NotificationChannelDisablePayload';
+  updated: Scalars['Boolean'];
+};
+
+export type NotificationChannelEnablePayload = {
+  __typename?: 'NotificationChannelEnablePayload';
+  updated: Scalars['Boolean'];
+};
+
+export type OnJobAddedPayload = {
+  __typename?: 'OnJobAddedPayload';
+  jobId: Scalars['String'];
   jobName: Scalars['String'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
+  queueId: Scalars['String'];
+  queueName: Scalars['String'];
 };
 
-export type BulkJobItemInput = {
-  name: Scalars['String'];
-  data: Scalars['JSONObject'];
-  options?: Maybe<JobOptionsInput>;
-};
-
-export type JobAddBulkPayload = {
-  __typename?: 'JobAddBulkPayload';
-  jobs: Array<Maybe<Job>>;
-};
-
-export type JobAddCronInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['ID'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
-};
-
-export type JobAddCronPayload = {
-  __typename?: 'JobAddCronPayload';
+export type OnJobDelayedPayload = {
+  __typename?: 'OnJobDelayedPayload';
   job?: Maybe<Job>;
-};
-
-export type JobAddEveryInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['ID'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
-};
-
-export type JobAddEveryPayload = {
-  __typename?: 'JobAddEveryPayload';
-  job: Job;
-};
-
-export type JobLocatorInput = {
-  queueId: Scalars['ID'];
-  jobId: Scalars['ID'];
-};
-
-export type JobDiscardPayload = {
-  __typename?: 'JobDiscardPayload';
-  job: Job;
-};
-
-export type JobPromotePayload = {
-  __typename?: 'JobPromotePayload';
-  job: Job;
   queue: Queue;
+  jobId: Scalars['String'];
+  queueName: Scalars['String'];
+  delay?: Maybe<Scalars['Int']>;
 };
 
-export type JobRemovePayload = {
-  __typename?: 'JobRemovePayload';
-  queue: Queue;
+export type OnJobLogAddedPayload = {
+  __typename?: 'OnJobLogAddedPayload';
   job: Job;
-};
-
-export type BulkJobActionInput = {
-  queueId: Scalars['ID'];
-  jobIds: Array<Scalars['ID']>;
-};
-
-export type BulkJobActionPayload = {
-  __typename?: 'BulkJobActionPayload';
-  queue: Queue;
-  status: Array<Maybe<BulkStatusItem>>;
-};
-
-export type BulkStatusItem = {
-  __typename?: 'BulkStatusItem';
-  id: Scalars['ID'];
-  success: Scalars['Boolean'];
-  reason?: Maybe<Scalars['String']>;
-};
-
-export type JobRetryPayload = {
-  __typename?: 'JobRetryPayload';
-  job: Job;
-  queue: Queue;
-};
-
-export type JobUpdateInput = {
   queueId: Scalars['String'];
   jobId: Scalars['String'];
-  data: Scalars['JSONObject'];
-};
-
-export type JobUpdatePayload = {
-  __typename?: 'JobUpdatePayload';
-  job: Job;
-};
-
-export type JobLogAddPayload = {
-  __typename?: 'JobLogAddPayload';
-  /** The job id */
-  id: Scalars['String'];
-  /** The number of log entries after adding */
+  /** The rows added to the job log */
+  rows: Array<Scalars['String']>;
+  /** The number of log lines after addition */
   count: Scalars['Int'];
-  state?: Maybe<JobStatus>;
 };
 
-export type JobMoveToCompletedPayload = {
-  __typename?: 'JobMoveToCompletedPayload';
-  queue: Queue;
-  job?: Maybe<Job>;
-};
-
-export type JobMoveToDelayedInput = {
-  queueId: Scalars['ID'];
-  jobId: Scalars['String'];
-  /** The amount of time to delay execution (in ms) */
-  delay?: Maybe<Scalars['Duration']>;
-};
-
-export type JobMoveToDelayedPayload = {
-  __typename?: 'JobMoveToDelayedPayload';
+export type OnJobProgressPayload = {
+  __typename?: 'OnJobProgressPayload';
   job: Job;
-  delay: Scalars['Int'];
-  /** Estimated date/time of execution */
-  executeAt: Scalars['Date'];
-};
-
-export type JobMoveToFailedInput = {
+  queue: Queue;
   queueId: Scalars['String'];
   jobId: Scalars['String'];
-  failedReason?: Maybe<Scalars['String']>;
+  progress?: Maybe<Scalars['JobProgress']>;
 };
 
-export type JobMoveToFailedPayload = {
-  __typename?: 'JobMoveToFailedPayload';
+export type OnJobRemovedPayload = {
+  __typename?: 'OnJobRemovedPayload';
+  queue: Queue;
+  jobId: Scalars['String'];
+};
+
+export type OnJobStateChangePayload = {
+  __typename?: 'OnJobStateChangePayload';
   job: Job;
   queue: Queue;
+  jobId: Scalars['String'];
 };
 
-export type RepeatableJobRemoveByKeyInput = {
-  queueId: Scalars['ID'];
-  key: Scalars['String'];
-};
-
-export type RepeatableJobRemoveByKeyPayload = {
-  __typename?: 'RepeatableJobRemoveByKeyPayload';
-  key: Scalars['String'];
-  queue?: Maybe<Queue>;
-};
-
-export type RepeatableJobRemoveOptions = {
-  tz?: Maybe<Scalars['String']>;
-  endDate?: Maybe<Scalars['Date']>;
-  cron?: Maybe<Scalars['String']>;
-  every?: Maybe<Scalars['String']>;
-};
-
-export type QueueRemoveRepeatablePayload = {
-  __typename?: 'QueueRemoveRepeatablePayload';
+/** Holds the changes to the state of a job */
+export type OnJobUpdatedPayload = {
+  __typename?: 'OnJobUpdatedPayload';
+  jobId: Scalars['String'];
+  /** The event which triggered the update */
+  event: Scalars['String'];
+  timestamp: Scalars['Date'];
+  /** updates in job state since the last event */
+  delta?: Maybe<Scalars['JSONObject']>;
+  job?: Maybe<Job>;
+  /** The job's queue */
   queue: Queue;
+};
+
+export type OnNotificationChannelCreatedPayload = {
+  __typename?: 'OnNotificationChannelCreatedPayload';
+  hostId: Scalars['String'];
+  channelId: Scalars['String'];
+  channelName: Scalars['String'];
+  channelType: Scalars['String'];
+};
+
+export type OnNotificationChannelDeletedPayload = {
+  __typename?: 'OnNotificationChannelDeletedPayload';
+  hostId: Scalars['String'];
+  channelId: Scalars['String'];
+  channelName: Scalars['String'];
+  channelType: Scalars['String'];
+};
+
+export type OnQueueDeletedPayload = {
+  __typename?: 'OnQueueDeletedPayload';
+  /** The id of the deleted queue */
+  queueId: Scalars['String'];
+  /** The name of the deleted queue */
+  queueName: Scalars['String'];
+  /** The queue host id */
+  hostId: Scalars['String'];
+  /** The number of keys deleted */
+  deletedKeys: Scalars['Int'];
+};
+
+export type OnQueueJobCountsChangedPayload = {
+  __typename?: 'OnQueueJobCountsChangedPayload';
+  queueId: Scalars['String'];
+  delta?: Maybe<QueueJobCountDelta>;
+};
+
+export type OnQueueJobUpdatesPayload = {
+  __typename?: 'OnQueueJobUpdatesPayload';
+  queueId: Scalars['String'];
+  changes: Array<JobUpdateDelta>;
+};
+
+export type OnQueuePausedPayload = {
+  __typename?: 'OnQueuePausedPayload';
+  queueId: Scalars['String'];
+};
+
+export type OnQueueRegisteredPayload = {
+  __typename?: 'OnQueueRegisteredPayload';
+  hostId: Scalars['String'];
+  queueId: Scalars['String'];
+  queueName: Scalars['String'];
+  prefix: Scalars['String'];
+};
+
+export type OnQueueResumedPayload = {
+  __typename?: 'OnQueueResumedPayload';
+  queueId: Scalars['String'];
+};
+
+export type OnQueueStateChangedPayload = {
+  __typename?: 'OnQueueStateChangedPayload';
+  queueId: Scalars['String'];
+  queueName: Scalars['String'];
+  state: Scalars['String'];
+};
+
+export type OnQueueUnregisteredPayload = {
+  __typename?: 'OnQueueUnregisteredPayload';
+  hostId: Scalars['String'];
+  queueName: Scalars['String'];
+  queueId: Scalars['String'];
+  prefix: Scalars['String'];
+};
+
+/** Returns the list of added and removed workers related to a queue */
+export type OnQueueWorkersChangedPayload = {
+  __typename?: 'OnQueueWorkersChangedPayload';
+  queueId: Scalars['String'];
+  added: Array<QueueWorker>;
+  removed: Array<QueueWorker>;
+};
+
+export type OnQueueWorkersCountPayload = {
+  __typename?: 'OnQueueWorkersCountPayload';
+  queueId: Scalars['String'];
+  workersCount: Scalars['Int'];
+};
+
+export type OnRuleAlertPayload = {
+  __typename?: 'OnRuleAlertPayload';
+  alert: RuleAlert;
+};
+
+/** A condition based on deviations from a rolling average */
+export type PeakCondition = RuleCondition & {
+  __typename?: 'PeakCondition';
+  /** Standard deviations at which to trigger an error notification. */
+  errorThreshold: Scalars['Float'];
+  /** Standard deviations at which to trigger an warning notification. */
+  warningThreshold?: Maybe<Scalars['Float']>;
+  /** Signal if peak is above the threshold, below the threshold or either */
+  direction?: Maybe<PeakSignalDirection>;
+  /** the influence (between 0 and 1) of new signals on the mean and standard deviation where 1 is normal influence, 0.5 is half */
+  influence?: Maybe<Scalars['Float']>;
+  /** The lag of the moving window (in milliseconds).  For example, a lag of 5000 will use the last 5 seconds of observationsto smooth the data. */
+  lag?: Maybe<Scalars['Duration']>;
+};
+
+export enum PeakSignalDirection {
+  Above = 'ABOVE',
+  Below = 'BELOW',
+  Both = 'BOTH'
+}
+
+export type PercentileCount = {
+  __typename?: 'PercentileCount';
+  count: Scalars['Int'];
+  /** The percentile value */
+  value: Scalars['Float'];
+};
+
+/** Percentile distribution of metric values */
+export type PercentileDistribution = {
+  __typename?: 'PercentileDistribution';
+  /** The total number of values. */
+  totalCount: Scalars['Int'];
+  /** The minimum value in the data range. */
+  min: Scalars['Float'];
+  /** The maximum value in the data range. */
+  max: Scalars['Float'];
+  percentiles: Array<Maybe<PercentileCount>>;
+};
+
+/** Records histogram binning data */
+export type PercentileDistributionInput = {
+  /** An optional job name to filter on */
+  jobName?: Maybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: Maybe<StatsMetricType>;
+  /** Stats snapshot granularity */
+  granularity: StatsGranularity;
+  /** An expression specifying the range to query e.g. yesterday, last_7days */
+  range: Scalars['String'];
+  /** The percentiles to get frequencies for */
+  percentiles?: Array<Scalars['Float']>;
+};
+
+export type PingPayload = {
+  __typename?: 'PingPayload';
+  latency: Scalars['Int'];
+};
+
+export type Query = {
+  __typename?: 'Query';
+  /** Get the list of aggregate types available for metrics */
+  aggregates: Array<Maybe<AggregateInfo>>;
+  /** Get general app info */
+  appInfo: AppInfo;
+  /** Get a queue by id */
+  queue?: Maybe<Queue>;
+  job: Job;
+  /** Validate job data against a schema previously defined on a queue */
+  jobDataValidate: JobDataValidatePayload;
+  /** Validate BullMQ job options structure */
+  jobOptionsValidate: ValidateJobOptionsPayload;
+  /** Find a queue by name */
+  findQueue?: Maybe<Queue>;
+  /** Get a Host by id */
+  host?: Maybe<QueueHost>;
+  /** Get the list of hosts managed by the server instance */
+  hosts: Array<QueueHost>;
+  /** Get a Host by name */
+  hostByName?: Maybe<QueueHost>;
+  notificationChannel?: Maybe<NotificationChannel>;
+  /** Get the list of metrics available */
+  metrics: Array<MetricInfo>;
+  /** Get a queue JobFilter by id */
+  queueJobFilter?: Maybe<JobFilter>;
+  /** Returns the JSON Schema for the BullMq JobOptions type */
+  jobOptionsSchema: Scalars['JSONSchema'];
+  rule?: Maybe<Rule>;
+  ruleAlert?: Maybe<RuleAlert>;
+  /** Get a JSONSchema document previously set for a job name on a queue */
+  queueJobSchema?: Maybe<JobSchema>;
+};
+
+
+export type QueryQueueArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryJobArgs = {
+  queueId: Scalars['ID'];
+  id: Scalars['ID'];
+};
+
+
+export type QueryJobDataValidateArgs = {
+  input: JobDataValidateInput;
+};
+
+
+export type QueryJobOptionsValidateArgs = {
+  input: JobOptionsInput;
+};
+
+
+export type QueryFindQueueArgs = {
+  hostName: Scalars['String'];
+  prefix?: Maybe<Scalars['String']>;
+  queueName: Scalars['String'];
+};
+
+
+export type QueryHostArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryHostByNameArgs = {
+  name: Scalars['String'];
+};
+
+
+export type QueryNotificationChannelArgs = {
+  hostId: Scalars['ID'];
+  id: Scalars['ID'];
+};
+
+
+export type QueryQueueJobFilterArgs = {
+  input?: Maybe<QueueJobFilterInput>;
+};
+
+
+export type QueryRuleArgs = {
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+};
+
+
+export type QueryRuleAlertArgs = {
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+  alertId: Scalars['ID'];
+};
+
+
+export type QueryQueueJobSchemaArgs = {
+  input?: Maybe<QueueJobSchemaInput>;
+};
+
+export type Queue = {
+  __typename?: 'Queue';
+  id: Scalars['String'];
+  prefix: Scalars['String'];
+  name: Scalars['String'];
+  /** Compute the histogram of job data. */
+  histogram: HistogramPayload;
+  host: Scalars['String'];
+  hostId: Scalars['ID'];
+  isPaused: Scalars['Boolean'];
+  jobCounts: JobCounts;
+  jobNames: Array<Scalars['String']>;
+  jobFilters: Array<JobFilter>;
+  /** Get JSONSchema documents and job defaults previously set for a job names on a queue */
+  jobSchemas: Array<JobSchema>;
+  /** Incrementally iterate over a list of jobs filtered by query criteria */
+  jobSearch: JobSearchPayload;
+  /** Fetch jobs based on a previously stored filter */
+  jobsByFilter: JobSearchPayload;
+  /** Get the average runtime duration of completed jobs in the queue */
+  jobDurationAvg: Scalars['Int'];
+  /** Get the average memory used by jobs in the queue */
+  jobMemoryAvg: Scalars['Int'];
+  /** Gets the last recorded queue stats snapshot for a metric */
+  lastStatsSnapshot?: Maybe<StatsSnapshot>;
+  /** Returns the number of jobs waiting to be processed. */
+  pendingJobCount: Scalars['Int'];
+  /** Compute a percentile distribution. */
+  percentileDistribution: PercentileDistribution;
+  repeatableJobs: Array<RepeatableJob>;
+  /** Returns the number of repeatable jobs */
+  repeatableJobCount: Scalars['Int'];
+  /** Returns the count of rule alerts associated with a Queue */
+  ruleAlertCount: Scalars['Int'];
+  /** Gets rule alerts associated with the queue */
+  ruleAlerts: Array<RuleAlert>;
+  jobs: Array<Job>;
+  jobsById: Array<Job>;
+  rules: Array<Rule>;
+  /** Queries for queue stats snapshots within a range */
+  stats: Array<StatsSnapshot>;
+  /** Aggregates queue statistics within a range */
+  statsAggregate?: Maybe<StatsSnapshot>;
+  /** Gets the time range of recorded stats for a queue/host */
+  statsDateRange?: Maybe<StatsSpanPayload>;
+  /** Gets the current job Throughput rates based on an exponential moving average */
+  throughput: Meter;
+  /** Gets the current job Errors rates based on an exponential moving average */
+  errorRate: Meter;
+  /** Gets the current job ErrorPercentage rates based on an exponential moving average */
+  errorPercentageRate: Meter;
+  /** Get the average time a job spends in the queue before being processed */
+  waitTimeAvg: Scalars['Int'];
+  workers: Array<QueueWorker>;
+  workerCount: Scalars['Int'];
+};
+
+
+export type QueueHistogramArgs = {
+  input: HistogramInput;
+};
+
+
+export type QueueJobFiltersArgs = {
+  ids?: Maybe<Array<Scalars['ID']>>;
+};
+
+
+export type QueueJobSchemasArgs = {
+  jobNames?: Maybe<Array<Scalars['String']>>;
+};
+
+
+export type QueueJobSearchArgs = {
+  filter: JobSearchInput;
+};
+
+
+export type QueueJobsByFilterArgs = {
+  filter: JobsByFilterIdInput;
+};
+
+
+export type QueueJobDurationAvgArgs = {
+  jobName?: Maybe<Scalars['String']>;
+  limit?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueueJobMemoryAvgArgs = {
+  jobName?: Maybe<Scalars['String']>;
+  limit?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueueLastStatsSnapshotArgs = {
+  input?: Maybe<StatsLatestInput>;
+};
+
+
+export type QueuePercentileDistributionArgs = {
+  input: PercentileDistributionInput;
+};
+
+
+export type QueueRepeatableJobsArgs = {
+  input?: Maybe<RepeatableJobsInput>;
+};
+
+
+export type QueueRuleAlertsArgs = {
+  input?: Maybe<QueueRuleAlertsInput>;
+};
+
+
+export type QueueJobsArgs = {
+  input?: Maybe<QueueJobsInput>;
+};
+
+
+export type QueueJobsByIdArgs = {
+  input?: Maybe<QueueJobsByIdInput>;
+};
+
+
+export type QueueStatsArgs = {
+  input: StatsQueryInput;
+};
+
+
+export type QueueStatsAggregateArgs = {
+  input: StatsQueryInput;
+};
+
+
+export type QueueStatsDateRangeArgs = {
+  input: StatsSpanInput;
+};
+
+
+export type QueueThroughputArgs = {
+  input?: Maybe<StatsRateQueryInput>;
+};
+
+
+export type QueueErrorRateArgs = {
+  input?: Maybe<StatsRateQueryInput>;
+};
+
+
+export type QueueErrorPercentageRateArgs = {
+  input?: Maybe<StatsRateQueryInput>;
+};
+
+
+export type QueueWaitTimeAvgArgs = {
+  jobName?: Maybe<Scalars['String']>;
+  limit?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueueWorkersArgs = {
+  limit?: Maybe<Scalars['Int']>;
 };
 
 export type QueueCleanFilter = {
@@ -1763,23 +1459,6 @@ export type QueueCleanPayload = {
   jobIds?: Maybe<Array<Scalars['ID']>>;
 };
 
-export type QueueDrainPayload = {
-  __typename?: 'QueueDrainPayload';
-  queue: Queue;
-};
-
-export type QueuePausePayload = {
-  __typename?: 'QueuePausePayload';
-  queue: Queue;
-  isPaused: Scalars['Boolean'];
-};
-
-export type QueueResumePayload = {
-  __typename?: 'QueueResumePayload';
-  queue: Queue;
-  isPaused: Scalars['Boolean'];
-};
-
 export type QueueDeleteOptions = {
   checkExistence?: Maybe<Scalars['Boolean']>;
   checkActivity?: Maybe<Scalars['Boolean']>;
@@ -1797,45 +1476,122 @@ export type QueueDeletePayload = {
   deletedKeys: Scalars['Int'];
 };
 
-export type RegisterQueueInput = {
-  hostId: Scalars['ID'];
+export type QueueDrainPayload = {
+  __typename?: 'QueueDrainPayload';
+  queue: Queue;
+};
+
+export type QueueHost = {
+  __typename?: 'QueueHost';
+  id: Scalars['ID'];
+  /** The name of the host */
+  name: Scalars['String'];
+  /** An optional description of the host */
+  description?: Maybe<Scalars['String']>;
+  /** The queues registered for this host */
+  queues: Array<Queue>;
+  /** The count of queues registered for this host */
+  queueCount: Scalars['Int'];
+  /** Notification channels for alerts */
+  channels: Array<NotificationChannel>;
+  /** Discover Bull queues on the given host */
+  discoverQueues: Array<DiscoverQueuesPayload>;
+  /** Gets the current job ErrorPercentage rates for a host based on an exponential moving average */
+  errorPercentageRate: Meter;
+  /** Gets the current job Errors rates for a host based on an exponential moving average */
+  errorRate: Meter;
+  /** Compute the histogram of job data. */
+  histogram: HistogramPayload;
+  /** Get job counts for a host */
+  jobCounts: JobCounts;
+  /** Gets the last recorded queue stats snapshot for a metric */
+  lastStatsSnapshot?: Maybe<StatsSnapshot>;
+  /** Compute a percentile distribution. */
+  percentileDistribution: PercentileDistribution;
+  ping: PingPayload;
+  redis: RedisInfo;
+  /** Queries for queue stats snapshots within a range */
+  stats: Array<StatsSnapshot>;
+  /** Aggregates queue statistics within a range */
+  statsAggregate?: Maybe<StatsSnapshot>;
+  /** Gets the time range of recorded stats for a queue/host */
+  statsDateRange?: Maybe<StatsSpanPayload>;
+  /** Gets the current job Throughput rates for a host based on an exponential moving average */
+  throughput: Meter;
+  uri: Scalars['String'];
+  /** Returns the number of workers associated with managed queues on this host */
+  workerCount: Scalars['Int'];
+  workers: Array<QueueWorker>;
+};
+
+
+export type QueueHostQueuesArgs = {
+  filter?: Maybe<HostQueuesFilter>;
+};
+
+
+export type QueueHostDiscoverQueuesArgs = {
   prefix?: Maybe<Scalars['String']>;
-  /** the queue names */
-  name: Scalars['String'];
-  checkExists?: Maybe<Scalars['Boolean']>;
-  trackMetrics?: Maybe<Scalars['Boolean']>;
+  unregisteredOnly?: Maybe<Scalars['Boolean']>;
 };
 
-export type QueueUnregisterPayload = {
-  __typename?: 'QueueUnregisterPayload';
-  host: QueueHost;
-  queue: Queue;
-  isRemoved: Scalars['Boolean'];
+
+export type QueueHostErrorPercentageRateArgs = {
+  input?: Maybe<StatsRateQueryInput>;
 };
 
-export type JobFilterInput = {
-  queueId: Scalars['ID'];
-  name: Scalars['String'];
-  status?: Maybe<JobStatus>;
-  expression: Scalars['String'];
+
+export type QueueHostErrorRateArgs = {
+  input?: Maybe<StatsRateQueryInput>;
 };
 
-export type JobSchemaInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['String'];
-  schema: Scalars['JSONSchema'];
-  defaultOpts?: Maybe<JobOptionsInput>;
+
+export type QueueHostHistogramArgs = {
+  input: HistogramInput;
 };
 
-export type QueueJobSchemaDeleteInput = {
-  queueId: Scalars['ID'];
-  jobName: Scalars['String'];
+
+export type QueueHostLastStatsSnapshotArgs = {
+  input?: Maybe<StatsLatestInput>;
 };
 
-export type QueueJobSchemaDeletePayload = {
-  __typename?: 'QueueJobSchemaDeletePayload';
-  jobName: Scalars['String'];
-  queue: Queue;
+
+export type QueueHostPercentileDistributionArgs = {
+  input: PercentileDistributionInput;
+};
+
+
+export type QueueHostStatsArgs = {
+  input: StatsQueryInput;
+};
+
+
+export type QueueHostStatsAggregateArgs = {
+  input: StatsQueryInput;
+};
+
+
+export type QueueHostStatsDateRangeArgs = {
+  input: StatsSpanInput;
+};
+
+
+export type QueueHostThroughputArgs = {
+  input?: Maybe<StatsRateQueryInput>;
+};
+
+
+export type QueueHostWorkersArgs = {
+  limit?: Maybe<Scalars['Int']>;
+};
+
+export type QueueJobCountDelta = {
+  __typename?: 'QueueJobCountDelta';
+  completed?: Maybe<Scalars['Int']>;
+  failed?: Maybe<Scalars['Int']>;
+  delayed?: Maybe<Scalars['Int']>;
+  active?: Maybe<Scalars['Int']>;
+  waiting: Scalars['Int'];
 };
 
 export type QueueJobFilterDeleteInput = {
@@ -1850,18 +1606,73 @@ export type QueueJobFilterDeletePayload = {
   isDeleted: Scalars['Boolean'];
 };
 
-export type JobFilterUpdateInput = {
+export type QueueJobFilterInput = {
   queueId: Scalars['ID'];
-  filterId: Scalars['ID'];
-  name?: Maybe<Scalars['String']>;
-  status?: Maybe<JobStatus>;
-  expression: Scalars['String'];
+  fieldId: Scalars['ID'];
 };
 
-export type JobFilterUpdatePayload = {
-  __typename?: 'JobFilterUpdatePayload';
-  filter?: Maybe<JobFilter>;
-  isUpdated: Scalars['Boolean'];
+export type QueueJobSchemaDeleteInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['String'];
+};
+
+export type QueueJobSchemaDeletePayload = {
+  __typename?: 'QueueJobSchemaDeletePayload';
+  jobName: Scalars['String'];
+  queue: Queue;
+};
+
+export type QueueJobSchemaInput = {
+  queueId: Scalars['ID'];
+  jobName: Scalars['String'];
+};
+
+export type QueueJobUpdatesFilterInput = {
+  queueId: Scalars['ID'];
+  /** The job names to filter for */
+  names?: Maybe<Array<Scalars['String']>>;
+  /** Only return updates for jobs with these states */
+  states?: Maybe<Array<Maybe<JobStatus>>>;
+};
+
+export type QueueJobsByIdInput = {
+  ids: Array<Scalars['ID']>;
+};
+
+export type QueueJobsInput = {
+  offset?: Maybe<Scalars['Int']>;
+  limit?: Maybe<Scalars['Int']>;
+  status?: Maybe<JobStatus>;
+  sortOrder?: Maybe<SortOrderEnum>;
+};
+
+export type QueuePausePayload = {
+  __typename?: 'QueuePausePayload';
+  queue: Queue;
+  isPaused: Scalars['Boolean'];
+};
+
+export type QueueRemoveRepeatablePayload = {
+  __typename?: 'QueueRemoveRepeatablePayload';
+  queue: Queue;
+};
+
+export type QueueResumePayload = {
+  __typename?: 'QueueResumePayload';
+  queue: Queue;
+  isPaused: Scalars['Boolean'];
+};
+
+/** Options for retrieving queue rule alerts */
+export type QueueRuleAlertsInput = {
+  /** Consider alerts starting on or after this date */
+  startDate?: Maybe<Scalars['Date']>;
+  /** Consider alerts ending on or before this date */
+  endDate?: Maybe<Scalars['Date']>;
+  /** The sort order of the results. Alerts are sorted by creation date. */
+  sortOrder?: Maybe<SortOrderEnum>;
+  /** The maximum number of alerts to return */
+  limit: Scalars['Int'];
 };
 
 export type QueueStatsDeleteInput = {
@@ -1878,40 +1689,151 @@ export type QueueStatsDeletePayload = {
   queue: Queue;
 };
 
-export type RuleAlertDeleteInput = {
+export type QueueUnregisterPayload = {
+  __typename?: 'QueueUnregisterPayload';
+  host: QueueHost;
+  queue: Queue;
+  isRemoved: Scalars['Boolean'];
+};
+
+export type QueueWorker = {
+  __typename?: 'QueueWorker';
+  id?: Maybe<Scalars['String']>;
+  /** address of the client */
+  addr: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
+  /** total duration of the connection (in seconds) */
+  age: Scalars['Int'];
+  /** Idle time of the connection (in seconds) */
+  idle: Scalars['Int'];
+  /** Date/time when the connection started */
+  started?: Maybe<Scalars['DateTime']>;
+  /** the current database number */
+  db: Scalars['Int'];
+  role?: Maybe<Scalars['String']>;
+  sub: Scalars['Int'];
+  multi: Scalars['Int'];
+  qbuf: Scalars['Int'];
+  qbufFree: Scalars['Int'];
+  obl: Scalars['Int'];
+  oll: Scalars['Int'];
+  omem: Scalars['Int'];
+};
+
+export type RedisInfo = {
+  __typename?: 'RedisInfo';
+  redis_version: Scalars['String'];
+  tcp_port?: Maybe<Scalars['Int']>;
+  uptime_in_seconds: Scalars['Int'];
+  uptime_in_days: Scalars['Int'];
+  connected_clients: Scalars['Int'];
+  blocked_clients: Scalars['Int'];
+  total_system_memory: Scalars['Int'];
+  used_memory: Scalars['Int'];
+  used_memory_peak: Scalars['Int'];
+  used_memory_lua: Scalars['Int'];
+  used_cpu_sys: Scalars['Float'];
+  maxmemory: Scalars['Int'];
+  number_of_cached_scripts: Scalars['Int'];
+  instantaneous_ops_per_sec: Scalars['Int'];
+  mem_fragmentation_ratio?: Maybe<Scalars['Float']>;
+  role?: Maybe<Scalars['String']>;
+};
+
+export type RegisterQueueInput = {
+  hostId: Scalars['ID'];
+  prefix?: Maybe<Scalars['String']>;
+  /** the queue names */
+  name: Scalars['String'];
+  checkExists?: Maybe<Scalars['Boolean']>;
+  trackMetrics?: Maybe<Scalars['Boolean']>;
+};
+
+export type RepeatableJob = {
+  __typename?: 'RepeatableJob';
+  key: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
+  id?: Maybe<Scalars['String']>;
+  /** Date when the repeat job should stop repeating (only with cron). */
+  endDate?: Maybe<Scalars['Date']>;
+  /** The timezone for the job */
+  tz?: Maybe<Scalars['String']>;
+  cron?: Maybe<Scalars['String']>;
+  /** Human readable description of the cron expression */
+  descr?: Maybe<Scalars['String']>;
+  next?: Maybe<Scalars['Date']>;
+};
+
+export type RepeatableJobRemoveByKeyInput = {
+  queueId: Scalars['ID'];
+  key: Scalars['String'];
+};
+
+export type RepeatableJobRemoveByKeyPayload = {
+  __typename?: 'RepeatableJobRemoveByKeyPayload';
+  key: Scalars['String'];
+  queue?: Maybe<Queue>;
+};
+
+export type RepeatableJobRemoveOptions = {
+  tz?: Maybe<Scalars['String']>;
+  endDate?: Maybe<Scalars['Date']>;
+  cron?: Maybe<Scalars['String']>;
+  every?: Maybe<Scalars['String']>;
+};
+
+export type RepeatableJobsInput = {
+  offset?: Maybe<Scalars['Int']>;
+  limit?: Maybe<Scalars['Int']>;
+  order?: Maybe<SortOrderEnum>;
+};
+
+export type Rule = {
+  __typename?: 'Rule';
+  /** The rule id */
+  id: Scalars['ID'];
+  /** The names of the rule */
+  name: Scalars['String'];
+  /** A helpful description of the rule */
+  description?: Maybe<Scalars['String']>;
+  /** The rule creation timestamp */
+  createdAt: Scalars['Date'];
+  /** The timestamp of last update */
+  updatedAt: Scalars['Date'];
+  /** The current rule states */
+  state?: Maybe<RuleState>;
+  severity?: Maybe<Severity>;
+  /** Is this rule active or not */
+  isActive: Scalars['Boolean'];
+  metric: RuleMetric;
+  condition: RuleCondition;
+  /** Optional text for message when an alert is raised. Markdown and handlebars supported */
+  message?: Maybe<Scalars['String']>;
+  /** channels for alert notifications. */
+  channels: Array<Scalars['String']>;
+  /** Optional data passed on to alerts */
+  payload?: Maybe<Scalars['JSONObject']>;
+  /** Options controlling the generation of events */
+  options?: Maybe<RuleAlertOptions>;
+  alerts: Array<Maybe<RuleAlert>>;
+  /** The total number of alerts raised for this rule */
+  alertCount: Scalars['Int'];
+};
+
+
+export type RuleAlertsArgs = {
+  input: RuleAlertsInput;
+};
+
+export type RuleActivateInput = {
   queueId: Scalars['ID'];
   ruleId: Scalars['ID'];
-  alertId: Scalars['ID'];
 };
 
-export type RuleAlertDeletePayload = {
-  __typename?: 'RuleAlertDeletePayload';
-  ruleId: Scalars['ID'];
-  rule?: Maybe<Rule>;
-};
-
-export type RuleAlertsClearInput = {
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-};
-
-export type RuleAlertsClearPayload = {
-  __typename?: 'RuleAlertsClearPayload';
-  /** The count of deleted alerts */
-  deletedItems: Scalars['Int'];
+export type RuleActivatePayload = {
+  __typename?: 'RuleActivatePayload';
+  isActive: Scalars['Boolean'];
   rule: Rule;
-};
-
-export type RuleDeleteInput = {
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-};
-
-export type RuleDeletePayload = {
-  __typename?: 'RuleDeletePayload';
-  ruleId: Scalars['ID'];
-  queueId: Scalars['ID'];
-  isDeleted: Scalars['Boolean'];
 };
 
 export type RuleAddInput = {
@@ -1938,9 +1860,75 @@ export type RuleAddInput = {
   options?: Maybe<RuleAlertOptionsInput>;
 };
 
-export type RuleMetricInput = {
-  type: Scalars['String'];
-  options?: Maybe<Scalars['JSONObject']>;
+export type RuleAddPayload = {
+  __typename?: 'RuleAddPayload';
+  rule: Rule;
+  queue: Queue;
+};
+
+/** An event recording the occurrence of an rule violation or reset */
+export type RuleAlert = {
+  __typename?: 'RuleAlert';
+  id: Scalars['ID'];
+  /** The event that raised this alert */
+  event: Scalars['String'];
+  /** Timestamp of when this alert was raised */
+  start: Scalars['DateTime'];
+  /** Timestamp of when this alert was reset */
+  end?: Maybe<Scalars['DateTime']>;
+  /** The value of the alert threshold set in the rule’s alert conditions. */
+  threshold: Scalars['Float'];
+  /** The metric value that crossed the threshold. */
+  value: Scalars['Float'];
+  /** The metric value that reset the threshold. */
+  resetValue?: Maybe<Scalars['Float']>;
+  /** State that triggered alert */
+  state?: Maybe<Scalars['JSONObject']>;
+  /** The number of violations before this alert was generated */
+  violations: Scalars['Int'];
+  /** Optional rule specific data. Corresponds to Rule.payload */
+  payload?: Maybe<Scalars['JSONObject']>;
+  /** Error level */
+  errorLevel?: Maybe<ErrorLevel>;
+  /** A categorization of the severity of the rule type */
+  severity?: Maybe<Severity>;
+};
+
+export type RuleAlertDeleteInput = {
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+  alertId: Scalars['ID'];
+};
+
+export type RuleAlertDeletePayload = {
+  __typename?: 'RuleAlertDeletePayload';
+  ruleId: Scalars['ID'];
+  rule?: Maybe<Rule>;
+};
+
+/** Options for raising alerts for a Rule */
+export type RuleAlertOptions = {
+  __typename?: 'RuleAlertOptions';
+  /** a timeout after startup (in ms) during which no alerts are raised, irrespective of the truthiness of the rule condition. */
+  warmupWindow?: Maybe<Scalars['Duration']>;
+  /** The minimum number of violations before an alert can be raised */
+  minViolations?: Maybe<Scalars['Int']>;
+  /**
+   * The max number of alerts to receive per event trigger in case the condition is met.
+   *  In this case the "event" is a single period between the rule VIOLATION and RESET states.
+   */
+  maxAlertsPerEvent?: Maybe<Scalars['Int']>;
+  /**
+   * Duration (ms) for which a metric is anomalous before triggering a violation.
+   * After a rule violation is encountered, no alerts are dispatched until this period has passed. This is useful for events which are normally transient by may periodically persist longer than usual, or for not sending notifications out too quickly.
+   */
+  triggerWindow?: Maybe<Scalars['Duration']>;
+  /** How long an anomalous metric must be normal before resetting an alert's states to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
+  recoveryWindow?: Maybe<Scalars['Duration']>;
+  /** If specified, the minimum time between alerts for the same incident */
+  renotifyInterval?: Maybe<Scalars['Duration']>;
+  /** Raise an alert after an event trigger when the situation returns to normal */
+  alertOnReset?: Maybe<Scalars['Boolean']>;
 };
 
 export type RuleAlertOptionsInput = {
@@ -1966,21 +1954,30 @@ export type RuleAlertOptionsInput = {
   alertOnReset?: Maybe<Scalars['Boolean']>;
 };
 
-export type RuleAddPayload = {
-  __typename?: 'RuleAddPayload';
-  rule: Rule;
-  queue: Queue;
-};
-
-export type RuleActivateInput = {
+export type RuleAlertsClearInput = {
   queueId: Scalars['ID'];
   ruleId: Scalars['ID'];
 };
 
-export type RuleActivatePayload = {
-  __typename?: 'RuleActivatePayload';
-  isActive: Scalars['Boolean'];
+export type RuleAlertsClearPayload = {
+  __typename?: 'RuleAlertsClearPayload';
+  /** The count of deleted alerts */
+  deletedItems: Scalars['Int'];
   rule: Rule;
+};
+
+export type RuleAlertsInput = {
+  start?: Maybe<Scalars['Int']>;
+  end?: Maybe<Scalars['Int']>;
+  sortOrder?: Maybe<SortOrderEnum>;
+};
+
+/** Describes a queue condition were monitoring. */
+export type RuleCondition = {
+  /** The value needed to trigger an error notification */
+  errorThreshold: Scalars['Float'];
+  /** The value needed to trigger an warning notification */
+  warningThreshold?: Maybe<Scalars['Float']>;
 };
 
 export type RuleDeactivateInput = {
@@ -1992,6 +1989,207 @@ export type RuleDeactivatePayload = {
   __typename?: 'RuleDeactivatePayload';
   isActive: Scalars['Boolean'];
   rule: Rule;
+};
+
+export type RuleDeleteInput = {
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+};
+
+export type RuleDeletePayload = {
+  __typename?: 'RuleDeletePayload';
+  ruleId: Scalars['ID'];
+  queueId: Scalars['ID'];
+  isDeleted: Scalars['Boolean'];
+};
+
+export type RuleMetric = {
+  __typename?: 'RuleMetric';
+  type: Scalars['String'];
+  options?: Maybe<Scalars['JSONObject']>;
+};
+
+export type RuleMetricInput = {
+  type: Scalars['String'];
+  options?: Maybe<Scalars['JSONObject']>;
+};
+
+export enum RuleOperator {
+  Gt = 'GT',
+  Gte = 'GTE',
+  Lt = 'LT',
+  Lte = 'LTE',
+  Eq = 'EQ',
+  Ne = 'NE'
+}
+
+export enum RuleState {
+  Warning = 'WARNING',
+  Normal = 'NORMAL',
+  Error = 'ERROR',
+  Muted = 'MUTED'
+}
+
+export enum Severity {
+  Warning = 'WARNING',
+  Critical = 'CRITICAL',
+  Error = 'ERROR',
+  Info = 'INFO'
+}
+
+/** A channel which sends notifications through slack */
+export type SlackNotificationChannel = NotificationChannel & {
+  __typename?: 'SlackNotificationChannel';
+  id: Scalars['ID'];
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Timestamp of channel creation */
+  createdAt?: Maybe<Scalars['Date']>;
+  /** Timestamp of last channel update */
+  updatedAt?: Maybe<Scalars['Date']>;
+  /** The slack webhook to post messages to */
+  webhook: Scalars['String'];
+  /** The slack webhook to post messages to */
+  channel?: Maybe<Scalars['String']>;
+  /** A valid slack auth token. Not needed if a webhook is specified */
+  token?: Maybe<Scalars['String']>;
+};
+
+export type SlackNotificationChannelInput = {
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** The slack webhook to post messages to */
+  webhook: Scalars['String'];
+  /** The slack webhook to post messages to */
+  channel?: Maybe<Scalars['String']>;
+  /** A valid slack auth token. Not needed if a webhook is specified */
+  token?: Maybe<Scalars['String']>;
+  /** the host to add the channel to */
+  hostId: Scalars['ID'];
+};
+
+export enum SortOrderEnum {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
+export enum StatsGranularity {
+  Day = 'day',
+  Hour = 'hour',
+  Minute = 'minute',
+  Month = 'month',
+  Week = 'week'
+}
+
+/** Queue stats filter to getting latest snapshot. */
+export type StatsLatestInput = {
+  /** An optional job name to filter on */
+  jobName?: Maybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: Maybe<StatsMetricType>;
+  /** Stats snapshot granularity */
+  granularity?: Maybe<StatsGranularity>;
+};
+
+export enum StatsMetricType {
+  Latency = 'Latency',
+  Wait = 'Wait'
+}
+
+/** Queue stats filter. */
+export type StatsQueryInput = {
+  /** An optional job name to filter on */
+  jobName?: Maybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: Maybe<StatsMetricType>;
+  /** Stats snapshot granularity */
+  granularity: StatsGranularity;
+  /** An expression specifying the range to query e.g. yesterday, last_7days */
+  range: Scalars['String'];
+};
+
+/** Queue stats rates filter. */
+export type StatsRateQueryInput = {
+  /** An optional job name to filter on */
+  jobName?: Maybe<Scalars['String']>;
+  /** Stats snapshot granularity */
+  granularity: StatsGranularity;
+  /** An expression specifying the range to query e.g. yesterday, last_7days */
+  range: Scalars['String'];
+};
+
+/** Queue job stats snapshot. */
+export type StatsSnapshot = JobStatsInterface & {
+  __typename?: 'StatsSnapshot';
+  /** The sample size */
+  count: Scalars['Int'];
+  /** The number of failed jobs in the sample interval */
+  failed: Scalars['Int'];
+  /** The number of completed jobs in the sample interval */
+  completed: Scalars['Int'];
+  /** The start of the interval */
+  startTime: Scalars['Date'];
+  /** The end of the interval */
+  endTime: Scalars['Date'];
+  /** The average of values during the period */
+  mean: Scalars['Float'];
+  /** The standard deviation of the dataset over the sample period */
+  stddev: Scalars['Float'];
+  /** The minimum value in the data set */
+  min: Scalars['Float'];
+  /** The maximum value in the data set */
+  max: Scalars['Float'];
+  /** The median value of the data set */
+  median: Scalars['Float'];
+  /** The 25th percentile */
+  p90: Scalars['Float'];
+  /** The 95th percentile */
+  p95: Scalars['Float'];
+  /** The 99th percentile */
+  p99: Scalars['Float'];
+  /** The 99.5th percentile */
+  p995: Scalars['Float'];
+  /** The average rate of events over the entire lifetime of measurement (e.g., the total number of requests handled, divided by the number of seconds the process has been running), it doesn’t offer a sense of recency. */
+  meanRate: Scalars['Float'];
+  /** One minute exponentially weighted moving average */
+  m1Rate: Scalars['Float'];
+  /** Five minute exponentially weighted moving average */
+  m5Rate: Scalars['Float'];
+  /** Fifteen minute exponentially weighted moving average */
+  m15Rate: Scalars['Float'];
+};
+
+export type StatsSpanInput = {
+  /** The host/queue to query */
+  id: Scalars['ID'];
+  jobName?: Maybe<Scalars['String']>;
+  granularity?: Maybe<StatsGranularity>;
+};
+
+export type StatsSpanPayload = {
+  __typename?: 'StatsSpanPayload';
+  start: Scalars['Date'];
+  end: Scalars['Date'];
+};
+
+/** Filtering options for stats subscriptions. */
+export type StatsUpdatedSubscriptionFilter = {
+  /** The id of the queue or host to subscribe to */
+  id: Scalars['ID'];
+  /** An optional job name for filtering */
+  jobName?: Maybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: Maybe<StatsMetricType>;
+  /** Data granularity */
+  granularity?: Maybe<StatsGranularity>;
 };
 
 export type Subscription = {
@@ -2165,259 +2363,6 @@ export type SubscriptionOnRuleAlertArgs = {
   ruleIds?: Maybe<Array<Scalars['String']>>;
 };
 
-export type OnNotificationChannelCreatedPayload = {
-  __typename?: 'OnNotificationChannelCreatedPayload';
-  hostId: Scalars['String'];
-  channelId: Scalars['String'];
-  channelName: Scalars['String'];
-  channelType: Scalars['String'];
-};
-
-export type OnNotificationChannelDeletedPayload = {
-  __typename?: 'OnNotificationChannelDeletedPayload';
-  hostId: Scalars['String'];
-  channelId: Scalars['String'];
-  channelName: Scalars['String'];
-  channelType: Scalars['String'];
-};
-
-/** Filtering options for stats subscriptions. */
-export type StatsUpdatedSubscriptionFilter = {
-  /** The id of the queue or host to subscribe to */
-  id: Scalars['ID'];
-  /** An optional job name for filtering */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
-  /** Data granularity */
-  granularity?: Maybe<StatsGranularity>;
-};
-
-export type OnJobAddedPayload = {
-  __typename?: 'OnJobAddedPayload';
-  jobId: Scalars['String'];
-  jobName: Scalars['String'];
-  queueId: Scalars['String'];
-  queueName: Scalars['String'];
-};
-
-/** Holds the changes to the state of a job */
-export type OnJobUpdatedPayload = {
-  __typename?: 'OnJobUpdatedPayload';
-  jobId: Scalars['String'];
-  /** The event which triggered the update */
-  event: Scalars['String'];
-  timestamp: Scalars['Date'];
-  /** updates in job state since the last event */
-  delta?: Maybe<Scalars['JSONObject']>;
-  job?: Maybe<Job>;
-  /** The job's queue */
-  queue: Queue;
-};
-
-export type OnJobProgressPayload = {
-  __typename?: 'OnJobProgressPayload';
-  job: Job;
-  queue: Queue;
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-  progress?: Maybe<Scalars['JobProgress']>;
-};
-
-export type OnJobRemovedPayload = {
-  __typename?: 'OnJobRemovedPayload';
-  queue: Queue;
-  jobId: Scalars['String'];
-};
-
-export type OnJobLogAddedPayload = {
-  __typename?: 'OnJobLogAddedPayload';
-  job: Job;
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-  /** The rows added to the job log */
-  rows: Array<Scalars['String']>;
-  /** The number of log lines after addition */
-  count: Scalars['Int'];
-};
-
-export type OnJobStateChangePayload = {
-  __typename?: 'OnJobStateChangePayload';
-  job: Job;
-  queue: Queue;
-  jobId: Scalars['String'];
-};
-
-export type OnJobDelayedPayload = {
-  __typename?: 'OnJobDelayedPayload';
-  job?: Maybe<Job>;
-  queue: Queue;
-  jobId: Scalars['String'];
-  queueName: Scalars['String'];
-  delay?: Maybe<Scalars['Int']>;
-};
-
-export type OnQueuePausedPayload = {
-  __typename?: 'OnQueuePausedPayload';
-  queueId: Scalars['String'];
-};
-
-export type OnQueueResumedPayload = {
-  __typename?: 'OnQueueResumedPayload';
-  queueId: Scalars['String'];
-};
-
-export type OnQueueDeletedPayload = {
-  __typename?: 'OnQueueDeletedPayload';
-  /** The id of the deleted queue */
-  queueId: Scalars['String'];
-  /** The name of the deleted queue */
-  queueName: Scalars['String'];
-  /** The queue host id */
-  hostId: Scalars['String'];
-  /** The number of keys deleted */
-  deletedKeys: Scalars['Int'];
-};
-
-/** Returns the list of added and removed workers related to a queue */
-export type OnQueueWorkersChangedPayload = {
-  __typename?: 'OnQueueWorkersChangedPayload';
-  queueId: Scalars['String'];
-  added: Array<QueueWorker>;
-  removed: Array<QueueWorker>;
-};
-
-export type OnQueueStateChangedPayload = {
-  __typename?: 'OnQueueStateChangedPayload';
-  queueId: Scalars['String'];
-  queueName: Scalars['String'];
-  state: Scalars['String'];
-};
-
-export type OnQueueJobCountsChangedPayload = {
-  __typename?: 'OnQueueJobCountsChangedPayload';
-  queueId: Scalars['String'];
-  delta?: Maybe<QueueJobCountDelta>;
-};
-
-export type QueueJobCountDelta = {
-  __typename?: 'QueueJobCountDelta';
-  completed?: Maybe<Scalars['Int']>;
-  failed?: Maybe<Scalars['Int']>;
-  delayed?: Maybe<Scalars['Int']>;
-  active?: Maybe<Scalars['Int']>;
-  waiting: Scalars['Int'];
-};
-
-export type QueueJobUpdatesFilterInput = {
-  queueId: Scalars['ID'];
-  /** The job names to filter for */
-  names?: Maybe<Array<Scalars['String']>>;
-  /** Only return updates for jobs with these states */
-  states?: Maybe<Array<Maybe<JobStatus>>>;
-};
-
-export type OnQueueJobUpdatesPayload = {
-  __typename?: 'OnQueueJobUpdatesPayload';
-  queueId: Scalars['String'];
-  changes: Array<JobUpdateDelta>;
-};
-
-export type JobUpdateDelta = {
-  __typename?: 'JobUpdateDelta';
-  id: Scalars['String'];
-  delta: Scalars['JSONObject'];
-};
-
-export type OnQueueRegisteredPayload = {
-  __typename?: 'OnQueueRegisteredPayload';
-  hostId: Scalars['String'];
-  queueId: Scalars['String'];
-  queueName: Scalars['String'];
-  prefix: Scalars['String'];
-};
-
-export type OnQueueUnregisteredPayload = {
-  __typename?: 'OnQueueUnregisteredPayload';
-  hostId: Scalars['String'];
-  queueName: Scalars['String'];
-  queueId: Scalars['String'];
-  prefix: Scalars['String'];
-};
-
-export type OnQueueWorkersCountPayload = {
-  __typename?: 'OnQueueWorkersCountPayload';
-  queueId: Scalars['String'];
-  workersCount: Scalars['Int'];
-};
-
-export type OnRuleAlertPayload = {
-  __typename?: 'OnRuleAlertPayload';
-  alert: RuleAlert;
-};
-
-/** A condition based on a simple threshold condition */
-export type ChangeCondition = RuleCondition & {
-  __typename?: 'ChangeCondition';
-  /** The value needed to trigger an error notification */
-  errorThreshold: Scalars['Float'];
-  /** The value needed to trigger an warning notification */
-  warningThreshold?: Maybe<Scalars['Float']>;
-  /** The comparison operator */
-  operator?: Maybe<RuleOperator>;
-  /** The sliding window for metric measurement */
-  timeWindow?: Maybe<Scalars['Duration']>;
-  /** Lookback period (ms). How far back are we going to compare eg 1 hour means we're comparing now vs 1 hour ago */
-  timeShift?: Maybe<Scalars['Duration']>;
-  changeType?: Maybe<ChangeType>;
-  aggregationType?: Maybe<ChangeAggregation>;
-};
-
-export enum RuleOperator {
-  Gt = 'GT',
-  Gte = 'GTE',
-  Lt = 'LT',
-  Lte = 'LTE',
-  Eq = 'EQ',
-  Ne = 'NE'
-}
-
-export enum ChangeType {
-  Value = 'VALUE',
-  Pct = 'PCT'
-}
-
-export enum ChangeAggregation {
-  Avg = 'AVG',
-  Max = 'MAX',
-  Min = 'MIN',
-  Sum = 'SUM',
-  P90 = 'P90',
-  P95 = 'P95',
-  P99 = 'P99'
-}
-
-/** A condition based on deviations from a rolling average */
-export type PeakCondition = RuleCondition & {
-  __typename?: 'PeakCondition';
-  /** Standard deviations at which to trigger an error notification. */
-  errorThreshold: Scalars['Float'];
-  /** Standard deviations at which to trigger an warning notification. */
-  warningThreshold?: Maybe<Scalars['Float']>;
-  /** Signal if peak is above the threshold, below the threshold or either */
-  direction?: Maybe<PeakSignalDirection>;
-  /** the influence (between 0 and 1) of new signals on the mean and standard deviation where 1 is normal influence, 0.5 is half */
-  influence?: Maybe<Scalars['Float']>;
-  /** The lag of the moving window (in milliseconds).  For example, a lag of 5000 will use the last 5 seconds of observationsto smooth the data. */
-  lag?: Maybe<Scalars['Duration']>;
-};
-
-export enum PeakSignalDirection {
-  Above = 'ABOVE',
-  Below = 'BELOW',
-  Both = 'BOTH'
-}
-
 /** A condition based on a simple threshold condition */
 export type ThresholdCondition = RuleCondition & {
   __typename?: 'ThresholdCondition';
@@ -2427,6 +2372,71 @@ export type ThresholdCondition = RuleCondition & {
   warningThreshold?: Maybe<Scalars['Float']>;
   /** The comparison operator */
   operator?: Maybe<RuleOperator>;
+};
+
+export type ValidateJobOptionsPayload = {
+  __typename?: 'ValidateJobOptionsPayload';
+  isValid: Scalars['Boolean'];
+  errors: Array<Scalars['String']>;
+};
+
+/** A channel that posts notifications to a webhook */
+export type WebhookNotificationChannel = NotificationChannel & {
+  __typename?: 'WebhookNotificationChannel';
+  id: Scalars['ID'];
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Timestamp of channel creation */
+  createdAt?: Maybe<Scalars['Date']>;
+  /** Timestamp of last channel update */
+  updatedAt?: Maybe<Scalars['Date']>;
+  /** Url to send data to */
+  url: Scalars['String'];
+  /** The HTTP method to use */
+  method?: Maybe<HttpMethodEnum>;
+  /** Optional request headers */
+  headers?: Maybe<Scalars['JSONObject']>;
+  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
+  timeout?: Maybe<Scalars['Duration']>;
+  /** The number of times to retry the client */
+  retry?: Maybe<Scalars['Int']>;
+  /** Defines if redirect responses should be followed automatically. */
+  followRedirect?: Maybe<Scalars['Boolean']>;
+  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
+  allowGetBody?: Maybe<Scalars['Boolean']>;
+  /** Optional success http status codes. Defaults to http codes 200 - 206 */
+  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
+};
+
+export type WebhookNotificationChannelInput = {
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Url to send data to */
+  url: Scalars['String'];
+  /** The HTTP method to use */
+  method?: Maybe<HttpMethodEnum>;
+  /** Optional request headers */
+  headers?: Maybe<Scalars['JSONObject']>;
+  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
+  timeout?: Maybe<Scalars['Duration']>;
+  /** The number of times to retry the client */
+  retry?: Maybe<Scalars['Int']>;
+  /** Defines if redirect responses should be followed automatically. */
+  followRedirect?: Maybe<Scalars['Boolean']>;
+  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
+  allowGetBody?: Maybe<Scalars['Boolean']>;
+  /** Optional success http status codes. Defaults to http codes 200 - 206 */
+  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
+  /** the host to add the channel to */
+  hostId: Scalars['ID'];
 };
 
 export type RedisStatsFragment = { __typename?: 'RedisInfo', redis_version: string, uptime_in_seconds: number, uptime_in_days: number, connected_clients: number, blocked_clients: number, total_system_memory: number, used_memory: number, used_memory_peak: number, used_memory_lua: number, used_cpu_sys: number, maxmemory: number, number_of_cached_scripts: number, instantaneous_ops_per_sec: number, mem_fragmentation_ratio?: Maybe<number>, role?: Maybe<string> };
@@ -3054,16 +3064,13 @@ export type QueueStatsPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type QueueStatsPageQueryQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string, name: string, hostId: string, prefix: string, isPaused: boolean, jobNames: Array<string>, workerCount: number, ruleAlertCount: number, waitTimeAvg: number, throughput: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, errorRate: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, stats: Array<(
+export type QueueStatsPageQueryQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', id: string, name: string, hostId: string, prefix: string, isPaused: boolean, jobNames: Array<string>, workerCount: number, throughput: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, errorRate: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, stats: Array<(
       { __typename?: 'StatsSnapshot' }
       & StatsSnapshotFragment
     )>, statsAggregate?: Maybe<(
       { __typename?: 'StatsSnapshot' }
       & StatsSnapshotFragment
-    )> }
-    & JobCountsFragment
-  )> };
+    )> }> };
 
 export const RedisStatsFragmentDoc: DocumentNode<RedisStatsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RedisStats"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RedisInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"redis_version"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_days"}},{"kind":"Field","name":{"kind":"Name","value":"connected_clients"}},{"kind":"Field","name":{"kind":"Name","value":"blocked_clients"}},{"kind":"Field","name":{"kind":"Name","value":"total_system_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory_peak"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory_lua"}},{"kind":"Field","name":{"kind":"Name","value":"used_cpu_sys"}},{"kind":"Field","name":{"kind":"Name","value":"maxmemory"}},{"kind":"Field","name":{"kind":"Name","value":"number_of_cached_scripts"}},{"kind":"Field","name":{"kind":"Name","value":"instantaneous_ops_per_sec"}},{"kind":"Field","name":{"kind":"Name","value":"mem_fragmentation_ratio"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]};
 export const NotificationChannelFragmentDoc: DocumentNode<NotificationChannelFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"NotificationChannel"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MailNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recipients"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SlackNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"webhook"}},{"kind":"Field","name":{"kind":"Name","value":"channel"}},{"kind":"Field","name":{"kind":"Name","value":"token"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WebhookNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"headers"}},{"kind":"Field","name":{"kind":"Name","value":"timeout"}},{"kind":"Field","name":{"kind":"Name","value":"retry"}},{"kind":"Field","name":{"kind":"Name","value":"followRedirect"}},{"kind":"Field","name":{"kind":"Name","value":"httpSuccessCodes"}}]}}]}}]};
@@ -3138,4 +3145,4 @@ export const HostStatsUpdatedDocument: DocumentNode<HostStatsUpdatedSubscription
 export const DashboardPageDocument: DocumentNode<DashboardPageQuery, DashboardPageQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DashboardPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"redis_version"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"connected_clients"}},{"kind":"Field","name":{"kind":"Name","value":"blocked_clients"}},{"kind":"Field","name":{"kind":"Name","value":"total_system_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory"}},{"kind":"Field","name":{"kind":"Name","value":"maxmemory"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobCounts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"active"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"paused"}},{"kind":"Field","name":{"kind":"Name","value":"completed"}},{"kind":"Field","name":{"kind":"Name","value":"delayed"}},{"kind":"Field","name":{"kind":"Name","value":"waiting"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queueCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
 export const HostPageQueryDocument: DocumentNode<HostPageQueryQuery, HostPageQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HostPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"HostQueuesFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"throughput"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"errorRate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ruleAlertCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"statsAggregate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"waitTimeAvg"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"500"}}]}]}}]}}]}},...RedisStatsFragmentDoc.definitions,...JobCountsFragmentDoc.definitions,...StatsSnapshotFragmentDoc.definitions]};
 export const QueueSchemaQueryDocument: DocumentNode<QueueSchemaQueryQuery, QueueSchemaQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueueSchemaQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"jobSchemas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}},{"kind":"Field","name":{"kind":"Name","value":"schema"}},{"kind":"Field","name":{"kind":"Name","value":"defaultOpts"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobCountsFragmentDoc.definitions]};
-export const QueueStatsPageQueryDocument: DocumentNode<QueueStatsPageQueryQuery, QueueStatsPageQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueueStatsPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsGranularity"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"hostId"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"throughput"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"errorRate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ruleAlertCount"}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"statsAggregate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"waitTimeAvg"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"500"}}]}]}}]}},...JobCountsFragmentDoc.definitions,...StatsSnapshotFragmentDoc.definitions]};
+export const QueueStatsPageQueryDocument: DocumentNode<QueueStatsPageQueryQuery, QueueStatsPageQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueueStatsPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsGranularity"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"hostId"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"throughput"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"errorRate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"statsAggregate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};

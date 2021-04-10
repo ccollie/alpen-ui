@@ -1,15 +1,24 @@
+import { StatsGranularity } from '@/api';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select, Space } from 'antd';
-import ms from 'ms';
-import React, { useState } from 'react';
-import { endOf, startOf } from '../../../lib/dates';
-import DatePicker from '../../DatePicker';
-import { RangePickerValue } from '../../RangePicker';
-import addMilliseconds from 'date-fns/addMilliseconds';
-const { RangePicker } = DatePicker;
-const { Option } = Select;
 // make this part of a store
 import locale from 'antd/es/date-picker/locale/en_US';
+import addMilliseconds from 'date-fns/addMilliseconds';
+import ms from 'ms';
+import React, { useEffect, useState } from 'react';
+import {
+  endOf,
+  ONE_DAY,
+  ONE_HOUR,
+  ONE_MONTH,
+  ONE_WEEK,
+  startOf,
+} from '@/lib/dates';
+import DatePicker from '../../DatePicker';
+import { RangePickerValue } from '../../RangePicker';
+
+const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 export type RangeType = 'hour' | 'day' | 'week' | 'month' | 'custom';
 
@@ -17,7 +26,11 @@ export interface TimeRangeToolbarOpts {
   rangeType?: RangeType;
   range?: RangePickerValue;
   minDate?: Date;
-  onRangeChange: (type: RangeType, dates: RangePickerValue) => void;
+  onRangeChange: (
+    type: RangeType,
+    dates: RangePickerValue,
+    granularity: StatsGranularity,
+  ) => void;
 }
 
 const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
@@ -25,13 +38,46 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
     (props.rangeType ?? 'hour') as RangeType,
   );
   const [range, setRange] = useState<RangePickerValue>([null, null]);
-  const [dateValue, setDateValue] = useState<Date | null>(new Date());
+  const [dateValue, setDateValue] = useState<Date | undefined>(new Date());
   const [nextDisabled, setNextDisabled] = useState<boolean>(false);
   const [prevDisabled, setPrevDisabled] = useState<boolean>(false);
   const [custom, setCustom] = useState(false);
 
+  function getGranularity(): StatsGranularity {
+    let type = rangeType;
+    if (rangeType === 'custom') {
+      const [start, end] = range || [null, null];
+      if (start && end) {
+        const diff = Math.abs(end.getTime() - start.getTime());
+        if (diff >= ONE_MONTH) {
+          type = 'month';
+        } else if (diff >= ONE_WEEK) {
+          type = 'week';
+        } else if (diff >= ONE_DAY) {
+          type = 'day';
+        } else if (diff >= ONE_HOUR) {
+          type = 'hour';
+        } else {
+          type = 'hour';
+        }
+      }
+    }
+    switch (type) {
+      case 'month':
+        return StatsGranularity.Day;
+      case 'week':
+        return StatsGranularity.Hour;
+      case 'day':
+        return StatsGranularity.Hour;
+      case 'hour':
+        return StatsGranularity.Minute;
+    }
+    return StatsGranularity.Minute;
+  }
+
   function emitChange() {
-    props.onRangeChange && props.onRangeChange(rangeType, range);
+    const granularity = getGranularity();
+    props.onRangeChange?.(rangeType, range, granularity);
   }
 
   function _setRange(start: Date | null, end: Date | null) {
@@ -41,7 +87,7 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
     }
     setNextDisabled(!!end && end > new Date());
     setRange([start, end]);
-    setDateValue(start);
+    setDateValue(start ?? undefined);
     if (start !== oldStart || end !== oldEnd) {
       emitChange();
     }
@@ -57,23 +103,24 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
   }
 
   function handleDateChange(value: Date | null, dateString: string) {
-    setDateValue(value);
     if (value) {
       value = startOf(value, rangeType);
       setDateValue(value);
       _setRange(value, endOf(value, rangeType));
     } else {
       _setRange(null, null);
+      setDateValue(value ?? undefined);
     }
   }
 
   function updateRangeType(type: RangeType) {
     setRangeType(type);
-    setCustom(false);
     const pivot = getPivotDate();
     const start = startOf(pivot, rangeType);
     const end = endOf(pivot, rangeType);
     _setRange(start, end);
+    const isCustom = !['day', 'week', 'month'].includes(rangeType);
+    setCustom(isCustom);
   }
 
   function getMidnight(): Date {
@@ -94,13 +141,12 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
 
   function PickerWithType({ type }: { type: RangeType }) {
     const now = new Date();
-    setCustom(false);
     switch (type) {
       case 'day':
         return (
           <DatePicker
             locale={locale}
-            value={dateValue}
+            defaultValue={dateValue}
             onChange={handleDateChange}
           />
         );
@@ -108,7 +154,7 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
         return (
           <DatePicker
             locale={locale}
-            value={dateValue}
+            defaultValue={dateValue}
             picker="week"
             onChange={handleDateChange}
           />
@@ -119,16 +165,15 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
             locale={locale}
             picker="month"
             format="MMM - YYYY"
-            value={dateValue}
+            defaultValue={dateValue}
             onChange={handleDateChange}
           />
         );
       default:
-        setCustom(true);
         return (
           <RangePicker
             locale={locale}
-            value={range}
+            defaultValue={range}
             showTime={{ format: 'HH:mm' }}
             onChange={handleRangeChange}
             style={{ width: 265 }}
@@ -144,6 +189,10 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
         );
     }
   }
+
+  useEffect(() => {
+    updateRangeType(rangeType);
+  }, [rangeType]);
 
   function getPivotDate(): Date {
     let pivot = new Date();
@@ -195,7 +244,7 @@ const TimeRangeToolbar: React.FC<TimeRangeToolbarOpts> = (props) => {
   return (
     <div>
       <Space>
-        <Select value={rangeType} onChange={updateRangeType}>
+        <Select value={rangeType} onChange={setRangeType}>
           <Option value="hour">Hour</Option>
           <Option value="day">Day</Option>
           <Option value="week">Week</Option>

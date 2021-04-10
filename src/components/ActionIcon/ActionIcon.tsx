@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
-import { useAsync } from '../../hooks';
+import React, { ReactNode, useRef } from 'react';
+import { useAsync, useUnmountEffect } from '../../hooks';
 import { LoadingOutlined } from '@ant-design/icons';
 import { message, Popconfirm, Tooltip } from 'antd';
 
@@ -29,10 +29,16 @@ function ActionIcon(props: ActionIconProps) {
     errorMessage = false,
   } = props;
   const { execute, error, loading } = useAsync(handler);
+  const mountedRef = useRef(true);
 
   async function noop() {}
 
+  useUnmountEffect(() => {
+    mountedRef.current = false;
+  });
+
   const showMessage = (success: boolean, err?: Error) => {
+    if (!mountedRef.current) return;
     if (success) {
       if (successMessage) {
         setTimeout(() => message.success(showMessage), 0);

@@ -26,7 +26,6 @@ const JobFilterCard: React.FC<JobFilterCardProps> = (props) => {
   const {
     isOpen: isSaveDialogOpen,
     onClose: closeSaveDialog,
-    onToggle: toggleSaveDialog,
     onOpen: openSaveDialog,
   } = useDisclosure({
     defaultIsOpen: false,

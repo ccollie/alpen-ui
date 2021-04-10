@@ -1,7 +1,7 @@
 import { Space, Table, TableProps } from 'antd';
 import { TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useRef, useState } from 'react';
-import { QueueJobActions } from '../../@types';
+import { QueueJobActions } from '@/@types';
 import { EmptyJobCounts, JobCounts, JobFragment, JobStatus } from '../../api';
 import {
   usePaginationQueryString,

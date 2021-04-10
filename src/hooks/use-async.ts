@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMountedState } from './use-mounted-state';
+import { useCallback, useState } from 'react';
 
 export enum AsyncState {
   IDLE = 'idle',
@@ -15,7 +16,7 @@ export const useAsync = (
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [called, setCalled] = useState(false);
-  const unmounted = useRef(false);
+  const isMounted = useMountedState();
 
   // The execute function wraps asyncFunction and
   // handles setting state for pending, value, and error.
@@ -23,9 +24,7 @@ export const useAsync = (
   // on every render, but only if asyncFunction changes.
   const execute = useCallback(
     (...args: any[]) => {
-      const mounted = !unmounted.current;
-
-      if (mounted) {
+      if (isMounted()) {
         setStatus(AsyncState.PENDING);
         setLoading(true);
         setValue(null);
@@ -34,33 +33,26 @@ export const useAsync = (
 
       return Promise.resolve(asyncFunction(...args))
         .then((response) => {
-          if (mounted) {
+          if (isMounted()) {
             setValue(response);
             setStatus(AsyncState.SUCCESS);
           }
           return response;
         })
         .catch((error) => {
-          if (mounted) {
+          if (isMounted()) {
             setError(error);
             setStatus(AsyncState.ERROR);
           }
         })
         .finally(() => {
-          if (mounted) {
+          if (isMounted()) {
             setLoading(false);
             setCalled(true);
           }
         });
     },
     [asyncFunction],
-  );
-
-  useEffect(
-    () => () => {
-      unmounted.current = true;
-    },
-    [],
   );
 
   return { execute, status, loading, called, value, error };

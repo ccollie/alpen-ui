@@ -1,11 +1,11 @@
 import dropWhile from 'lodash-es/dropWhile';
 import get from 'lodash-es/get';
-import isEmpty from 'lodash-es/isEmpty';
 import isEqual from 'lodash-es/isEqual';
-import mapValues from 'lodash-es/mapValues';
 import merge from 'lodash-es/merge';
 import take from 'lodash-es/take';
 import uniqWith from 'lodash-es/uniqWith';
+import initial from 'lodash-es/initial';
+
 import {
   Functions,
   isClassType,
@@ -29,8 +29,8 @@ const typeInfoCache = new Map<
 >();
 const methodsCache = new Map<TypingResult, TypedMethod[] | undefined>();
 
-// before indexer['last indexer key
-const INDEXER_REGEX = /^(.*)\['([^\[]*)$/;
+// before indexer[last indexer key
+const INDEXER_REGEX = /^(.*)\[([^\[]*)$/;
 
 interface NormalizedInput {
   input: string;
@@ -51,6 +51,7 @@ const EmptyClass: TypedObject = {
 
 export default class ExpressionSuggester {
   private readonly _variables: VariableDict;
+  private allVarsWithClassRefs: TypedMethod[] | undefined = undefined;
 
   constructor(variables: VariableDict = {}) {
     if (typeCache.size === 0) {
@@ -79,9 +80,6 @@ export default class ExpressionSuggester {
       properties,
       variablesIncludingSelectionOrProjection,
     );
-    if (!focusedClazz) {
-      return this.suggestFunctions(normalized.input);
-    }
     return this._getSuggestions(
       lastExpressionPart,
       focusedClazz,
@@ -120,12 +118,12 @@ export default class ExpressionSuggester {
 
   private async _getSuggestions(
     value: string,
-    focusedClazz: TypedObject,
+    focusedClazz: TypedObject | null,
     variables: VariableDict,
   ): Promise<TypedSuggestion[]> {
     const variableNames = Object.keys(variables);
     const variableAlreadySelected = variableNames.some((variable) => {
-      return value.includes(`${variable}.`) || value.includes(`${variable}['`);
+      return value.includes(`${variable}.`) || value.includes(`${variable}[`);
     });
     const toCompare = value.toLowerCase();
     const variableNotSelected = variableNames.some((variable) => {
@@ -135,24 +133,24 @@ export default class ExpressionSuggester {
       const currentType = this.getTypeInfo(focusedClazz);
       const inputValue = this._justTypedProperty(value) ?? '';
       const allowedMethodList = this.getAllowedMethods(currentType);
-      return inputValue?.length === 0
-        ? allowedMethodList.map(convertSuggestion)
-        : this._filterSuggestionsForInput(allowedMethodList, inputValue);
-    } else if (variableNotSelected && !isEmpty(value)) {
-      const allVariablesWithClazzRefs = variableNames.map((key) => {
-        const val = variables[key];
-        const refClazz = this.getTypeInfo(val);
-        return {
-          type: 'method',
-          methodName: key,
-          returnType: key,
-          refClazz,
-          params: [],
-        } as TypedMethod;
-      });
-      return this._filterSuggestionsForInput(allVariablesWithClazzRefs, value);
+      return this._filterSuggestionsForInput(allowedMethodList, inputValue);
+    } else if (variableNotSelected && !!value?.length) {
+      this.allVarsWithClassRefs =
+        this.allVarsWithClassRefs ||
+        variableNames.map((key) => {
+          const val = variables[key];
+          const refClazz = this.getTypeInfo(val);
+          return {
+            type: 'method',
+            methodName: key,
+            returnType: key,
+            refClazz,
+            params: [],
+          } as TypedMethod;
+        });
+      return this._filterSuggestionsForInput(this.allVarsWithClassRefs, value);
     } else {
-      return [];
+      return this.suggestFunctions(value);
     }
   }
 
@@ -179,9 +177,10 @@ export default class ExpressionSuggester {
     const keys = Object.keys(currentType.methods);
     return keys.map((key) => {
       const val = currentType.methods[key];
+      val.methodName = key;
       val.refClazz =
         val.refClazz || this.getClassFromGlobalTypeInfo(val.returnType);
-      return { ...val, methodName: key };
+      return val;
     });
   }
 
@@ -189,6 +188,7 @@ export default class ExpressionSuggester {
     variables: TypedMethod[],
     inputValue: string,
   ) {
+    if (!inputValue) return variables.map(convertSuggestion);
     const value = inputValue.toLowerCase();
     const result: TypedSuggestion[] = [];
     variables.forEach((variable) => {
@@ -225,19 +225,15 @@ export default class ExpressionSuggester {
     const variableName = properties[0];
     if (variables[variableName]) {
       let clazz: TypedObject | undefined;
-      let method: TypedMethod;
-      let parentClazz = get(variables, variableName);
-      if (isClassType(parentClazz)) clazz = parentClazz;
-
-      for (let i = 1; i < properties.length && !!parentClazz; i++) {
-        const prop = properties[i];
-        const parentType = this.getTypeInfo(parentClazz);
-        method = this.extractMethod(parentType, prop);
+      let parentClazz = this.getClassFromGlobalTypeInfo(
+        variables[variableName],
+      );
+      for (let i = 1; !!parentClazz && i < properties.length; i++) {
+        const method = this.extractMethod(parentClazz, properties[i]);
         clazz = method && this.getClassFromGlobalTypeInfo(method.returnType);
-        if (!clazz) return null;
         parentClazz = clazz;
       }
-      return clazz || null;
+      return parentClazz || null;
     } else {
       return null;
     }
@@ -289,25 +285,33 @@ export default class ExpressionSuggester {
   }
 
   private getTypeInfoFromClass(clazz: TypingResult | TypeRef): TypedObject {
-    const methodsFromInfo = this._getMethodsFromGlobalTypeInfo(clazz);
-    let methods = methodsFromInfo;
-    if (isClassType(clazz)) {
-      const names = Object.keys(clazz.fields);
-      const fromFields = Object.create(null);
-      const methodsFromFields = mapValues(clazz.fields, (field) => ({
-        refClazzName: field,
-      }));
-      methods = merge(methodsFromFields, methodsFromInfo);
+    const type = this.getClassFromGlobalTypeInfo(clazz);
+    let methods: Record<string, TypedMethod>;
+    if (isClassType(type)) {
+      const names = Object.keys(type.fields);
+      const fromFields: Record<string, TypedMethod> = Object.create(null);
+      names.forEach((name) => {
+        fromFields[name] = {
+          ...type.fields[name],
+          returnType: type.refClazzName,
+          refClazz: this.getClassFromGlobalTypeInfo(type.refClazzName),
+          params: [],
+        };
+      });
+      methods = {
+        ...fromFields,
+        ...(type.methods || {}),
+      };
+    } else {
+      return EmptyClass;
     }
 
-    return ({
-      refClazzName: '',
-      params: [],
-      ...clazz,
+    return {
+      ...type,
       type: 'class',
       fields: {},
       methods,
-    } as unknown) as TypedObject;
+    };
   }
 
   private _getMethodsFromGlobalTypeInfo(
@@ -371,7 +375,7 @@ export default class ExpressionSuggester {
     const valueCleaned = withoutNestedParenthesis.replace(/\(.*\)/, '');
     //handling ?. operator
     const withSafeNavigationIgnored = valueCleaned.replace(/\?\./g, '.');
-    return isEmpty(value)
+    return !value || value.length == 0
       ? ''
       : `${last((withSafeNavigationIgnored ?? '').split('#'))}`; ///???
   }
@@ -394,7 +398,7 @@ export default class ExpressionSuggester {
 
   private _alreadyTypedProperties(value: string) {
     const items = this._dotSeparatedToProperties(value);
-    return items.splice(0, -1);
+    return initial(items);
   }
 
   private _dotSeparatedToProperties(value: string): string[] {

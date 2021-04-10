@@ -64,6 +64,7 @@ export function useStatsSnapshotList(range: string, items: StatsSnapshot[]) {
   }
 
   return {
+    update,
     data: snaps.current,
   };
 }
