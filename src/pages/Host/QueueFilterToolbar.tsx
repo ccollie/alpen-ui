@@ -1,12 +1,10 @@
+import { QueueFilterStatus, SortOrderEnum } from '@/api';
 import { useWhyDidYouUpdate } from '@/hooks';
+import { filtersEqual, normalizeFilter, QueueFilter } from '@/modules/host';
 import { LightFilter, ProFormRadio, ProFormText } from '@ant-design/pro-form';
 import { Input, Space } from 'antd';
-import React, { useCallback, useRef, ChangeEvent } from 'react';
-import { QueueFilter } from '@/@types';
-import { Maybe, SortOrderEnum } from '@/api';
+import React, { ChangeEvent, useCallback, useRef } from 'react';
 import SortSelect from './SortSelect';
-
-type TriStateValue = true | false | null | undefined;
 
 interface FilterToolbarProps {
   defaultFilter: QueueFilter;
@@ -57,11 +55,40 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
     return values.hasOwnProperty(prop);
   }
 
+  function addStatus(status: QueueFilterStatus) {
+    const curr = filter.current;
+    curr.statuses = curr.statuses || [];
+    if (!curr.statuses.includes(status)) {
+      curr.statuses.push(status);
+    }
+  }
+
+  function removeStatus(status: QueueFilterStatus) {
+    const curr = filter.current;
+    curr.statuses = curr.statuses || [];
+    const index = curr.statuses.indexOf(status);
+    if (index >= 0) {
+      curr.statuses.splice(index, 1);
+    }
+  }
+
   function updateFromForm(values: Record<string, any>) {
-    if (has(values, 'isActive'))
-      filter.current.isActive = toBool(values['isActive']);
-    if (has(values, 'isPaused'))
-      filter.current.isPaused = toBool(values['isPaused']);
+    if (has(values, 'isActive')) {
+      const status = QueueFilterStatus.Active;
+      if (toBool(values.isActive)) {
+        addStatus(status);
+      } else {
+        removeStatus(status);
+      }
+    }
+    if (has(values, 'isPaused')) {
+      const status = QueueFilterStatus.Paused;
+      if (toBool(values.isPaused)) {
+        addStatus(status);
+      } else {
+        removeStatus(status);
+      }
+    }
     if (has(values, 'prefix'))
       filter.current.prefix = values['prefix'] as string;
   }
@@ -77,8 +104,16 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
     filter.current = { ...saveFilter.current };
   }
 
+  function hasStatus(status: QueueFilterStatus) {
+    const curr = filter.current;
+    if (!curr.statuses) return false;
+    return curr.statuses.includes(status);
+  }
+
   function FilterDropdown() {
-    const { isActive, isPaused, prefix } = filter.current;
+    const isActive = hasStatus(QueueFilterStatus.Active);
+    const isPaused = hasStatus(QueueFilterStatus.Paused);
+    const prefix = filter.current.prefix;
     return (
       <LightFilter
         initialValues={{
@@ -173,49 +208,6 @@ const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
     </Space>
   );
 };
-
-function normalizeFilter(filter: QueueFilter): QueueFilter {
-  filter = filter ?? {
-    sortOrder: SortOrderEnum.Asc,
-  };
-  const result: QueueFilter = {
-    sortOrder: filter.sortOrder || SortOrderEnum.Asc,
-    sortBy: filter.sortBy || 'name',
-  };
-  if (filter.search) {
-    result.search = filter.search;
-  }
-  if (filter.prefix) {
-    result.prefix = filter.prefix;
-  }
-  if (filter.isPaused !== undefined) {
-    result.isPaused = filter.isPaused;
-  }
-  if (filter.isActive !== undefined) {
-    result.isActive = filter.isActive;
-  }
-  return result;
-}
-
-function stringEqual(
-  a: Maybe<string> | undefined,
-  b: Maybe<string> | undefined,
-): boolean {
-  if (!a && !b) return true;
-  return a === b;
-}
-
-function filtersEqual(a: QueueFilter, b: QueueFilter): boolean {
-  a = normalizeFilter(a);
-  b = normalizeFilter(b);
-  return (
-    a.isPaused === b.isPaused &&
-    stringEqual(a.prefix, b.prefix) &&
-    stringEqual(a.search, b.search) &&
-    a.sortBy === b.sortBy &&
-    a.sortOrder === b.sortOrder
-  );
-}
 
 function arePropsEqual(a: FilterToolbarProps, b: FilterToolbarProps): boolean {
   return (
