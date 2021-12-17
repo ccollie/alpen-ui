@@ -65,7 +65,7 @@ export function createExpressionSuggester(variableTypes?: VariableDict) {
           }
         });
     },
-    // We adds hash to identifier pattern to start suggestions just after hash is typed
+    // We add hash to identifier pattern to start suggestions just after hash is typed
     identifierRegexps: identifierRegexpsIncludingDot,
     getDocTooltip: (item: Ace.Completion) => {
       const temp = item as any;

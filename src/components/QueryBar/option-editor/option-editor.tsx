@@ -7,7 +7,7 @@ import React, {
   useEffect,
 } from 'react';
 import AceEditor, { getTools, Ace, getThemeName } from '@/lib/ace';
-import { useUpdateEffect, useWhyDidYouUpdate } from '../../../hooks';
+import { useUpdateEffect, useWhyDidYouUpdate } from '@/hooks';
 import { parseExpression } from '@/query-parser';
 import styles from './option-editor.module.css';
 

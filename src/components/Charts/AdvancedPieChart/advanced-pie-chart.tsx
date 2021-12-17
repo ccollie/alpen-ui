@@ -1,6 +1,6 @@
 import { DonutChart } from 'bizcharts';
 import React, { ReactNode, useEffect, useState } from 'react';
-import { isDate } from '../../../lib';
+import { isDate } from '@/lib';
 import {
   calculateViewDimensions,
   ColorHelper,

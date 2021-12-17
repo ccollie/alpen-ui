@@ -2,8 +2,8 @@ import { useWhyDidYouUpdate } from '@/hooks';
 import { LightFilter, ProFormRadio, ProFormText } from '@ant-design/pro-form';
 import { Input, Space } from 'antd';
 import React, { useCallback, useRef, ChangeEvent } from 'react';
-import { QueueFilter } from '../../@types/queue';
-import { Maybe, SortOrderEnum } from '../../api';
+import { QueueFilter } from '@/@types';
+import { Maybe, SortOrderEnum } from '@/api';
 import SortSelect from './SortSelect';
 
 type TriStateValue = true | false | null | undefined;

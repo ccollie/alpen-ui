@@ -1,17 +1,32 @@
 
 query getAvailableMetrics {
-  metrics {
+  availableMetrics {
     key
     description
     unit
     category
     isPolling
+    valueType
+    category
   }
 }
 
 query getAvailableAggregates {
   aggregates {
-    key,
+    type
+    isWindowed
     description
+  }
+}
+
+query HostsAndQueues {
+  hosts {
+    id
+    name
+    description
+    uri
+    queues {
+      ...Queue
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { Dict } from '@/@types';
-import { StatsGranularity, StatsSnapshot } from '../../api';
+import { StatsGranularity, StatsSnapshot } from '@/api';
 import { format } from 'date-fns';
 
 export const LABELS = {

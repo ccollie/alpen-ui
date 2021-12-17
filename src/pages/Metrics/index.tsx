@@ -10,7 +10,7 @@ import {
 } from '../../api';
 import { useParams } from 'react-router';
 import { useLazyQuery } from '@apollo/client';
-import { RangePickerValue } from '../../components';
+import { RangePickerValue } from '@/components';
 import { StatsLineChart } from '../../components/Charts';
 import ErrorRateChart, {
   ErrorDataItem,

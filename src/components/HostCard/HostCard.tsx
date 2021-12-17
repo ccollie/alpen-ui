@@ -2,11 +2,11 @@ import ProCard from '@ant-design/pro-card';
 import { Col, Row, Space, Statistic } from 'antd';
 import formatBytes from 'pretty-bytes';
 import React, { ReactText, useCallback, useEffect, useState } from 'react';
-import { EmptyJobCounts, JobCounts, QueueHost, StatsSnapshot } from '../../api';
+import { EmptyJobCounts, JobCounts, QueueHost, StatsSnapshot } from '@/api';
 import { useNavigate } from 'react-router-dom';
-import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
-import { calcErrorPercentage, calcJobRatePerUnit } from '../../lib/stats';
-import { roundNumber } from '../../lib';
+import { useWhyDidYouUpdate } from '@/hooks';
+import { calcErrorPercentage, calcJobRatePerUnit } from '@/lib/stats';
+import { roundNumber } from '@/lib';
 import { JobCountsPieChart, MiniArea } from '../Charts';
 import { HostStateTag } from '../HostStateTag';
 
@@ -64,9 +64,10 @@ const HostCard: React.FC<HostCardProps> = (props) => {
     }
   }, [host.lastStatsSnapshot]);
 
-  const selectHost = useCallback(() => navigate(`/hosts/${host.id}`), [
-    host.id,
-  ]);
+  const selectHost = useCallback(
+    () => navigate(`/hosts/${host.id}`),
+    [host.id],
+  );
 
   function byteFormatter(value: ReactText) {
     const num: number = typeof value === 'string' ? parseInt(value) : value;

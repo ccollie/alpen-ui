@@ -2,7 +2,7 @@
 import React, { ReactNode } from 'react';
 import { Button } from 'antd';
 import classNames from 'classnames';
-import { useAsync, AsyncState } from '../../hooks';
+import { useAsync, AsyncState } from '@/hooks';
 
 interface AsyncButtonProps {
   className?: string;

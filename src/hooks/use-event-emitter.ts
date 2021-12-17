@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EventEmitter, EventHandler, UnsubscribeFn } from '../lib';
+import { EventEmitter, EventHandler, UnsubscribeFn } from '@/lib';
 import { useUnmountEffect } from './use-unmount-effect';
 
 export function useEventEmitter() {

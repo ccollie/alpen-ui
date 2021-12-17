@@ -12,7 +12,7 @@ import {
   GetAppInfoDocument,
   GetHostsDocument,
   QueueHost,
-} from '../api';
+} from '@/api';
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -57,9 +57,11 @@ const Main: React.FC = ({ children }) => {
     pollInterval: 10000,
   });
 
-  const { data: appData, error: appError, loading: appLoading } = useQuery(
-    GetAppInfoDocument,
-  );
+  const {
+    data: appData,
+    error: appError,
+    loading: appLoading,
+  } = useQuery(GetAppInfoDocument);
 
   const navigate = useNavigate();
 

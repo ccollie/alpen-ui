@@ -2,8 +2,8 @@
 query GetStatsSpan($id: ID!, $input: StatsSpanInput!) {
   queue(id: $id) {
     statsDateRange(input: $input) {
-      start,
-      end
+      startTime,
+      endTime
     }
   }
 }

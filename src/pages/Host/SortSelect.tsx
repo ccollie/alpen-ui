@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Select, Space } from 'antd';
 import React, { useState } from 'react';
-import { SortOrderEnum } from '../../api';
+import { SortOrderEnum } from '@/api';
 
 const { Option } = Select;
 

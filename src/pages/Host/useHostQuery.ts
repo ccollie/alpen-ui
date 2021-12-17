@@ -1,11 +1,18 @@
 import { QueueFilter } from '@/@types';
-import { HostPageQueryDocument, Queue, QueueHost, SortOrderEnum } from '@/api';
+import {
+  HostPageDocument,
+  HostPageQueryVariables,
+  Queue,
+  QueueFilterStatus,
+  QueueHost,
+  SortOrderEnum,
+  sortQueues,
+} from '@/api';
 import { useDebounceFn, useInterval, useUnmountEffect } from '@/hooks';
 import { isEmpty } from '@/lib';
+import { useHostsStore } from '@/stores/hosts';
 import { ApolloError, useApolloClient } from '@apollo/client';
-import orderBy from 'lodash-es/orderBy';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Timeout = NodeJS.Timeout;
+import { useCallback, useRef, useState } from 'react';
 
 export interface HostData {
   name: string;
@@ -24,47 +31,33 @@ export const useHostQuery = (
   const [error, setError] = useState<ApolloError | undefined>();
   const [loading, setLoading] = useState(false);
   const [called, setCalled] = useState(false);
+  const store = useHostsStore();
 
   const client = useApolloClient();
 
-  function sortQueues(): void {
-    // todo: filter and sort
-    const { sortBy = 'name', sortOrder = SortOrderEnum.Asc } =
-      queueFilter.current || {};
-    const orders = [
-      sortOrder == SortOrderEnum.Asc ? 'asc' : 'desc',
-      ...(sortBy !== 'name' ? ['asc'] : []),
-    ];
-    const fields = [sortBy];
-    // use name as a secondary
-    if (sortBy !== 'name') {
-      fields.push('name');
-    }
+  function doSort() {
     if (hostData.current) {
-      hostData.current.queues = orderBy(
-        hostData.current.queues,
-        fields,
-        // @ts-ignore
-        orders,
-      ) as Queue[];
+      const { sortBy = 'name', sortOrder = SortOrderEnum.Asc } =
+        queueFilter.current || {};
+      const { queues } = hostData.current;
+      hostData.current.queues = sortQueues(queues, sortBy, sortOrder);
     }
   }
 
   function getHostData(): Promise<void> {
-    const variables = {
+    const variables: HostPageQueryVariables = {
       id,
       range,
     };
     if (queueFilter?.current && !isEmpty(queueFilter.current)) {
       const { sortOrder, sortBy, ...rest } = queueFilter.current;
-      // @ts-ignore
       variables['filter'] = rest;
     }
 
     setLoading(true);
     return client
       .query({
-        query: HostPageQueryDocument,
+        query: HostPageDocument,
         variables,
         fetchPolicy: 'network-only',
       })
@@ -75,12 +68,18 @@ export const useHostQuery = (
         const host = (result.data?.host || null) as QueueHost;
         const queues = (host?.queues ?? []) as Queue[];
         const name = host?.name || 'host';
+        const h = store.findHost(id);
+        if (h) {
+          store.updateHost(id, host);
+        } else {
+          store.addHost(host);
+        }
         hostData.current = {
           host,
           name,
           queues,
         };
-        sortQueues();
+        doSort();
       });
   }
 
@@ -106,22 +105,26 @@ export const useHostQuery = (
 
   function setFilter(filter: QueueFilter) {
     const sortChanged =
-      queueFilter.current?.sortBy != filter.sortBy ||
-      queueFilter.current?.sortOrder != filter.sortOrder;
+      !stringsEqual(queueFilter.current?.sortBy, filter.sortBy) ||
+      !sortOrderEqual(queueFilter.current?.sortOrder, filter.sortOrder);
 
-    const changed =
-      !queueFilter.current ||
-      queueFilter.current.isPaused !== filter.isPaused ||
-      queueFilter.current.prefix !== filter.prefix ||
-      queueFilter.current.isActive !== filter.isActive ||
-      queueFilter.current.search !== filter.search;
+    const currentFilter = queueFilter.current;
+    let changed: boolean;
+
+    if (!currentFilter) {
+      changed = true;
+    } else {
+      changed =
+        !stringsEqual(currentFilter.prefix, filter.prefix) ||
+        !stringsEqual(currentFilter.search, filter.search) ||
+        !statusesEqual(currentFilter.statuses ?? [], filter.statuses);
+    }
 
     if (changed) {
       queueFilter.current = {
         search: filter.search,
         prefix: filter.prefix,
-        isActive: filter.isActive,
-        isPaused: filter.isPaused,
+        statuses: [...(filter.statuses || [])],
       };
       if (sortChanged && queueFilter.current) {
         queueFilter.current.sortBy = filter.sortBy;
@@ -129,12 +132,14 @@ export const useHostQuery = (
       }
       refresh();
     } else if (sortChanged) {
+      const sortBy = filter.sortBy ?? 'name';
+      const sortOrder = filter.sortOrder ?? SortOrderEnum.Asc;
       queueFilter.current = {
         ...(queueFilter.current || {}),
-        sortBy: filter.sortBy ?? 'name',
-        sortOrder: filter.sortOrder,
+        sortBy,
+        sortOrder,
       };
-      sortQueues();
+      doSort();
     }
   }
 
@@ -154,3 +159,28 @@ export const useHostQuery = (
     error,
   };
 };
+
+function stringsEqual(
+  a: string | undefined | null,
+  b: string | undefined | null,
+): boolean {
+  if (a === b) return true;
+  return (a ?? '') === (b ?? '');
+}
+
+function sortOrderEqual(
+  a: SortOrderEnum | undefined,
+  b: SortOrderEnum | undefined,
+): boolean {
+  return a === b || (a ?? SortOrderEnum.Asc) === (b ?? SortOrderEnum.Asc);
+}
+
+function statusesEqual(
+  a: QueueFilterStatus[] | undefined | null,
+  b: QueueFilterStatus[] | undefined | null,
+) {
+  a = a || [];
+  b = b || [];
+  if (a.length !== b.length) return false;
+  return a.every((status) => b?.includes(status));
+}

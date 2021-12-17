@@ -1,12 +1,7 @@
 import ms from 'ms';
 import React, { useCallback, useMemo } from 'react';
-import { StatsGranularity, StatsSnapshot } from '../../../api';
-import {
-  BackgroundColor,
-  formatDate,
-  getStatsChartData,
-  TickValues,
-} from '../chart-utils';
+import { StatsGranularity, StatsSnapshot } from '@/api';
+import { formatDate, getStatsChartData } from '../chart-utils';
 import { AreaChart } from 'bizcharts';
 
 interface StatsLineChartProps {
@@ -24,16 +19,17 @@ const StatsLineChart: React.FC<StatsLineChartProps> = (props) => {
     granularity,
   } = props;
 
-  const dateFormatter = useCallback((date) => formatDate(date, granularity), [
-    granularity,
-  ]);
+  const dateFormatter = useCallback(
+    (date) => formatDate(date, granularity),
+    [granularity],
+  );
 
   const valueFormatter = useCallback((value) => ms(value), []);
 
-  const chartData = useMemo(() => getStatsChartData(data, fields), [
-    data,
-    fields,
-  ]);
+  const chartData = useMemo(
+    () => getStatsChartData(data, fields),
+    [data, fields],
+  );
 
   return (
     <AreaChart

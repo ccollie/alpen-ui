@@ -5,9 +5,9 @@ import { Button, Typography, Space, PageHeader } from 'antd';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { QueueActions } from '../../@types/actions';
 import { QueueMenu, QueueStateTag } from '../../components';
-import { Queue } from '../../api';
+import { Queue } from '@/api';
 import { useNavigate } from 'react-router';
-import { useQueueActions } from '../../hooks';
+import { useQueueActions } from '@/hooks';
 
 const { Title } = Typography;
 
@@ -136,7 +136,7 @@ const QueueHeader: React.FC<QueueHeaderProps> = (props) => {
           icon: <FaInbox />,
         }}
       >
-        <span></span>
+        <span />
       </PageHeader>
     </div>
   );

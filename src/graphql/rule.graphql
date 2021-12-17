@@ -8,9 +8,7 @@ query GetRuleById($queueId: ID!, $ruleId: ID!) {
 
 mutation CreateRule($input: RuleAddInput!) {
   ruleAdd(input: $input) {
-    rule {
-      ... Rule
-    }
+    ... Rule
   }
 }
 

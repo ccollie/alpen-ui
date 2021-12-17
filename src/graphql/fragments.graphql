@@ -124,18 +124,14 @@ fragment QueueWorkers on Queue {
   }
 }
 
-fragment RuleMetric on RuleMetric {
-  type
-  options
-}
-
 fragment RuleAlertOptions on RuleAlertOptions {
-  triggerWindow
-  minViolations
+  triggerDelay
+  failureThreshold
+  successThreshold
   maxAlertsPerEvent
   alertOnReset
   recoveryWindow
-  renotifyInterval
+  notifyInterval
 }
 
 fragment Rule on Rule {
@@ -145,7 +141,10 @@ fragment Rule on Rule {
   createdAt
   updatedAt
   metric {
-    ...RuleMetric
+    id
+    isActive
+    name
+    options
   }
   condition {
     ... on ThresholdCondition {
@@ -165,14 +164,16 @@ fragment Rule on Rule {
       errorThreshold
       warningThreshold
       operator
-      timeWindow
+      windowSize
       timeShift
       aggregationType
     }
   }
   state
   payload
-  channels
+  channels {
+    ...NotificationChannel
+  }
   isActive
   message
   options {

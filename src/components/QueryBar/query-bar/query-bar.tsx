@@ -7,17 +7,11 @@ import { Button, Col, Row, Space } from 'antd';
 import React, {
   useState,
   Fragment,
-  useRef,
   RefAttributes,
   ForwardRefExoticComponent,
 } from 'react';
 import classnames from 'classnames';
-import isEqual from 'lodash-es/isEqual';
-import {
-  useCallbackRef,
-  useDisclosure,
-  useWhyDidYouUpdate,
-} from '../../../hooks';
+import { useCallbackRef, useDisclosure, useWhyDidYouUpdate } from '@/hooks';
 import OptionEditor from '../option-editor';
 import styles from './query-bar.module.css';
 
@@ -104,13 +98,13 @@ const QueryBar: React.FC<QueryBarProps> = (props) => {
    */
   function reset() {
     // if the current query is the same as the default, nothing happens
-    if (isEqual(filter?.trim() ?? '', '')) {
+    if (!filter?.trim()) {
       return;
     }
 
     // if the last executed query is the default query, we don't need to
     // change lastExecuteQuery and trigger a change in the QueryChangedStore.
-    if (isEqual(lastExecutedQuery, '')) {
+    if (!lastExecutedQuery) {
       setQueryString('');
       return;
     }

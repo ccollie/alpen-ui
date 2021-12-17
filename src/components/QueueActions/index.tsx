@@ -2,7 +2,7 @@ import { ArrowUpOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Space } from 'antd';
 import React, { useState } from 'react';
 import { QueueJobActions } from '../../@types/actions';
-import { BulkStatusItem, JobStatus, Queue } from '../../api';
+import { BulkStatusItem, JobStatus, Queue } from '@/api';
 import { AsyncButton } from '../AsyncButton';
 import { RetryIcon } from '../Icons/Retry';
 import { TrashIcon } from '../Icons/Trash';

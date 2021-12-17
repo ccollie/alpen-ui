@@ -74,8 +74,48 @@ query GetHostByIdFull($id: ID!) {
 query GetHostQueues($id: ID!) {
   host(id: $id) {
     id
+    name
+    description
     queues {
       ...Queue
+    }
+  }
+}
+
+query HostQueues($id: ID!, $range: String!, $filter: HostQueuesFilter) {
+  host(id: $id) {
+    id
+    name
+    description
+    queues(filter: $filter) {
+      id
+      name
+      isPaused
+      ...JobCounts
+      workerCount
+      throughput {
+        count
+        m1Rate
+        m5Rate
+        m15Rate
+      }
+      errorRate {
+        count
+        m1Rate
+        m5Rate
+        m15Rate
+      }
+      ruleAlertCount
+      workerCount
+      stats(input: { range: $range, granularity: Minute }) {
+        ...StatsSnapshot
+      }
+      statsAggregate(input: { range: $range, granularity: Minute }) {
+        ...StatsSnapshot
+      }
+      lastStatsSnapshot(input:{ granularity: Minute }) {
+        ...StatsSnapshot
+      }
     }
   }
 }
@@ -113,3 +153,4 @@ mutation UnregisterQueue($queueId: ID!) {
     isRemoved
   }
 }
+

@@ -1,6 +1,5 @@
 import { ScaleLinear, scaleLinear } from 'd3-scale';
 import React, { useEffect, useState } from 'react';
-import { RangeColumnChart } from 'bizcharts';
 import {
   ColorHelper,
   ColorMapper,
@@ -243,7 +242,7 @@ const Gauge: React.FC<GaugeProps> = (props) => {
   return (
     <div style={{ width, height }}>
       <g transform={transform} className="gauge chart">
-        <g transform={rotation}></g>
+        <g transform={rotation} />
         {showAxis && (
           <GaugeAxis
             bigSegments={bigSegments}

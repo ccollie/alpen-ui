@@ -1,8 +1,16 @@
+/* eslint-disable */
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type InputMaybe<T> = T | null;
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -11,10 +19,12 @@ export type Scalars = {
   Int: number;
   Float: number;
   Date: any;
-  /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
+  /** An ISO date-time string, such as 2007-12-03T10:15:30Z. Also handles Elastic compatible date-math expr:  https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#date-math. */
   DateTime: number;
   /** Specifies a duration in milliseconds - either as an int or a string specification e.g. "2 min", "3 hr" */
   Duration: string | number;
+  /** A field whose value conforms to the standard internet email address format as specified in RFC822: https://www.w3.org/Protocols/rfc822/. */
+  EmailAddress: string;
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSON: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
@@ -25,29 +35,64 @@ export type Scalars = {
   JobProgress: string | number | Record<string, any>;
   /** Specifies the number of jobs to keep after an operation (e.g. complete or fail).A bool(true) causes a job to be removed after the action */
   JobRemoveOption: boolean | number;
+  /** The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch. */
+  Timestamp: number;
+  /** A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt. */
+  URL: string;
 };
 
 export type AggregateInfo = {
   __typename?: 'AggregateInfo';
-  key: Scalars['String'];
   description: Scalars['String'];
+  isWindowed: Scalars['Boolean'];
+  type: AggregateTypeEnum;
+};
+
+export enum AggregateTypeEnum {
+  Ewma = 'Ewma',
+  Identity = 'Identity',
+  Latest = 'Latest',
+  Max = 'Max',
+  Mean = 'Mean',
+  Min = 'Min',
+  None = 'None',
+  P75 = 'P75',
+  P90 = 'P90',
+  P95 = 'P95',
+  P99 = 'P99',
+  P995 = 'P995',
+  Quantile = 'Quantile',
+  StdDev = 'StdDev',
+  Sum = 'Sum',
+}
+
+export type Aggregator = {
+  __typename?: 'Aggregator';
+  description: Scalars['String'];
+  options?: Maybe<Scalars['JSONObject']>;
+  type: AggregateTypeEnum;
+};
+
+export type AggregatorInput = {
+  options?: InputMaybe<Scalars['JSONObject']>;
+  type: AggregateTypeEnum;
 };
 
 export type AppInfo = {
   __typename?: 'AppInfo';
+  author?: Maybe<Scalars['String']>;
+  brand?: Maybe<Scalars['String']>;
   /** The server environment (development, production, etc) */
   env: Scalars['String'];
   /** The app title */
   title: Scalars['String'];
-  brand?: Maybe<Scalars['String']>;
-  /** The api version */
+  /** The core version */
   version: Scalars['String'];
-  author?: Maybe<Scalars['String']>;
 };
 
 export type BulkJobActionInput = {
-  queueId: Scalars['ID'];
   jobIds: Array<Scalars['ID']>;
+  queueId: Scalars['ID'];
 };
 
 export type BulkJobActionPayload = {
@@ -57,51 +102,85 @@ export type BulkJobActionPayload = {
 };
 
 export type BulkJobItemInput = {
-  name: Scalars['String'];
   data: Scalars['JSONObject'];
-  options?: Maybe<JobOptionsInput>;
+  name: Scalars['String'];
+  options?: InputMaybe<JobOptionsInput>;
 };
 
 export type BulkStatusItem = {
   __typename?: 'BulkStatusItem';
   id: Scalars['ID'];
-  success: Scalars['Boolean'];
   reason?: Maybe<Scalars['String']>;
+  success: Scalars['Boolean'];
 };
 
 export enum ChangeAggregation {
   Avg = 'AVG',
   Max = 'MAX',
   Min = 'MIN',
-  Sum = 'SUM',
   P90 = 'P90',
   P95 = 'P95',
-  P99 = 'P99'
+  P99 = 'P99',
+  Sum = 'SUM',
 }
 
 /** A condition based on a simple threshold condition */
-export type ChangeCondition = RuleCondition & {
+export type ChangeCondition = RuleConditionInterface & {
   __typename?: 'ChangeCondition';
+  aggregationType: ChangeAggregation;
+  changeType: ConditionChangeType;
   /** The value needed to trigger an error notification */
   errorThreshold: Scalars['Float'];
+  /** The comparison operator */
+  operator: RuleOperator;
+  /** Lookback period (ms). How far back are we going to compare eg 1 hour means we're comparing now vs 1 hour ago */
+  timeShift: Scalars['Duration'];
   /** The value needed to trigger an warning notification */
   warningThreshold?: Maybe<Scalars['Float']>;
-  /** The comparison operator */
-  operator?: Maybe<RuleOperator>;
   /** The sliding window for metric measurement */
-  timeWindow?: Maybe<Scalars['Duration']>;
-  /** Lookback period (ms). How far back are we going to compare eg 1 hour means we're comparing now vs 1 hour ago */
-  timeShift?: Maybe<Scalars['Duration']>;
-  changeType?: Maybe<ChangeType>;
-  aggregationType?: Maybe<ChangeAggregation>;
+  windowSize: Scalars['Duration'];
 };
 
-export enum ChangeType {
-  Value = 'VALUE',
-  Pct = 'PCT'
+export type ChangeConditionInput = {
+  aggregationType: ChangeAggregation;
+  changeType: ConditionChangeType;
+  /** The value needed to trigger an error notification */
+  errorThreshold: Scalars['Float'];
+  /** The comparison operator */
+  operator: RuleOperator;
+  /** Lookback period (ms). How far back are we going to compare eg 1 hour means we're comparing now vs 1 hour ago */
+  timeShift: Scalars['Duration'];
+  /** The value needed to trigger an warning notification */
+  warningThreshold?: InputMaybe<Scalars['Float']>;
+  /** The sliding window for metric measurement */
+  windowSize: Scalars['Duration'];
+};
+
+/** The state resulting from evaluation a Change rule condition */
+export type ChangeRuleEvaluationState = RuleEvaluationState & {
+  __typename?: 'ChangeRuleEvaluationState';
+  aggregation: ChangeAggregation;
+  changeType: ConditionChangeType;
+  /** The rule operator */
+  comparator: RuleOperator;
+  errorLevel: ErrorLevel;
+  /** The error threshold of the rule */
+  errorThreshold: Scalars['Float'];
+  /** The type of rule */
+  ruleType: RuleType;
+  timeShift: Scalars['Duration'];
+  unit: Scalars['String'];
+  /** The value which triggered the alert */
+  value: Scalars['Float'];
+  /** The warning threshold of the rule */
+  warningThreshold?: Maybe<Scalars['Float']>;
+  windowSize: Scalars['Duration'];
+};
+
+export enum ConditionChangeType {
+  Change = 'CHANGE',
+  Pct = 'PCT',
 }
-
-
 
 export type DiscoverQueuesPayload = {
   __typename?: 'DiscoverQueuesPayload';
@@ -111,12 +190,78 @@ export type DiscoverQueuesPayload = {
   prefix: Scalars['String'];
 };
 
-
 export enum ErrorLevel {
-  Critical = 'CRITICAL',
+  Error = 'ERROR',
+  None = 'NONE',
   Warning = 'WARNING',
-  None = 'NONE'
 }
+
+export type FlowAddInput = {
+  /** The host to which to add the flow */
+  host: Scalars['String'];
+  job: FlowJobInput;
+};
+
+/** TODO: fill in description */
+export type FlowJobInput = {
+  children?: InputMaybe<Array<FlowJobInput>>;
+  /** Data for the job */
+  data?: InputMaybe<Scalars['JSONObject']>;
+  name: Scalars['String'];
+  opts?: InputMaybe<FlowJobOptionsInput>;
+  /** Prefix of queue */
+  prefix?: InputMaybe<Scalars['String']>;
+  /** The queue to create the job in */
+  queueName: Scalars['String'];
+};
+
+export type FlowJobOptionsInput = {
+  /** The total number of attempts to try the job until it completes. */
+  attempts?: InputMaybe<Scalars['Int']>;
+  /** Backoff setting for automatic retries if the job fails */
+  backoff?: InputMaybe<Scalars['JSON']>;
+  /**
+   * An amount of milliseconds to wait until this job can be processed.
+   * Note that for accurate delays, worker and producers should have their clocks synchronized.
+   */
+  delay?: InputMaybe<Scalars['Int']>;
+  /** Override the job ID - by default, the job ID is a unique integer, but you can use this setting to override it. If you use this option, it is up to you to ensure the jobId is unique. If you attempt to add a job with an id that already exists, it will not be added. */
+  jobId?: InputMaybe<Scalars['String']>;
+  /** if true, adds the job to the right of the queue instead of the left (default false) */
+  lifo?: InputMaybe<Scalars['Boolean']>;
+  /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
+  priority?: InputMaybe<Scalars['Int']>;
+  /** Rate limiter key to use if rate limiter enabled. */
+  rateLimiterKey?: InputMaybe<Scalars['String']>;
+  /** If true, removes the job when it successfully completes.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the COMPLETED set. */
+  removeOnComplete?: InputMaybe<Scalars['JobRemoveOption']>;
+  /** If true, removes the job when it fails after all attempts.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the FAILED set. */
+  removeOnFail?: InputMaybe<Scalars['JobRemoveOption']>;
+  repeat?: InputMaybe<JobRepeatOptionsCronInput>;
+  /** Limits the size in bytes of the job's data payload (as a JSON serialized string). */
+  sizeLimit?: InputMaybe<Scalars['Int']>;
+  /** Limits the amount of stack trace lines that will be recorded in the stacktrace. */
+  stackTraceLimit?: InputMaybe<Scalars['Int']>;
+  /** The number of milliseconds after which the job should be fail with a timeout error [optional] */
+  timeout?: InputMaybe<Scalars['Int']>;
+  timestamp?: InputMaybe<Scalars['Date']>;
+};
+
+/** Input type for fetching a flow */
+export type FlowNodeGetInput = {
+  /** The maximum depth to traverse */
+  depth?: InputMaybe<Scalars['Int']>;
+  /** The host to search */
+  host: Scalars['String'];
+  /** The id of the job that is the root of the tree or subtree */
+  id: Scalars['String'];
+  /** The maximum number of children to fetch per level */
+  maxChildren?: InputMaybe<Scalars['Int']>;
+  /** Queue prefix */
+  prefix?: InputMaybe<Scalars['String']>;
+  /** The queue in which the root is found */
+  queueName: Scalars['String'];
+};
 
 export type HistogramBin = {
   __typename?: 'HistogramBin';
@@ -127,95 +272,127 @@ export type HistogramBin = {
   x1: Scalars['Float'];
 };
 
+/** Options for generating histogram bins */
+export type HistogramBinOptionsInput = {
+  /** Optional number of bins to select. */
+  binCount?: InputMaybe<Scalars['Int']>;
+  /** Method used to compute histogram bin count */
+  binMethod?: InputMaybe<HistogramBinningMethod>;
+  /** Optional maximum value to include in counts */
+  maxValue?: InputMaybe<Scalars['Float']>;
+  /** Optional minimum value to include in counts */
+  minValue?: InputMaybe<Scalars['Float']>;
+  /** Generate a "nice" bin count */
+  pretty?: InputMaybe<Scalars['Boolean']>;
+};
+
 /** The method used to calculate the optimal bin width (and consequently number of bins) for a histogram */
 export enum HistogramBinningMethod {
   /** Maximum of the ‘Sturges’ and ‘Freedman’ estimators. Provides good all around performance. */
   Auto = 'Auto',
+  /** Calculate the number of histogram bins based on Freedman-Diaconis method */
+  Freedman = 'Freedman',
   /** Calculate the number of bins based on the Sturges method */
   Sturges = 'Sturges',
-  /** Calculate the number of histogram bins based on Freedman-Diaconis method */
-  Freedman = 'Freedman'
 }
 
 /** Records histogram binning data */
 export type HistogramInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
+  /** The minimum date to consider */
+  from: Scalars['Date'];
   /** Stats snapshot granularity */
   granularity: StatsGranularity;
-  /** An expression specifying the range to query e.g. yesterday, last_7days */
-  range: Scalars['String'];
-  /** Generate a "nice" bin count */
-  pretty?: Maybe<Scalars['Boolean']>;
-  /** Optional number of bins to select. */
-  binCount?: Maybe<Scalars['Int']>;
-  /** Method used to compute histogram bin count */
-  binMethod?: Maybe<HistogramBinningMethod>;
-  /** Optional minimum value to include in counts */
-  minValue?: Maybe<Scalars['Float']>;
-  /** Optional maximum value to include in counts */
-  maxValue?: Maybe<Scalars['Float']>;
+  /** An optional job name to filter on */
+  jobName?: InputMaybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: InputMaybe<StatsMetricType>;
+  options?: InputMaybe<HistogramBinOptionsInput>;
+  /** The maximum date to consider */
+  to: Scalars['Date'];
 };
 
 /** Records histogram binning data */
 export type HistogramPayload = {
   __typename?: 'HistogramPayload';
-  /** The total number of values. */
-  total: Scalars['Int'];
-  /** The minimum value in the data range. */
-  min: Scalars['Float'];
+  bins: Array<Maybe<HistogramBin>>;
   /** The maximum value in the data range. */
   max: Scalars['Float'];
+  /** The minimum value in the data range. */
+  min: Scalars['Float'];
+  /** The total number of values. */
+  total: Scalars['Int'];
   /** The width of the bins */
-  binWidth: Scalars['Float'];
-  bins: Array<Maybe<HistogramBin>>;
+  width: Scalars['Float'];
 };
 
 export type HostQueuesFilter = {
-  /** Regex pattern for queue name matching */
-  search?: Maybe<Scalars['String']>;
+  /** Ids of queues to exclude */
+  exclude?: InputMaybe<Array<Scalars['String']>>;
+  /** Ids of queues to include */
+  include?: InputMaybe<Array<Scalars['String']>>;
   /** Queue prefix */
-  prefix?: Maybe<Scalars['String']>;
-  /** Filter based on paused state */
-  isPaused?: Maybe<Scalars['Boolean']>;
-  /** Filter based on "active" status (true if the queue has at least one worker)  */
-  isActive?: Maybe<Scalars['Boolean']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  /** Regex pattern for queue name matching */
+  search?: InputMaybe<Scalars['String']>;
+  /** Statuses to filter on */
+  statuses?: InputMaybe<Array<QueueFilterStatus>>;
 };
 
 export enum HttpMethodEnum {
   Get = 'GET',
-  Post = 'POST'
+  Post = 'POST',
 }
-
-
-
 
 export type Job = {
   __typename?: 'Job';
-  id: Scalars['ID'];
-  name: Scalars['String'];
-  data: Scalars['JSONObject'];
-  progress?: Maybe<Scalars['JobProgress']>;
-  delay: Scalars['Int'];
-  timestamp: Scalars['Date'];
   attemptsMade: Scalars['Int'];
+  /** Get this jobs children result values as an object indexed by job key, if any. */
+  childrenValues: Scalars['JSONObject'];
+  data: Scalars['JSONObject'];
+  delay: Scalars['Int'];
+  /** Get children job keys if this job is a parent and has children. */
+  dependencies: JobDependenciesPayload;
+  /** Get children job counts if this job is a parent and has children. */
+  dependenciesCount: JobDependenciesCountPayload;
   failedReason?: Maybe<Scalars['JSON']>;
-  stacktrace: Array<Scalars['String']>;
-  returnvalue?: Maybe<Scalars['JSON']>;
   finishedOn?: Maybe<Scalars['Date']>;
-  processedOn?: Maybe<Scalars['Date']>;
-  opts: JobOptions;
-  state: JobStatus;
-  queueId: Scalars['String'];
+  /** Returns the fully qualified id of a job, including the queue prefix and queue name */
+  fullId: Scalars['String'];
+  id: Scalars['ID'];
+  /** Returns true if this job is either a parent or child node in a flow. */
+  isInFlow: Scalars['Boolean'];
+  /** returns true if this job is waiting. */
+  isWaiting: Scalars['Boolean'];
+  /** returns true if this job is waiting for children. */
+  isWaitingChildren: Scalars['Boolean'];
   logs: JobLogs;
+  name: Scalars['String'];
+  opts: JobOptions;
+  /** Returns the parent of a job that is part of a flow */
+  parent?: Maybe<Job>;
+  parentKey?: Maybe<Scalars['String']>;
+  /** Returns the parent queue of a job that is part of a flow */
+  parentQueue?: Maybe<Queue>;
+  processedOn?: Maybe<Scalars['Date']>;
+  progress?: Maybe<Scalars['JobProgress']>;
+  queueId: Scalars['String'];
+  returnvalue?: Maybe<Scalars['JSON']>;
+  stacktrace: Array<Scalars['String']>;
+  state: JobStatus;
+  timestamp: Scalars['Date'];
 };
 
+export type JobDependenciesArgs = {
+  input?: InputMaybe<JobDependenciesOptsInput>;
+};
+
+export type JobDependenciesCountArgs = {
+  input?: InputMaybe<JobDependenciesCountInput>;
+};
 
 export type JobLogsArgs = {
-  start?: Scalars['Int'];
   end?: Scalars['Int'];
+  start?: Scalars['Int'];
 };
 
 export type JobAddBulkPayload = {
@@ -224,10 +401,10 @@ export type JobAddBulkPayload = {
 };
 
 export type JobAddCronInput = {
-  queueId: Scalars['ID'];
+  data?: InputMaybe<Scalars['JSONObject']>;
   jobName: Scalars['ID'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
+  options?: InputMaybe<JobOptionsInput>;
+  queueId: Scalars['ID'];
 };
 
 export type JobAddCronPayload = {
@@ -236,10 +413,10 @@ export type JobAddCronPayload = {
 };
 
 export type JobAddEveryInput = {
-  queueId: Scalars['ID'];
+  data?: InputMaybe<Scalars['JSONObject']>;
   jobName: Scalars['ID'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
+  options?: InputMaybe<JobOptionsInput>;
+  queueId: Scalars['ID'];
 };
 
 export type JobAddEveryPayload = {
@@ -248,36 +425,72 @@ export type JobAddEveryPayload = {
 };
 
 export type JobAddInput = {
-  queueId: Scalars['ID'];
+  data?: InputMaybe<Scalars['JSONObject']>;
   jobName: Scalars['String'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
+  options?: InputMaybe<JobOptionsInput>;
+  queueId: Scalars['ID'];
+};
+
+export type JobChangeDelayInput = {
+  delay: Scalars['Int'];
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
 /** The count of jobs according to status */
 export type JobCounts = {
   __typename?: 'JobCounts';
-  completed: Scalars['Int'];
-  failed: Scalars['Int'];
-  delayed: Scalars['Int'];
-  active: Scalars['Int'];
-  waiting: Scalars['Int'];
-  paused: Scalars['Int'];
+  active?: Maybe<Scalars['Int']>;
+  completed?: Maybe<Scalars['Int']>;
+  delayed?: Maybe<Scalars['Int']>;
+  failed?: Maybe<Scalars['Int']>;
+  paused?: Maybe<Scalars['Int']>;
+  waiting?: Maybe<Scalars['Int']>;
 };
 
 export type JobDataValidateInput = {
-  queueId: Scalars['ID'];
+  data?: InputMaybe<Scalars['JSONObject']>;
   jobName: Scalars['String'];
-  data?: Maybe<Scalars['JSONObject']>;
-  opts?: Maybe<JobOptionsInput>;
+  opts?: InputMaybe<JobOptionsInput>;
+  queueId: Scalars['ID'];
 };
 
 export type JobDataValidatePayload = {
   __typename?: 'JobDataValidatePayload';
-  queueId: Scalars['ID'];
   jobName: Scalars['String'];
+  queueId: Scalars['ID'];
 };
 
+export type JobDependenciesCountInput = {
+  processed?: InputMaybe<Scalars['Boolean']>;
+  unprocessed?: InputMaybe<Scalars['Boolean']>;
+};
+
+export type JobDependenciesCountPayload = {
+  __typename?: 'JobDependenciesCountPayload';
+  processed?: Maybe<Scalars['Int']>;
+  unprocessed?: Maybe<Scalars['Int']>;
+};
+
+export type JobDependenciesOptsInput = {
+  processed?: InputMaybe<JobDependencyCursorInput>;
+  unprocessed?: InputMaybe<JobDependencyCursorInput>;
+};
+
+export type JobDependenciesPayload = {
+  __typename?: 'JobDependenciesPayload';
+  nextProcessedCursor?: Maybe<Scalars['Int']>;
+  nextUnprocessedCursor?: Maybe<Scalars['Int']>;
+  processed?: Maybe<Scalars['JSONObject']>;
+  unprocessed?: Maybe<Array<Scalars['String']>>;
+};
+
+export type JobDependencyCursorInput = {
+  count?: InputMaybe<Scalars['Int']>;
+  cursor?: InputMaybe<Scalars['Int']>;
+};
+
+/** Marks a job to not be retried if it fails (even if attempts has been configured) */
 export type JobDiscardPayload = {
   __typename?: 'JobDiscardPayload';
   job: Job;
@@ -286,30 +499,30 @@ export type JobDiscardPayload = {
 /** Options for filtering queue jobs */
 export type JobFilter = {
   __typename?: 'JobFilter';
+  /** The date this filter was created */
+  createdAt?: Maybe<Scalars['Date']>;
+  /** The job filter query */
+  expression: Scalars['String'];
   id: Scalars['ID'];
   /** A descriptive name of the filter */
   name: Scalars['String'];
   /** Optional job status to filter jobs by */
   status?: Maybe<JobStatus>;
-  /** The job filter query */
-  expression: Scalars['String'];
-  /** The date this filter was created */
-  createdAt?: Maybe<Scalars['Date']>;
 };
 
 export type JobFilterInput = {
-  queueId: Scalars['ID'];
-  name: Scalars['String'];
-  status?: Maybe<JobStatus>;
   expression: Scalars['String'];
+  name: Scalars['String'];
+  queueId: Scalars['ID'];
+  status?: InputMaybe<JobStatus>;
 };
 
 export type JobFilterUpdateInput = {
-  queueId: Scalars['ID'];
-  filterId: Scalars['ID'];
-  name?: Maybe<Scalars['String']>;
-  status?: Maybe<JobStatus>;
   expression: Scalars['String'];
+  filterId: Scalars['ID'];
+  name?: InputMaybe<Scalars['String']>;
+  queueId: Scalars['ID'];
+  status?: InputMaybe<JobStatus>;
 };
 
 export type JobFilterUpdatePayload = {
@@ -319,16 +532,16 @@ export type JobFilterUpdatePayload = {
 };
 
 export type JobLocatorInput = {
-  queueId: Scalars['ID'];
   jobId: Scalars['ID'];
+  queueId: Scalars['ID'];
 };
 
 export type JobLogAddPayload = {
   __typename?: 'JobLogAddPayload';
-  /** The job id */
-  id: Scalars['String'];
   /** The number of log entries after adding */
   count: Scalars['Int'];
+  /** The job id */
+  id: Scalars['String'];
   state?: Maybe<JobStatus>;
 };
 
@@ -338,31 +551,39 @@ export type JobLogs = {
   items: Array<Scalars['String']>;
 };
 
+export type JobMemoryUsagePayload = {
+  __typename?: 'JobMemoryUsagePayload';
+  /** The total number of bytes consumed by the sampled jobs */
+  byteCount: Scalars['Int'];
+  /** The total number of jobs contributing to the byteCount */
+  jobCount: Scalars['Int'];
+};
+
 export type JobMoveToCompletedPayload = {
   __typename?: 'JobMoveToCompletedPayload';
-  queue: Queue;
   job?: Maybe<Job>;
+  queue: Queue;
 };
 
 export type JobMoveToDelayedInput = {
-  queueId: Scalars['ID'];
-  jobId: Scalars['String'];
   /** The amount of time to delay execution (in ms) */
-  delay?: Maybe<Scalars['Duration']>;
+  delay?: InputMaybe<Scalars['Duration']>;
+  jobId: Scalars['String'];
+  queueId: Scalars['ID'];
 };
 
 export type JobMoveToDelayedPayload = {
   __typename?: 'JobMoveToDelayedPayload';
-  job: Job;
   delay: Scalars['Int'];
   /** Estimated date/time of execution */
   executeAt: Scalars['Date'];
+  job: Job;
 };
 
 export type JobMoveToFailedInput = {
-  queueId: Scalars['String'];
+  failedReason?: InputMaybe<Scalars['String']>;
   jobId: Scalars['String'];
-  failedReason?: Maybe<Scalars['String']>;
+  queueId: Scalars['String'];
 };
 
 export type JobMoveToFailedPayload = {
@@ -371,64 +592,94 @@ export type JobMoveToFailedPayload = {
   queue: Queue;
 };
 
+export type JobNode = {
+  __typename?: 'JobNode';
+  children?: Maybe<Array<Job>>;
+  job: Job;
+};
+
 export type JobOptions = {
   __typename?: 'JobOptions';
-  timestamp?: Maybe<Scalars['Date']>;
-  /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
-  priority?: Maybe<Scalars['Int']>;
+  /** The total number of attempts to try the job until it completes. */
+  attempts?: Maybe<Scalars['Int']>;
+  /** Backoff setting for automatic retries if the job fails */
+  backoff?: Maybe<Scalars['JSON']>;
   /**
    * An amount of milliseconds to wait until this job can be processed.
    * Note that for accurate delays, worker and producers should have their clocks synchronized.
    */
   delay?: Maybe<Scalars['Int']>;
-  /** The total number of attempts to try the job until it completes. */
-  attempts?: Maybe<Scalars['Int']>;
-  /** Backoff setting for automatic retries if the job fails */
-  backoff?: Maybe<Scalars['JSON']>;
-  /** if true, adds the job to the right of the queue instead of the left (default false) */
-  lifo?: Maybe<Scalars['Boolean']>;
-  /** The number of milliseconds after which the job should be fail with a timeout error [optional] */
-  timeout?: Maybe<Scalars['Int']>;
   /** Override the job ID - by default, the job ID is a unique integer, but you can use this setting to override it. If you use this option, it is up to you to ensure the jobId is unique. If you attempt to add a job with an id that already exists, it will not be added. */
   jobId?: Maybe<Scalars['String']>;
+  /** if true, adds the job to the right of the queue instead of the left (default false) */
+  lifo?: Maybe<Scalars['Boolean']>;
+  parent?: Maybe<JobParent>;
+  /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
+  priority?: Maybe<Scalars['Int']>;
+  /** Rate limiter key to use if rate limiter enabled. */
+  rateLimiterKey?: Maybe<Scalars['String']>;
   /** If true, removes the job when it successfully completes.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the COMPLETED set. */
   removeOnComplete?: Maybe<Scalars['JobRemoveOption']>;
   /** If true, removes the job when it fails after all attempts.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the FAILED set. */
   removeOnFail?: Maybe<Scalars['JobRemoveOption']>;
-  /** Limits the amount of stack trace lines that will be recorded in the stacktrace. */
-  stackTraceLimit?: Maybe<Scalars['Int']>;
   /** Job repeat options */
   repeat?: Maybe<JobRepeatOptions>;
+  /** Limits the size in bytes of the job's data payload (as a JSON serialized string). */
+  sizeLimit?: Maybe<Scalars['Int']>;
+  /** Limits the amount of stack trace lines that will be recorded in the stacktrace. */
+  stackTraceLimit?: Maybe<Scalars['Int']>;
+  /** The number of milliseconds after which the job should be fail with a timeout error [optional] */
+  timeout?: Maybe<Scalars['Int']>;
+  timestamp?: Maybe<Scalars['Date']>;
 };
 
 export type JobOptionsInput = {
-  timestamp?: Maybe<Scalars['Date']>;
-  /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
-  priority?: Maybe<Scalars['Int']>;
+  /** The total number of attempts to try the job until it completes. */
+  attempts?: InputMaybe<Scalars['Int']>;
+  /** Backoff setting for automatic retries if the job fails */
+  backoff?: InputMaybe<Scalars['JSON']>;
   /**
    * An amount of milliseconds to wait until this job can be processed.
    * Note that for accurate delays, worker and producers should have their clocks synchronized.
    */
-  delay?: Maybe<Scalars['Int']>;
-  /** The total number of attempts to try the job until it completes. */
-  attempts?: Maybe<Scalars['Int']>;
-  /** Backoff setting for automatic retries if the job fails */
-  backoff?: Maybe<Scalars['JSON']>;
-  /** if true, adds the job to the right of the queue instead of the left (default false) */
-  lifo?: Maybe<Scalars['Boolean']>;
-  /** The number of milliseconds after which the job should be fail with a timeout error [optional] */
-  timeout?: Maybe<Scalars['Int']>;
+  delay?: InputMaybe<Scalars['Int']>;
   /** Override the job ID - by default, the job ID is a unique integer, but you can use this setting to override it. If you use this option, it is up to you to ensure the jobId is unique. If you attempt to add a job with an id that already exists, it will not be added. */
-  jobId?: Maybe<Scalars['String']>;
+  jobId?: InputMaybe<Scalars['String']>;
+  /** if true, adds the job to the right of the queue instead of the left (default false) */
+  lifo?: InputMaybe<Scalars['Boolean']>;
+  parent?: InputMaybe<JobParentInput>;
+  /** Ranges from 1 (highest priority) to MAX_INT  (lowest priority). Note that using priorities has a slight impact on performance, so do not use it if not required. */
+  priority?: InputMaybe<Scalars['Int']>;
+  /** Rate limiter key to use if rate limiter enabled. */
+  rateLimiterKey?: InputMaybe<Scalars['String']>;
   /** If true, removes the job when it successfully completes.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the COMPLETED set. */
-  removeOnComplete?: Maybe<Scalars['JobRemoveOption']>;
+  removeOnComplete?: InputMaybe<Scalars['JobRemoveOption']>;
   /** If true, removes the job when it fails after all attempts.  A number specify the max amount of jobs to keep.  Default behavior is to keep the job in the FAILED set. */
-  removeOnFail?: Maybe<Scalars['JobRemoveOption']>;
+  removeOnFail?: InputMaybe<Scalars['JobRemoveOption']>;
+  repeat?: InputMaybe<JobRepeatOptionsCronInput>;
+  /** Limits the size in bytes of the job's data payload (as a JSON serialized string). */
+  sizeLimit?: InputMaybe<Scalars['Int']>;
   /** Limits the amount of stack trace lines that will be recorded in the stacktrace. */
-  stackTraceLimit?: Maybe<Scalars['Int']>;
-  repeat?: Maybe<JobRepeatOptionsCronInput>;
+  stackTraceLimit?: InputMaybe<Scalars['Int']>;
+  /** The number of milliseconds after which the job should be fail with a timeout error [optional] */
+  timeout?: InputMaybe<Scalars['Int']>;
+  timestamp?: InputMaybe<Scalars['Date']>;
 };
 
+export type JobParent = {
+  __typename?: 'JobParent';
+  /** The id of the job */
+  id: Scalars['String'];
+  /** The name of the queue (including prefix) containing the job */
+  queue: Scalars['String'];
+};
+
+export type JobParentInput = {
+  /** The id of the job */
+  id: Scalars['String'];
+  /** The name of the queue (including prefix) containing the job */
+  queue: Scalars['String'];
+};
 
 export type JobPromotePayload = {
   __typename?: 'JobPromotePayload';
@@ -436,35 +687,34 @@ export type JobPromotePayload = {
   queue: Queue;
 };
 
-
 export type JobRemovePayload = {
   __typename?: 'JobRemovePayload';
-  queue: Queue;
   job: Job;
+  queue: Queue;
 };
 
 export type JobRepeatOptions = {
   __typename?: 'JobRepeatOptions';
-  tz?: Maybe<Scalars['String']>;
-  endDate?: Maybe<Scalars['Date']>;
-  limit?: Maybe<Scalars['Int']>;
   count?: Maybe<Scalars['Int']>;
-  prevMillis?: Maybe<Scalars['Int']>;
-  jobId?: Maybe<Scalars['String']>;
-  startDate?: Maybe<Scalars['Date']>;
   cron?: Maybe<Scalars['String']>;
+  endDate?: Maybe<Scalars['Date']>;
   every?: Maybe<Scalars['String']>;
+  jobId?: Maybe<Scalars['String']>;
+  limit?: Maybe<Scalars['Int']>;
+  prevMillis?: Maybe<Scalars['Int']>;
+  startDate?: Maybe<Scalars['Date']>;
+  tz?: Maybe<Scalars['String']>;
 };
 
 export type JobRepeatOptionsCronInput = {
-  tz?: Maybe<Scalars['String']>;
-  endDate?: Maybe<Scalars['Date']>;
-  limit?: Maybe<Scalars['Int']>;
-  count?: Maybe<Scalars['Int']>;
-  prevMillis?: Maybe<Scalars['Int']>;
-  jobId?: Maybe<Scalars['String']>;
-  startDate?: Maybe<Scalars['Date']>;
+  count?: InputMaybe<Scalars['Int']>;
   cron: Scalars['String'];
+  endDate?: InputMaybe<Scalars['Date']>;
+  jobId?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  prevMillis?: InputMaybe<Scalars['Int']>;
+  startDate?: InputMaybe<Scalars['Date']>;
+  tz?: InputMaybe<Scalars['String']>;
 };
 
 export type JobRetryPayload = {
@@ -476,73 +726,80 @@ export type JobRetryPayload = {
 /** Options for validating job data */
 export type JobSchema = {
   __typename?: 'JobSchema';
+  /** Default options for jobs off this type created through the API */
+  defaultOpts?: Maybe<Scalars['JSONObject']>;
   jobName: Scalars['String'];
   /** The JSON schema associated with the job name */
   schema?: Maybe<Scalars['JSONSchema']>;
-  /** Default options for jobs off this type created through the API */
-  defaultOpts?: Maybe<Scalars['JSONObject']>;
+};
+
+export type JobSchemaInferInput = {
+  jobName?: InputMaybe<Scalars['String']>;
+  queueId: Scalars['ID'];
 };
 
 export type JobSchemaInput = {
-  queueId: Scalars['ID'];
+  defaultOpts?: InputMaybe<JobOptionsInput>;
   jobName: Scalars['String'];
+  queueId: Scalars['ID'];
   schema: Scalars['JSONSchema'];
-  defaultOpts?: Maybe<JobOptionsInput>;
 };
 
 export type JobSearchInput = {
-  /** Search for jobs having this status */
-  status?: Maybe<JobStatus>;
-  /** The job filter expression */
-  criteria?: Maybe<Scalars['String']>;
-  /** The iterator cursor. Iteration starts when the cursor is set to null, and terminates when the cursor returned by the server is null */
-  cursor?: Maybe<Scalars['String']>;
   /** The maximum number of jobs to return per iteration */
   count?: Scalars['Int'];
+  /** The job filter expression */
+  criteria?: InputMaybe<Scalars['String']>;
+  /** The iterator cursor. Iteration starts when the cursor is set to null, and terminates when the cursor returned by the server is null */
+  cursor?: InputMaybe<Scalars['String']>;
+  /** Search for jobs having this status */
+  status?: InputMaybe<JobStatus>;
 };
 
 export type JobSearchPayload = {
   __typename?: 'JobSearchPayload';
+  current: Scalars['Int'];
   cursor?: Maybe<Scalars['String']>;
   hasNext: Scalars['Boolean'];
   jobs: Array<Job>;
   total: Scalars['Int'];
-  current: Scalars['Int'];
 };
 
 /** Base implementation for job stats information. */
 export type JobStatsInterface = {
-  /** The sample size */
-  count: Scalars['Int'];
-  /** The number of failed jobs in the sample interval */
-  failed: Scalars['Int'];
   /** The number of completed jobs in the sample interval */
   completed: Scalars['Int'];
-  /** The start of the interval */
-  startTime: Scalars['Date'];
+  /** The sample size */
+  count: Scalars['Int'];
   /** The end of the interval */
   endTime: Scalars['Date'];
+  /** The number of failed jobs in the sample interval */
+  failed: Scalars['Int'];
+  /** The start of the interval */
+  startTime: Scalars['Date'];
 };
 
 export enum JobStatus {
-  Completed = 'completed',
-  Waiting = 'waiting',
-  Active = 'active',
-  Delayed = 'delayed',
-  Failed = 'failed',
-  Paused = 'paused'
+  Active = 'ACTIVE',
+  Completed = 'COMPLETED',
+  Delayed = 'DELAYED',
+  Failed = 'FAILED',
+  Paused = 'PAUSED',
+  Unknown = 'UNKNOWN',
+  Waiting = 'WAITING',
+  WaitingChildren = 'WAITING_CHILDREN',
 }
 
 export type JobUpdateDelta = {
   __typename?: 'JobUpdateDelta';
-  id: Scalars['String'];
   delta: Scalars['JSONObject'];
+  id: Scalars['String'];
 };
 
 export type JobUpdateInput = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
   data: Scalars['JSONObject'];
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
 export type JobUpdatePayload = {
@@ -551,42 +808,59 @@ export type JobUpdatePayload = {
 };
 
 export type JobsByFilterIdInput = {
-  /** The id of the filter */
-  filterId: Scalars['ID'];
-  /** The iterator cursor. Iteration starts when the cursor is set to 0, and terminates when the cursor returned by the server is 0 */
-  cursor?: Maybe<Scalars['Int']>;
   /** The maximum number of jobs to return per iteration */
   count: Scalars['Int'];
+  /** The iterator cursor. Iteration starts when the cursor is set to 0, and terminates when the cursor returned by the server is 0 */
+  cursor?: InputMaybe<Scalars['Int']>;
+  /** The id of the filter */
+  filterId: Scalars['ID'];
+};
+
+export type JobsMemoryAvgInput = {
+  /** Consider only jobs of this type (optional) */
+  jobName?: InputMaybe<Scalars['String']>;
+  /** An optional upper limit of jobs to sample for the average */
+  limit?: InputMaybe<Scalars['Int']>;
+  /** Job status to consider. Defaults to COMPLETED */
+  status?: InputMaybe<JobStatus>;
 };
 
 /** A channel which sends notifications through email */
 export type MailNotificationChannel = NotificationChannel & {
   __typename?: 'MailNotificationChannel';
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
   /** Timestamp of channel creation */
   createdAt?: Maybe<Scalars['Date']>;
-  /** Timestamp of last channel update */
-  updatedAt?: Maybe<Scalars['Date']>;
-  /** Emails of notification recipients */
-  recipients: Array<Scalars['String']>;
-};
-
-export type MailNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
   /** Is the channel enabled ? */
   enabled: Scalars['Boolean'];
+  id: Scalars['ID'];
+  /** The name of the channel */
+  name: Scalars['String'];
   /** Emails of notification recipients */
-  recipients: Array<Scalars['String']>;
-  /** the host to add the channel to */
+  recipients: Array<Maybe<Scalars['EmailAddress']>>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** Timestamp of last channel update */
+  updatedAt?: Maybe<Scalars['Date']>;
+};
+
+export type MailNotificationChannelAddInput = {
+  channel: MailNotificationChannelUpdate;
+  hostId: Scalars['ID'];
+};
+
+export type MailNotificationChannelUpdate = {
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** Emails of notification recipients */
+  recipients: Array<InputMaybe<Scalars['EmailAddress']>>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+};
+
+export type MailNotificationChannelUpdateInput = {
+  channel: MailNotificationChannelUpdate;
   hostId: Scalars['ID'];
 };
 
@@ -595,357 +869,565 @@ export type Meter = {
   __typename?: 'Meter';
   /** The number of samples. */
   count: Scalars['Int'];
-  /** The average rate since the meter was started. */
-  meanRate: Scalars['Float'];
   /** The 1 minute average */
   m1Rate: Scalars['Float'];
   /** The 5 minute average */
   m5Rate: Scalars['Float'];
   /** The 15 minute average */
   m15Rate: Scalars['Float'];
+  /** The average rate since the meter was started. */
+  meanRate: Scalars['Float'];
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type Metric = {
+  __typename?: 'Metric';
+  aggregator: Aggregator;
+  category: MetricCategory;
+  /** Timestamp of when this metric was created */
+  createdAt: Scalars['Date'];
+  /** The current value of the metric */
+  currentValue?: Maybe<Scalars['Float']>;
+  data: Array<Maybe<TimeseriesDataPoint>>;
+  /** Returns the timestamps of the first and last data items recorded for the metric */
+  dateRange?: Maybe<TimeSpan>;
+  /** Returns the description of the metric */
+  description: Scalars['String'];
+  histogram: HistogramPayload;
+  /** the id of the metric */
+  id: Scalars['ID'];
+  /** Is the metric active (i.e. is data being collected). */
+  isActive: Scalars['Boolean'];
+  /** The name of the metric */
+  name: Scalars['String'];
+  /** The metric options */
+  options: Scalars['JSONObject'];
+  /** Uses a rolling mean and a rolling deviation (separate) to identify peaks in metric data */
+  outliers: Array<Maybe<TimeseriesDataPoint>>;
+  /** Compute a percentile distribution. */
+  percentileDistribution: PercentileDistribution;
+  /** The id of the queue to which the metric belongs */
+  queueId: Scalars['ID'];
+  /** The metric sampling interval. */
+  sampleInterval?: Maybe<Scalars['Int']>;
+  /** Returns simple descriptive statistics from a range of metric data */
+  summaryStats: SummaryStatistics;
+  type: MetricType;
+  unit: Scalars['String'];
+  /** Timestamp of when this metric was created */
+  updatedAt: Scalars['Date'];
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type MetricDataArgs = {
+  input: MetricDataInput;
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type MetricHistogramArgs = {
+  input: MetricsHistogramInput;
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type MetricOutliersArgs = {
+  input: MetricDataOutliersInput;
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type MetricPercentileDistributionArgs = {
+  input: MetricPercentileDistributionInput;
+};
+
+/** Metrics are numeric samples of data collected over time */
+export type MetricSummaryStatsArgs = {
+  input: MetricDataInput;
 };
 
 export enum MetricCategory {
-  Host = 'HOST',
-  Redis = 'REDIS',
-  Queue = 'QUEUE'
+  Host = 'Host',
+  Queue = 'Queue',
+  Redis = 'Redis',
 }
+
+/** Input fields for creating a metric */
+export type MetricCreateInput = {
+  aggregator?: InputMaybe<AggregatorInput>;
+  /** A description of the metric being measured. */
+  description?: InputMaybe<Scalars['String']>;
+  /** Is the metric active (i.e. is data being collected). */
+  isActive: Scalars['Boolean'];
+  /** The name of the metric */
+  name: Scalars['String'];
+  /** The metric options */
+  options: Scalars['JSONObject'];
+  /** The id of the queue to which the metric belongs */
+  queueId: Scalars['ID'];
+  /** The metric sampling interval. */
+  sampleInterval?: InputMaybe<Scalars['Int']>;
+  type: MetricType;
+};
+
+export type MetricDataInput = {
+  end: Scalars['Date'];
+  outlierFilter?: InputMaybe<OutlierFilterInput>;
+  start: Scalars['Date'];
+};
+
+export type MetricDataOutliersInput = {
+  end: Scalars['Date'];
+  method?: OutlierDetectionMethod;
+  start: Scalars['Date'];
+  /** the threshold for outline detection. Defaults depend on the method of detection */
+  threshold?: InputMaybe<Scalars['Float']>;
+};
+
+export type MetricDataRefreshInput = {
+  end?: InputMaybe<Scalars['Date']>;
+  metricId: Scalars['String'];
+  /** An expression specifying the range to query e.g. yesterday, last_7days */
+  range?: InputMaybe<Scalars['String']>;
+  start?: InputMaybe<Scalars['Date']>;
+};
+
+export type MetricDataRefreshPayload = {
+  __typename?: 'MetricDataRefreshPayload';
+  end?: Maybe<Scalars['Date']>;
+  metric: Metric;
+  metricId: Scalars['String'];
+  start?: Maybe<Scalars['Date']>;
+};
+
+export type MetricDeleteInput = {
+  metricId: Scalars['ID'];
+  queueId: Scalars['ID'];
+};
+
+export type MetricDeletePayload = {
+  __typename?: 'MetricDeletePayload';
+  isDeleted: Scalars['Boolean'];
+  queue: Queue;
+};
 
 export type MetricInfo = {
   __typename?: 'MetricInfo';
-  key: Scalars['String'];
+  category: MetricCategory;
   description?: Maybe<Scalars['String']>;
-  category?: Maybe<MetricCategory>;
-  type?: Maybe<MetricType>;
-  unit?: Maybe<Scalars['String']>;
   isPolling: Scalars['Boolean'];
+  key: Scalars['String'];
+  type: MetricType;
+  unit?: Maybe<Scalars['String']>;
+  valueType: MetricValueType;
+};
+
+/** Input fields for updating a metric */
+export type MetricInput = {
+  aggregator?: InputMaybe<AggregatorInput>;
+  /** A description of the metric being measured. */
+  description?: InputMaybe<Scalars['String']>;
+  /** the id of the metric */
+  id: Scalars['ID'];
+  /** Is the metric active (i.e. is data being collected). */
+  isActive: Scalars['Boolean'];
+  /** The name of the metric */
+  name?: InputMaybe<Scalars['String']>;
+  /** The metric options */
+  options?: InputMaybe<Scalars['JSONObject']>;
+  /** The id of the queue to which the metric belongs */
+  queueId: Scalars['ID'];
+  /** The metric sampling interval. */
+  sampleInterval?: InputMaybe<Scalars['Int']>;
+  type: MetricType;
+};
+
+export type MetricPercentileDistributionInput = {
+  from: Scalars['Date'];
+  outlierFilter?: InputMaybe<OutlierFilterInput>;
+  /** The percentiles to get frequencies for */
+  percentiles?: InputMaybe<Array<Scalars['Float']>>;
+  to: Scalars['Date'];
 };
 
 export enum MetricType {
+  ActiveJobs = 'ActiveJobs',
+  Apdex = 'Apdex',
+  Completed = 'Completed',
+  CompletedRate = 'CompletedRate',
+  ConnectedClients = 'ConnectedClients',
+  ConsecutiveFailures = 'ConsecutiveFailures',
+  CurrentCompletedCount = 'CurrentCompletedCount',
+  CurrentFailedCount = 'CurrentFailedCount',
+  DelayedJobs = 'DelayedJobs',
+  ErrorPercentage = 'ErrorPercentage',
+  ErrorRate = 'ErrorRate',
+  Failures = 'Failures',
+  Finished = 'Finished',
+  FragmentationRatio = 'FragmentationRatio',
+  InstantaneousOps = 'InstantaneousOps',
+  JobRate = 'JobRate',
+  Latency = 'Latency',
+  None = 'None',
+  PeakMemory = 'PeakMemory',
+  PendingCount = 'PendingCount',
+  UsedMemory = 'UsedMemory',
+  WaitTime = 'WaitTime',
+  Waiting = 'Waiting',
+  WaitingChildren = 'WaitingChildren',
+}
+
+export enum MetricValueType {
+  Count = 'Count',
   Gauge = 'Gauge',
   Rate = 'Rate',
-  Count = 'Count'
 }
+
+/** Compute a frequency distribution of a range of metric data. */
+export type MetricsHistogramInput = {
+  /** The minimum date to consider */
+  from: Scalars['Date'];
+  options?: InputMaybe<HistogramBinOptionsInput>;
+  outlierFilter?: InputMaybe<OutlierFilterInput>;
+  /** The maximum date to consider */
+  to: Scalars['Date'];
+};
 
 export type Mutation = {
   __typename?: 'Mutation';
-  mailNotificationChannelAdd: MailNotificationChannel;
-  slackNotificationChannelAdd: SlackNotificationChannel;
-  /** Add a webhook notification channel */
-  webhookNotificationChannelAdd: WebhookNotificationChannel;
-  notificationChannelEnable: NotificationChannelEnablePayload;
-  notificationChannelDisable: NotificationChannelDisablePayload;
-  notificationChannelDelete: NotificationChannelDeletePayload;
+  flowAdd: JobNode;
   jobAdd: Job;
   jobAddBulk?: Maybe<JobAddBulkPayload>;
   jobAddCron: JobAddCronPayload;
   jobAddEvery: JobAddEveryPayload;
+  jobChangeDelay: Job;
   jobDiscard: JobDiscardPayload;
-  jobPromote: JobPromotePayload;
-  jobRemove: JobRemovePayload;
-  /** Bulk deletes a list of jobs by id */
-  jobRemoveBulk?: Maybe<BulkJobActionPayload>;
-  jobRetry: JobRetryPayload;
-  jobUpdate: JobUpdatePayload;
   jobLogAdd: JobLogAddPayload;
   jobMoveToCompleted: JobMoveToCompletedPayload;
   /** Moves job from active to delayed. */
   jobMoveToDelayed: JobMoveToDelayedPayload;
   jobMoveToFailed: JobMoveToFailedPayload;
+  jobPromote: JobPromotePayload;
   /** Bulk promotes a list of jobs by id */
   jobPromoteBulk?: Maybe<BulkJobActionPayload>;
+  jobRemove: JobRemovePayload;
+  /** Bulk deletes a list of jobs by id */
+  jobRemoveBulk?: Maybe<BulkJobActionPayload>;
+  jobRetry: JobRetryPayload;
   /** Bulk retries a list of jobs by id */
   jobRetryBulk?: Maybe<BulkJobActionPayload>;
-  repeatableJobRemoveByKey: RepeatableJobRemoveByKeyPayload;
-  repeatableJobRemove: QueueRemoveRepeatablePayload;
+  jobUpdate: JobUpdatePayload;
+  /** Add a mail notification channel */
+  mailNotificationChannelAdd: MailNotificationChannel;
+  mailNotificationChannelUpdate: MailNotificationChannel;
+  /** Create a queue metric */
+  metricCreate: Metric;
+  metricDataRefresh: Array<Maybe<MetricDataRefreshPayload>>;
+  /** Delete a queue metric */
+  metricDelete: MetricDeletePayload;
+  /** Update a job metric */
+  metricUpdate: Metric;
+  notificationChannelDelete: NotificationChannelDeletePayload;
+  notificationChannelDisable: NotificationChannelDisablePayload;
+  notificationChannelEnable: NotificationChannelEnablePayload;
   /** Remove all jobs created outside of a grace interval in milliseconds. You can clean the jobs with the following states: COMPLETED, wait (typo for WAITING), isActive, DELAYED, and FAILED. */
   queueClean: QueueCleanPayload;
+  queueDelete: QueueDeletePayload;
   /** Drains the queue, i.e., removes all jobs that are waiting or delayed, but not active, completed or failed. */
   queueDrain: QueueDrainPayload;
+  /** Add a named job filter */
+  queueJobFilterCreate: JobFilter;
+  /** Delete a job filter */
+  queueJobFilterDelete: QueueJobFilterDeletePayload;
+  /** Update a job filter */
+  queueJobFilterUpdate: JobFilterUpdatePayload;
+  /** Delete a schema associated with a job name on a queue */
+  queueJobSchemaDelete: QueueJobSchemaDeletePayload;
+  /** Associate a JSON schema with a job name on a queue */
+  queueJobSchemaSet: JobSchema;
   /**
    * Pause the queue.
    *
    * A PAUSED queue will not process new jobs until resumed, but current jobs being processed will continue until they are finalized.
    */
-  queuePause: QueuePausePayload;
-  /** Resume a queue after being PAUSED. */
-  queueResume: QueueResumePayload;
-  queueDelete: QueueDeletePayload;
+  queuePause: Queue;
   /** Start tracking a queue */
   queueRegister: Queue;
-  /** Stop tracking a queue */
-  queueUnregister: QueueUnregisterPayload;
-  /** Add a named job filter */
-  queueJobFilterCreate: JobFilter;
-  /** Associate a JSON schema with a job name on a queue */
-  queueJobSchemaSet: JobSchema;
-  /** Delete a schema associated with a job name on a queue */
-  queueJobSchemaDelete: QueueJobSchemaDeletePayload;
-  /** Delete a job filter */
-  queueJobFilterDelete: QueueJobFilterDeletePayload;
-  /** Update a job filter */
-  queueJobFilterUpdate: JobFilterUpdatePayload;
+  /** Resume a queue after being PAUSED. */
+  queueResume: Queue;
   /** Delete all stats associated with a queue */
   queueStatsDelete: QueueStatsDeletePayload;
-  /** Delete a rule alert */
-  ruleAlertDelete: RuleAlertDeletePayload;
-  /** Removes all alerts associated with a rule */
-  ruleAlertClear: RuleAlertsClearPayload;
-  /** Delete a rule */
-  ruleDelete: RuleDeletePayload;
-  /** Create a rule for a queue */
-  ruleAdd: RuleAddPayload;
+  /** Stop tracking a queue */
+  queueUnregister: QueueUnregisterPayload;
+  repeatableJobRemove: QueueRemoveRepeatablePayload;
+  repeatableJobRemoveByKey: RepeatableJobRemoveByKeyPayload;
   /** Removes all alerts associated with a rule */
   ruleActivate: RuleActivatePayload;
+  /** Create a rule for a queue */
+  ruleAdd: Rule;
+  /** Delete a rule alert */
+  ruleAlertDelete: RuleAlertDeletePayload;
+  /** Delete a rule alert */
+  ruleAlertMarkAsRead: RuleAlertMarkAsReadPayload;
+  /** Removes all alerts associated with a rule */
+  ruleAlertsClear: RuleAlertsClearPayload;
   /** Removes all alerts associated with a rule */
   ruleDeactivate: RuleDeactivatePayload;
+  /** Delete a rule */
+  ruleDelete: RuleDeletePayload;
+  /** Update a rule */
+  ruleUpdate: Rule;
+  /** Add a slack notification channel */
+  slackNotificationChannelAdd: SlackNotificationChannel;
+  slackNotificationChannelUpdate: SlackNotificationChannel;
+  /** Add a webhook notification channel */
+  webhookNotificationChannelAdd: WebhookNotificationChannel;
+  webhookNotificationChannelUpdate: WebhookNotificationChannel;
 };
 
-
-export type MutationMailNotificationChannelAddArgs = {
-  input?: Maybe<MailNotificationChannelInput>;
+export type MutationFlowAddArgs = {
+  input?: InputMaybe<FlowAddInput>;
 };
-
-
-export type MutationSlackNotificationChannelAddArgs = {
-  input?: Maybe<SlackNotificationChannelInput>;
-};
-
-
-export type MutationWebhookNotificationChannelAddArgs = {
-  input?: Maybe<WebhookNotificationChannelInput>;
-};
-
-
-export type MutationNotificationChannelEnableArgs = {
-  hostId: Scalars['String'];
-  channelId: Scalars['ID'];
-};
-
-
-export type MutationNotificationChannelDisableArgs = {
-  hostId: Scalars['String'];
-  channelId: Scalars['ID'];
-};
-
-
-export type MutationNotificationChannelDeleteArgs = {
-  hostId: Scalars['String'];
-  channelId: Scalars['ID'];
-};
-
 
 export type MutationJobAddArgs = {
-  input?: Maybe<JobAddInput>;
+  input?: InputMaybe<JobAddInput>;
 };
-
 
 export type MutationJobAddBulkArgs = {
+  jobs: Array<InputMaybe<BulkJobItemInput>>;
   queueId: Scalars['String'];
-  jobs: Array<Maybe<BulkJobItemInput>>;
 };
-
 
 export type MutationJobAddCronArgs = {
   input: JobAddCronInput;
 };
 
-
 export type MutationJobAddEveryArgs = {
-  input?: Maybe<JobAddEveryInput>;
+  input?: InputMaybe<JobAddEveryInput>;
 };
 
+export type MutationJobChangeDelayArgs = {
+  input?: InputMaybe<JobChangeDelayInput>;
+};
 
 export type MutationJobDiscardArgs = {
   input: JobLocatorInput;
 };
 
-
-export type MutationJobPromoteArgs = {
-  input: JobLocatorInput;
-};
-
-
-export type MutationJobRemoveArgs = {
-  input: JobLocatorInput;
-};
-
-
-export type MutationJobRemoveBulkArgs = {
-  input: BulkJobActionInput;
-};
-
-
-export type MutationJobRetryArgs = {
-  input: JobLocatorInput;
-};
-
-
-export type MutationJobUpdateArgs = {
-  input: JobUpdateInput;
-};
-
-
 export type MutationJobLogAddArgs = {
-  queueId: Scalars['String'];
   id: Scalars['String'];
+  queueId: Scalars['String'];
   row: Scalars['String'];
 };
-
 
 export type MutationJobMoveToCompletedArgs = {
   input: JobLocatorInput;
 };
 
-
 export type MutationJobMoveToDelayedArgs = {
-  input?: Maybe<JobMoveToDelayedInput>;
+  input?: InputMaybe<JobMoveToDelayedInput>;
 };
-
 
 export type MutationJobMoveToFailedArgs = {
-  input?: Maybe<JobMoveToFailedInput>;
+  input?: InputMaybe<JobMoveToFailedInput>;
 };
 
+export type MutationJobPromoteArgs = {
+  input: JobLocatorInput;
+};
 
 export type MutationJobPromoteBulkArgs = {
   input: BulkJobActionInput;
 };
 
+export type MutationJobRemoveArgs = {
+  input: JobLocatorInput;
+};
+
+export type MutationJobRemoveBulkArgs = {
+  input: BulkJobActionInput;
+};
+
+export type MutationJobRetryArgs = {
+  input: JobLocatorInput;
+};
 
 export type MutationJobRetryBulkArgs = {
   input: BulkJobActionInput;
 };
 
-
-export type MutationRepeatableJobRemoveByKeyArgs = {
-  input: RepeatableJobRemoveByKeyInput;
+export type MutationJobUpdateArgs = {
+  input: JobUpdateInput;
 };
 
-
-export type MutationRepeatableJobRemoveArgs = {
-  id: Scalars['ID'];
-  jobName?: Maybe<Scalars['String']>;
-  repeat: RepeatableJobRemoveOptions;
+export type MutationMailNotificationChannelAddArgs = {
+  input: MailNotificationChannelAddInput;
 };
 
+export type MutationMailNotificationChannelUpdateArgs = {
+  input: MailNotificationChannelUpdateInput;
+};
+
+export type MutationMetricCreateArgs = {
+  input: MetricCreateInput;
+};
+
+export type MutationMetricDataRefreshArgs = {
+  input: MetricDataRefreshInput;
+};
+
+export type MutationMetricDeleteArgs = {
+  input: MetricDeleteInput;
+};
+
+export type MutationMetricUpdateArgs = {
+  input: MetricInput;
+};
+
+export type MutationNotificationChannelDeleteArgs = {
+  channelId: Scalars['ID'];
+  hostId: Scalars['ID'];
+};
+
+export type MutationNotificationChannelDisableArgs = {
+  channelId: Scalars['ID'];
+  hostId: Scalars['ID'];
+};
+
+export type MutationNotificationChannelEnableArgs = {
+  channelId: Scalars['ID'];
+  hostId: Scalars['ID'];
+};
 
 export type MutationQueueCleanArgs = {
   input: QueueCleanFilter;
 };
 
-
-export type MutationQueueDrainArgs = {
-  id: Scalars['ID'];
-  delayed?: Maybe<Scalars['Boolean']>;
-};
-
-
-export type MutationQueuePauseArgs = {
-  id: Scalars['ID'];
-};
-
-
-export type MutationQueueResumeArgs = {
-  id: Scalars['ID'];
-};
-
-
 export type MutationQueueDeleteArgs = {
   id: Scalars['ID'];
-  options?: Maybe<QueueDeleteOptions>;
+  options?: InputMaybe<QueueDeleteOptions>;
 };
 
-
-export type MutationQueueRegisterArgs = {
-  input?: Maybe<RegisterQueueInput>;
-};
-
-
-export type MutationQueueUnregisterArgs = {
+export type MutationQueueDrainArgs = {
+  delayed?: InputMaybe<Scalars['Boolean']>;
   id: Scalars['ID'];
 };
-
 
 export type MutationQueueJobFilterCreateArgs = {
   input: JobFilterInput;
 };
 
-
-export type MutationQueueJobSchemaSetArgs = {
-  input: JobSchemaInput;
-};
-
-
-export type MutationQueueJobSchemaDeleteArgs = {
-  input: QueueJobSchemaDeleteInput;
-};
-
-
 export type MutationQueueJobFilterDeleteArgs = {
   input: QueueJobFilterDeleteInput;
 };
-
 
 export type MutationQueueJobFilterUpdateArgs = {
   input: JobFilterUpdateInput;
 };
 
+export type MutationQueueJobSchemaDeleteArgs = {
+  input: QueueJobSchemaDeleteInput;
+};
+
+export type MutationQueueJobSchemaSetArgs = {
+  input: JobSchemaInput;
+};
+
+export type MutationQueuePauseArgs = {
+  id: Scalars['ID'];
+};
+
+export type MutationQueueRegisterArgs = {
+  input?: InputMaybe<RegisterQueueInput>;
+};
+
+export type MutationQueueResumeArgs = {
+  id: Scalars['ID'];
+};
 
 export type MutationQueueStatsDeleteArgs = {
   input: QueueStatsDeleteInput;
 };
 
-
-export type MutationRuleAlertDeleteArgs = {
-  input: RuleAlertDeleteInput;
+export type MutationQueueUnregisterArgs = {
+  id: Scalars['ID'];
 };
 
-
-export type MutationRuleAlertClearArgs = {
-  input: RuleAlertsClearInput;
+export type MutationRepeatableJobRemoveArgs = {
+  id: Scalars['ID'];
+  jobName?: InputMaybe<Scalars['String']>;
+  repeat: RepeatableJobRemoveOptions;
 };
 
-
-export type MutationRuleDeleteArgs = {
-  input: RuleDeleteInput;
+export type MutationRepeatableJobRemoveByKeyArgs = {
+  input: RepeatableJobRemoveByKeyInput;
 };
-
-
-export type MutationRuleAddArgs = {
-  input: RuleAddInput;
-};
-
 
 export type MutationRuleActivateArgs = {
   input: RuleActivateInput;
 };
 
+export type MutationRuleAddArgs = {
+  input: RuleAddInput;
+};
+
+export type MutationRuleAlertDeleteArgs = {
+  input: RuleAlertDeleteInput;
+};
+
+export type MutationRuleAlertMarkAsReadArgs = {
+  input: RuleAlertMarkAsReadInput;
+};
+
+export type MutationRuleAlertsClearArgs = {
+  input: RuleAlertsClearInput;
+};
 
 export type MutationRuleDeactivateArgs = {
   input: RuleDeactivateInput;
 };
 
+export type MutationRuleDeleteArgs = {
+  input: RuleDeleteInput;
+};
+
+export type MutationRuleUpdateArgs = {
+  input: RuleUpdateInput;
+};
+
+export type MutationSlackNotificationChannelAddArgs = {
+  input: SlackNotificationChannelAddInput;
+};
+
+export type MutationSlackNotificationChannelUpdateArgs = {
+  input: SlackNotificationChannelUpdateInput;
+};
+
+export type MutationWebhookNotificationChannelAddArgs = {
+  input: WebhookNotificationChannelAddInput;
+};
+
+export type MutationWebhookNotificationChannelUpdateArgs = {
+  input: WebhookNotificationChannelUpdateInput;
+};
+
 /** NotificationChannels provide a consistent ways for users to be notified about incidents. */
 export type NotificationChannel = {
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
   /** Timestamp of channel creation */
   createdAt?: Maybe<Scalars['Date']>;
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  id: Scalars['ID'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
   /** Timestamp of last channel update */
   updatedAt?: Maybe<Scalars['Date']>;
 };
 
 export type NotificationChannelDeletePayload = {
   __typename?: 'NotificationChannelDeletePayload';
-  hostId: Scalars['String'];
   channelId: Scalars['ID'];
   deleted: Scalars['Boolean'];
+  hostId: Scalars['ID'];
 };
 
 export type NotificationChannelDisablePayload = {
@@ -968,98 +1450,102 @@ export type OnJobAddedPayload = {
 
 export type OnJobDelayedPayload = {
   __typename?: 'OnJobDelayedPayload';
-  job?: Maybe<Job>;
-  queue: Queue;
-  jobId: Scalars['String'];
-  queueName: Scalars['String'];
   delay?: Maybe<Scalars['Int']>;
+  job?: Maybe<Job>;
+  jobId: Scalars['String'];
+  queue: Queue;
 };
 
 export type OnJobLogAddedPayload = {
   __typename?: 'OnJobLogAddedPayload';
-  job: Job;
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-  /** The rows added to the job log */
-  rows: Array<Scalars['String']>;
   /** The number of log lines after addition */
   count: Scalars['Int'];
+  job: Job;
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
+  /** The rows added to the job log */
+  rows: Array<Scalars['String']>;
 };
 
 export type OnJobProgressPayload = {
   __typename?: 'OnJobProgressPayload';
   job: Job;
-  queue: Queue;
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
   progress?: Maybe<Scalars['JobProgress']>;
+  queue: Queue;
 };
 
 export type OnJobRemovedPayload = {
   __typename?: 'OnJobRemovedPayload';
-  queue: Queue;
   jobId: Scalars['String'];
+  queue: Queue;
 };
 
 export type OnJobStateChangePayload = {
   __typename?: 'OnJobStateChangePayload';
   job: Job;
   queue: Queue;
-  jobId: Scalars['String'];
 };
 
 /** Holds the changes to the state of a job */
 export type OnJobUpdatedPayload = {
   __typename?: 'OnJobUpdatedPayload';
-  jobId: Scalars['String'];
-  /** The event which triggered the update */
-  event: Scalars['String'];
-  timestamp: Scalars['Date'];
   /** updates in job state since the last event */
   delta?: Maybe<Scalars['JSONObject']>;
+  /** The event which triggered the update */
+  event: Scalars['String'];
   job?: Maybe<Job>;
   /** The job's queue */
   queue: Queue;
+  timestamp: Scalars['Date'];
 };
 
 export type OnNotificationChannelCreatedPayload = {
   __typename?: 'OnNotificationChannelCreatedPayload';
-  hostId: Scalars['String'];
   channelId: Scalars['String'];
   channelName: Scalars['String'];
   channelType: Scalars['String'];
+  hostId: Scalars['String'];
 };
 
 export type OnNotificationChannelDeletedPayload = {
   __typename?: 'OnNotificationChannelDeletedPayload';
-  hostId: Scalars['String'];
   channelId: Scalars['String'];
   channelName: Scalars['String'];
   channelType: Scalars['String'];
+  hostId: Scalars['String'];
 };
 
 export type OnQueueDeletedPayload = {
   __typename?: 'OnQueueDeletedPayload';
+  /** The number of keys deleted */
+  deletedKeys: Scalars['Int'];
+  /** The queue host id */
+  hostId: Scalars['String'];
   /** The id of the deleted queue */
   queueId: Scalars['String'];
   /** The name of the deleted queue */
   queueName: Scalars['String'];
-  /** The queue host id */
-  hostId: Scalars['String'];
-  /** The number of keys deleted */
-  deletedKeys: Scalars['Int'];
 };
 
 export type OnQueueJobCountsChangedPayload = {
   __typename?: 'OnQueueJobCountsChangedPayload';
-  queueId: Scalars['String'];
   delta?: Maybe<QueueJobCountDelta>;
+  queueId: Scalars['String'];
 };
 
 export type OnQueueJobUpdatesPayload = {
   __typename?: 'OnQueueJobUpdatesPayload';
-  queueId: Scalars['String'];
   changes: Array<JobUpdateDelta>;
+  queueId: Scalars['String'];
+};
+
+/** Returns a stream of metric data updates */
+export type OnQueueMetricValueUpdated = {
+  __typename?: 'OnQueueMetricValueUpdated';
+  queueId: Scalars['String'];
+  /** The timestamp of the time the value was recorded */
+  ts: Scalars['Date'];
+  value: Scalars['Float'];
 };
 
 export type OnQueuePausedPayload = {
@@ -1070,9 +1556,9 @@ export type OnQueuePausedPayload = {
 export type OnQueueRegisteredPayload = {
   __typename?: 'OnQueueRegisteredPayload';
   hostId: Scalars['String'];
+  prefix: Scalars['String'];
   queueId: Scalars['String'];
   queueName: Scalars['String'];
-  prefix: Scalars['String'];
 };
 
 export type OnQueueResumedPayload = {
@@ -1090,16 +1576,16 @@ export type OnQueueStateChangedPayload = {
 export type OnQueueUnregisteredPayload = {
   __typename?: 'OnQueueUnregisteredPayload';
   hostId: Scalars['String'];
-  queueName: Scalars['String'];
-  queueId: Scalars['String'];
   prefix: Scalars['String'];
+  queueId: Scalars['String'];
+  queueName: Scalars['String'];
 };
 
 /** Returns the list of added and removed workers related to a queue */
 export type OnQueueWorkersChangedPayload = {
   __typename?: 'OnQueueWorkersChangedPayload';
-  queueId: Scalars['String'];
   added: Array<QueueWorker>;
+  queueId: Scalars['String'];
   removed: Array<QueueWorker>;
 };
 
@@ -1114,25 +1600,78 @@ export type OnRuleAlertPayload = {
   alert: RuleAlert;
 };
 
+/** Method used for outlier detection */
+export enum OutlierDetectionMethod {
+  /** Detect outliers based on the Inter Quartile Range. */
+  Iqr = 'IQR',
+  /** Detect outliers based on Iglewicz and Hoaglin (Mean Absolute Deviation). */
+  Mad = 'MAD',
+  /** Detect outliers based on deviations from the mean. */
+  Sigma = 'Sigma',
+}
+
+/** Input parameters for outlier filtering */
+export type OutlierFilterInput = {
+  method: OutlierDetectionMethod;
+  /** Optional detection threshold */
+  threshold?: InputMaybe<Scalars['Float']>;
+};
+
 /** A condition based on deviations from a rolling average */
-export type PeakCondition = RuleCondition & {
+export type PeakCondition = RuleConditionInterface & {
   __typename?: 'PeakCondition';
+  /** Signal if peak is above the threshold, below the threshold or either */
+  direction: PeakSignalDirection;
   /** Standard deviations at which to trigger an error notification. */
   errorThreshold: Scalars['Float'];
-  /** Standard deviations at which to trigger an warning notification. */
-  warningThreshold?: Maybe<Scalars['Float']>;
-  /** Signal if peak is above the threshold, below the threshold or either */
-  direction?: Maybe<PeakSignalDirection>;
   /** the influence (between 0 and 1) of new signals on the mean and standard deviation where 1 is normal influence, 0.5 is half */
   influence?: Maybe<Scalars['Float']>;
   /** The lag of the moving window (in milliseconds).  For example, a lag of 5000 will use the last 5 seconds of observationsto smooth the data. */
   lag?: Maybe<Scalars['Duration']>;
+  /** The comparison operator */
+  operator: RuleOperator;
+  /** Standard deviations at which to trigger an warning notification. */
+  warningThreshold?: Maybe<Scalars['Float']>;
+};
+
+export type PeakConditionInput = {
+  /** Signal if peak is above the threshold, below the threshold or either */
+  direction: PeakSignalDirection;
+  /** Standard deviations at which to trigger an error notification. */
+  errorThreshold: Scalars['Float'];
+  /** the influence (between 0 and 1) of new signals on the mean and standard deviation where 1 is normal influence, 0.5 is half */
+  influence?: InputMaybe<Scalars['Float']>;
+  /** The lag of the moving window (in milliseconds).  For example, a lag of 5000 will use the last 5 seconds of observationsto smooth the data. */
+  lag?: InputMaybe<Scalars['Duration']>;
+  /** The comparison operator */
+  operator: RuleOperator;
+  /** Standard deviations at which to trigger an warning notification. */
+  warningThreshold?: InputMaybe<Scalars['Float']>;
+};
+
+/** The state resulting from evaluation a Peak rule condition */
+export type PeakRuleEvaluationState = RuleEvaluationState & {
+  __typename?: 'PeakRuleEvaluationState';
+  /** The rule operator */
+  comparator: RuleOperator;
+  direction: PeakSignalDirection;
+  errorLevel: ErrorLevel;
+  /** The error threshold of the rule */
+  errorThreshold: Scalars['Float'];
+  /** The type of rule */
+  ruleType: RuleType;
+  signal: Scalars['Int'];
+  unit: Scalars['String'];
+  /** The value which triggered the alert */
+  value: Scalars['Float'];
+  /** The warning threshold of the rule */
+  warningThreshold?: Maybe<Scalars['Float']>;
 };
 
 export enum PeakSignalDirection {
   Above = 'ABOVE',
   Below = 'BELOW',
-  Both = 'BOTH'
+  Both = 'BOTH',
 }
 
 export type PercentileCount = {
@@ -1145,27 +1684,27 @@ export type PercentileCount = {
 /** Percentile distribution of metric values */
 export type PercentileDistribution = {
   __typename?: 'PercentileDistribution';
-  /** The total number of values. */
-  totalCount: Scalars['Int'];
-  /** The minimum value in the data range. */
-  min: Scalars['Float'];
   /** The maximum value in the data range. */
   max: Scalars['Float'];
-  percentiles: Array<Maybe<PercentileCount>>;
+  /** The minimum value in the data range. */
+  min: Scalars['Float'];
+  percentiles: Array<PercentileCount>;
+  /** The total number of values. */
+  totalCount: Scalars['Int'];
 };
 
 /** Records histogram binning data */
 export type PercentileDistributionInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
   /** Stats snapshot granularity */
   granularity: StatsGranularity;
+  /** An optional job name to filter on */
+  jobName?: InputMaybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: InputMaybe<StatsMetricType>;
+  /** The percentiles to get frequencies for */
+  percentiles?: InputMaybe<Array<Scalars['Float']>>;
   /** An expression specifying the range to query e.g. yesterday, last_7days */
   range: Scalars['String'];
-  /** The percentiles to get frequencies for */
-  percentiles?: Array<Scalars['Float']>;
 };
 
 export type PingPayload = {
@@ -1179,301 +1718,301 @@ export type Query = {
   aggregates: Array<Maybe<AggregateInfo>>;
   /** Get general app info */
   appInfo: AppInfo;
-  /** Get a queue by id */
-  queue?: Maybe<Queue>;
+  /** Get the list of available metric types */
+  availableMetrics: Array<MetricInfo>;
+  /** Returns the JSON Schema for the BullMq BulkJobOptions type */
+  bulkJobOptionsSchema: Scalars['JSONSchema'];
+  /** Find a queue by name */
+  findQueue?: Maybe<Queue>;
+  /** Load a flow */
+  flow?: Maybe<JobNode>;
+  /** Get a Host by id */
+  host?: Maybe<QueueHost>;
+  /** Get a Host by name */
+  hostByName?: Maybe<QueueHost>;
+  /** Get the list of hosts managed by the server instance */
+  hosts: Array<QueueHost>;
   job: Job;
   /** Validate job data against a schema previously defined on a queue */
   jobDataValidate: JobDataValidatePayload;
-  /** Validate BullMQ job options structure */
-  jobOptionsValidate: ValidateJobOptionsPayload;
-  /** Find a queue by name */
-  findQueue?: Maybe<Queue>;
-  /** Get a Host by id */
-  host?: Maybe<QueueHost>;
-  /** Get the list of hosts managed by the server instance */
-  hosts: Array<QueueHost>;
-  /** Get a Host by name */
-  hostByName?: Maybe<QueueHost>;
-  notificationChannel?: Maybe<NotificationChannel>;
-  /** Get the list of metrics available */
-  metrics: Array<MetricInfo>;
-  /** Get a queue JobFilter by id */
-  queueJobFilter?: Maybe<JobFilter>;
   /** Returns the JSON Schema for the BullMq JobOptions type */
   jobOptionsSchema: Scalars['JSONSchema'];
-  rule?: Maybe<Rule>;
-  ruleAlert?: Maybe<RuleAlert>;
+  /** Validate BullMQ job options structure */
+  jobOptionsValidate: ValidateJobOptionsPayload;
+  /** Infer a JSONSchema from completed jobs in a queue */
+  jobSchemaInfer?: Maybe<JobSchema>;
+  /** Get a queue Metric by id */
+  metric?: Maybe<Metric>;
+  notificationChannel?: Maybe<NotificationChannel>;
+  /** Get a queue by id */
+  queue?: Maybe<Queue>;
+  /** Get a queue JobFilter by id */
+  queueJobFilter?: Maybe<JobFilter>;
   /** Get a JSONSchema document previously set for a job name on a queue */
   queueJobSchema?: Maybe<JobSchema>;
+  rule?: Maybe<Rule>;
+  ruleAlert?: Maybe<RuleAlert>;
 };
-
-
-export type QueryQueueArgs = {
-  id: Scalars['ID'];
-};
-
-
-export type QueryJobArgs = {
-  queueId: Scalars['ID'];
-  id: Scalars['ID'];
-};
-
-
-export type QueryJobDataValidateArgs = {
-  input: JobDataValidateInput;
-};
-
-
-export type QueryJobOptionsValidateArgs = {
-  input: JobOptionsInput;
-};
-
 
 export type QueryFindQueueArgs = {
   hostName: Scalars['String'];
-  prefix?: Maybe<Scalars['String']>;
+  prefix?: InputMaybe<Scalars['String']>;
   queueName: Scalars['String'];
 };
 
+export type QueryFlowArgs = {
+  input: FlowNodeGetInput;
+};
 
 export type QueryHostArgs = {
   id: Scalars['ID'];
 };
 
-
 export type QueryHostByNameArgs = {
   name: Scalars['String'];
 };
 
+export type QueryJobArgs = {
+  id: Scalars['ID'];
+  queueId: Scalars['ID'];
+};
+
+export type QueryJobDataValidateArgs = {
+  input: JobDataValidateInput;
+};
+
+export type QueryJobOptionsValidateArgs = {
+  input: JobOptionsInput;
+};
+
+export type QueryJobSchemaInferArgs = {
+  input?: InputMaybe<JobSchemaInferInput>;
+};
+
+export type QueryMetricArgs = {
+  metricId: Scalars['ID'];
+  queueId: Scalars['ID'];
+};
 
 export type QueryNotificationChannelArgs = {
   hostId: Scalars['ID'];
   id: Scalars['ID'];
 };
 
-
-export type QueryQueueJobFilterArgs = {
-  input?: Maybe<QueueJobFilterInput>;
+export type QueryQueueArgs = {
+  id: Scalars['ID'];
 };
 
+export type QueryQueueJobFilterArgs = {
+  input?: InputMaybe<QueueJobFilterInput>;
+};
+
+export type QueryQueueJobSchemaArgs = {
+  input?: InputMaybe<QueueJobSchemaInput>;
+};
 
 export type QueryRuleArgs = {
   queueId: Scalars['ID'];
   ruleId: Scalars['ID'];
 };
 
-
 export type QueryRuleAlertArgs = {
+  alertId: Scalars['ID'];
   queueId: Scalars['ID'];
   ruleId: Scalars['ID'];
-  alertId: Scalars['ID'];
-};
-
-
-export type QueryQueueJobSchemaArgs = {
-  input?: Maybe<QueueJobSchemaInput>;
 };
 
 export type Queue = {
   __typename?: 'Queue';
-  id: Scalars['String'];
-  prefix: Scalars['String'];
-  name: Scalars['String'];
+  /** Gets the current job ErrorPercentage rates based on an exponential moving average */
+  errorPercentageRate: Meter;
+  /** Gets the current job Errors rates based on an exponential moving average */
+  errorRate: Meter;
   /** Compute the histogram of job data. */
   histogram: HistogramPayload;
   host: Scalars['String'];
   hostId: Scalars['ID'];
+  id: Scalars['String'];
   isPaused: Scalars['Boolean'];
+  isReadonly: Scalars['Boolean'];
   jobCounts: JobCounts;
-  jobNames: Array<Scalars['String']>;
+  /** Get the average runtime duration of completed jobs in the queue */
+  jobDurationAvg: Scalars['Int'];
   jobFilters: Array<JobFilter>;
+  /** Get the average memory used by jobs in the queue */
+  jobMemoryAvg: Scalars['Float'];
+  /** Get the average memory used by jobs in the queue */
+  jobMemoryUsage: JobMemoryUsagePayload;
+  jobNames: Array<Scalars['String']>;
   /** Get JSONSchema documents and job defaults previously set for a job names on a queue */
   jobSchemas: Array<JobSchema>;
   /** Incrementally iterate over a list of jobs filtered by query criteria */
   jobSearch: JobSearchPayload;
+  jobs: Array<Job>;
   /** Fetch jobs based on a previously stored filter */
   jobsByFilter: JobSearchPayload;
-  /** Get the average runtime duration of completed jobs in the queue */
-  jobDurationAvg: Scalars['Int'];
-  /** Get the average memory used by jobs in the queue */
-  jobMemoryAvg: Scalars['Int'];
+  jobsById: Array<Job>;
   /** Gets the last recorded queue stats snapshot for a metric */
   lastStatsSnapshot?: Maybe<StatsSnapshot>;
+  metricCount: Scalars['Int'];
+  metrics: Array<Metric>;
+  name: Scalars['String'];
   /** Returns the number of jobs waiting to be processed. */
   pendingJobCount: Scalars['Int'];
   /** Compute a percentile distribution. */
   percentileDistribution: PercentileDistribution;
-  repeatableJobs: Array<RepeatableJob>;
+  prefix: Scalars['String'];
   /** Returns the number of repeatable jobs */
   repeatableJobCount: Scalars['Int'];
+  repeatableJobs: Array<RepeatableJob>;
   /** Returns the count of rule alerts associated with a Queue */
   ruleAlertCount: Scalars['Int'];
   /** Gets rule alerts associated with the queue */
   ruleAlerts: Array<RuleAlert>;
-  jobs: Array<Job>;
-  jobsById: Array<Job>;
   rules: Array<Rule>;
   /** Queries for queue stats snapshots within a range */
   stats: Array<StatsSnapshot>;
   /** Aggregates queue statistics within a range */
   statsAggregate?: Maybe<StatsSnapshot>;
   /** Gets the time range of recorded stats for a queue/host */
-  statsDateRange?: Maybe<StatsSpanPayload>;
+  statsDateRange?: Maybe<TimeSpan>;
   /** Gets the current job Throughput rates based on an exponential moving average */
   throughput: Meter;
-  /** Gets the current job Errors rates based on an exponential moving average */
-  errorRate: Meter;
-  /** Gets the current job ErrorPercentage rates based on an exponential moving average */
-  errorPercentageRate: Meter;
   /** Get the average time a job spends in the queue before being processed */
   waitTimeAvg: Scalars['Int'];
-  workers: Array<QueueWorker>;
+  /** Returns the number of child jobs waiting to be processed. */
+  waitingChildrenCount: Scalars['Int'];
+  /** Returns the number of jobs waiting to be processed. */
+  waitingCount: Scalars['Int'];
   workerCount: Scalars['Int'];
+  workers: Array<QueueWorker>;
 };
 
+export type QueueErrorPercentageRateArgs = {
+  input?: InputMaybe<StatsRateQueryInput>;
+};
+
+export type QueueErrorRateArgs = {
+  input?: InputMaybe<StatsRateQueryInput>;
+};
 
 export type QueueHistogramArgs = {
   input: HistogramInput;
 };
 
+export type QueueJobDurationAvgArgs = {
+  jobName?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
 
 export type QueueJobFiltersArgs = {
-  ids?: Maybe<Array<Scalars['ID']>>;
+  ids?: InputMaybe<Array<Scalars['ID']>>;
 };
 
+export type QueueJobMemoryAvgArgs = {
+  input?: InputMaybe<JobsMemoryAvgInput>;
+};
+
+export type QueueJobMemoryUsageArgs = {
+  input?: InputMaybe<JobsMemoryAvgInput>;
+};
 
 export type QueueJobSchemasArgs = {
-  jobNames?: Maybe<Array<Scalars['String']>>;
+  jobNames?: InputMaybe<Array<Scalars['String']>>;
 };
-
 
 export type QueueJobSearchArgs = {
   filter: JobSearchInput;
 };
 
+export type QueueJobsArgs = {
+  input?: InputMaybe<QueueJobsInput>;
+};
 
 export type QueueJobsByFilterArgs = {
   filter: JobsByFilterIdInput;
 };
 
-
-export type QueueJobDurationAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
+export type QueueJobsByIdArgs = {
+  input?: InputMaybe<QueueJobsByIdInput>;
 };
-
-
-export type QueueJobMemoryAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
-};
-
 
 export type QueueLastStatsSnapshotArgs = {
-  input?: Maybe<StatsLatestInput>;
+  input?: InputMaybe<StatsLatestInput>;
 };
-
 
 export type QueuePercentileDistributionArgs = {
   input: PercentileDistributionInput;
 };
 
-
 export type QueueRepeatableJobsArgs = {
-  input?: Maybe<RepeatableJobsInput>;
+  input?: InputMaybe<RepeatableJobsInput>;
 };
-
 
 export type QueueRuleAlertsArgs = {
-  input?: Maybe<QueueRuleAlertsInput>;
+  input?: InputMaybe<QueueRuleAlertsInput>;
 };
-
-
-export type QueueJobsArgs = {
-  input?: Maybe<QueueJobsInput>;
-};
-
-
-export type QueueJobsByIdArgs = {
-  input?: Maybe<QueueJobsByIdInput>;
-};
-
 
 export type QueueStatsArgs = {
   input: StatsQueryInput;
 };
 
-
 export type QueueStatsAggregateArgs = {
   input: StatsQueryInput;
 };
-
 
 export type QueueStatsDateRangeArgs = {
   input: StatsSpanInput;
 };
 
-
 export type QueueThroughputArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+  input?: InputMaybe<StatsRateQueryInput>;
 };
-
-
-export type QueueErrorRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
-
-export type QueueErrorPercentageRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
-};
-
 
 export type QueueWaitTimeAvgArgs = {
-  jobName?: Maybe<Scalars['String']>;
-  limit?: Maybe<Scalars['Int']>;
+  jobName?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
-
 export type QueueWorkersArgs = {
-  limit?: Maybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type QueueCleanFilter = {
-  id: Scalars['ID'];
   /** Grace period interval (ms). Jobs older this this will be removed.  */
-  grace?: Maybe<Scalars['Duration']>;
-  /** Status of the jobs to clean */
-  status?: Maybe<JobStatus>;
+  grace?: InputMaybe<Scalars['Duration']>;
+  id: Scalars['ID'];
   /** limit Maximum amount of jobs to clean per call. If not provided will clean all matching jobs. */
-  limit?: Maybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  /** Status of the jobs to clean */
+  status?: InputMaybe<JobStatus>;
 };
 
 export type QueueCleanPayload = {
   __typename?: 'QueueCleanPayload';
-  /** The queue id */
-  id: Scalars['ID'];
   /** Returns the number of affected jobs */
   count: Scalars['Int'];
+  /** The queue id */
+  id: Scalars['ID'];
   /** Returns a list of cleared job ids */
   jobIds?: Maybe<Array<Scalars['ID']>>;
 };
 
 export type QueueDeleteOptions = {
-  checkExistence?: Maybe<Scalars['Boolean']>;
-  checkActivity?: Maybe<Scalars['Boolean']>;
+  checkActivity?: InputMaybe<Scalars['Boolean']>;
+  checkExistence?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type QueueDeletePayload = {
   __typename?: 'QueueDeletePayload';
+  /** The number of keys deleted */
+  deletedKeys: Scalars['Int'];
+  /** The queue host */
+  host: QueueHost;
   /** The id of the deleted queue */
   queueId: Scalars['ID'];
   /** The name of the deleted queue */
   queueName: Scalars['String'];
-  /** The queue host */
-  host: QueueHost;
-  /** The number of keys deleted */
-  deletedKeys: Scalars['Int'];
 };
 
 export type QueueDrainPayload = {
@@ -1481,19 +2020,21 @@ export type QueueDrainPayload = {
   queue: Queue;
 };
 
+export enum QueueFilterStatus {
+  Active = 'Active',
+  Inactive = 'Inactive',
+  Paused = 'Paused',
+  Running = 'Running',
+}
+
 export type QueueHost = {
   __typename?: 'QueueHost';
-  id: Scalars['ID'];
-  /** The name of the host */
-  name: Scalars['String'];
-  /** An optional description of the host */
-  description?: Maybe<Scalars['String']>;
-  /** The queues registered for this host */
-  queues: Array<Queue>;
-  /** The count of queues registered for this host */
-  queueCount: Scalars['Int'];
+  /** Returns the number of alerts raised across all the queues associated with this host */
+  alertCount: Scalars['Int'];
   /** Notification channels for alerts */
   channels: Array<NotificationChannel>;
+  /** An optional description of the host */
+  description?: Maybe<Scalars['String']>;
   /** Discover Bull queues on the given host */
   discoverQueues: Array<DiscoverQueuesPayload>;
   /** Gets the current job ErrorPercentage rates for a host based on an exponential moving average */
@@ -1502,20 +2043,27 @@ export type QueueHost = {
   errorRate: Meter;
   /** Compute the histogram of job data. */
   histogram: HistogramPayload;
+  id: Scalars['ID'];
   /** Get job counts for a host */
   jobCounts: JobCounts;
   /** Gets the last recorded queue stats snapshot for a metric */
   lastStatsSnapshot?: Maybe<StatsSnapshot>;
+  /** The name of the host */
+  name: Scalars['String'];
   /** Compute a percentile distribution. */
   percentileDistribution: PercentileDistribution;
   ping: PingPayload;
+  /** The count of queues registered for this host */
+  queueCount: Scalars['Int'];
+  /** The queues registered for this host */
+  queues: Array<Queue>;
   redis: RedisInfo;
   /** Queries for queue stats snapshots within a range */
   stats: Array<StatsSnapshot>;
   /** Aggregates queue statistics within a range */
   statsAggregate?: Maybe<StatsSnapshot>;
   /** Gets the time range of recorded stats for a queue/host */
-  statsDateRange?: Maybe<StatsSpanPayload>;
+  statsDateRange?: Maybe<TimeSpan>;
   /** Gets the current job Throughput rates for a host based on an exponential moving average */
   throughput: Meter;
   uri: Scalars['String'];
@@ -1524,96 +2072,84 @@ export type QueueHost = {
   workers: Array<QueueWorker>;
 };
 
-
-export type QueueHostQueuesArgs = {
-  filter?: Maybe<HostQueuesFilter>;
-};
-
-
 export type QueueHostDiscoverQueuesArgs = {
-  prefix?: Maybe<Scalars['String']>;
-  unregisteredOnly?: Maybe<Scalars['Boolean']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  unregisteredOnly?: InputMaybe<Scalars['Boolean']>;
 };
-
 
 export type QueueHostErrorPercentageRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+  input?: InputMaybe<StatsRateQueryInput>;
 };
-
 
 export type QueueHostErrorRateArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+  input?: InputMaybe<StatsRateQueryInput>;
 };
-
 
 export type QueueHostHistogramArgs = {
   input: HistogramInput;
 };
 
-
 export type QueueHostLastStatsSnapshotArgs = {
-  input?: Maybe<StatsLatestInput>;
+  input?: InputMaybe<StatsLatestInput>;
 };
-
 
 export type QueueHostPercentileDistributionArgs = {
   input: PercentileDistributionInput;
 };
 
+export type QueueHostQueuesArgs = {
+  filter?: InputMaybe<HostQueuesFilter>;
+};
 
 export type QueueHostStatsArgs = {
   input: StatsQueryInput;
 };
 
-
 export type QueueHostStatsAggregateArgs = {
   input: StatsQueryInput;
 };
-
 
 export type QueueHostStatsDateRangeArgs = {
   input: StatsSpanInput;
 };
 
-
 export type QueueHostThroughputArgs = {
-  input?: Maybe<StatsRateQueryInput>;
+  input?: InputMaybe<StatsRateQueryInput>;
 };
 
-
 export type QueueHostWorkersArgs = {
-  limit?: Maybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type QueueJobCountDelta = {
   __typename?: 'QueueJobCountDelta';
-  completed?: Maybe<Scalars['Int']>;
-  failed?: Maybe<Scalars['Int']>;
-  delayed?: Maybe<Scalars['Int']>;
   active?: Maybe<Scalars['Int']>;
+  completed?: Maybe<Scalars['Int']>;
+  delayed?: Maybe<Scalars['Int']>;
+  failed?: Maybe<Scalars['Int']>;
   waiting: Scalars['Int'];
 };
 
 export type QueueJobFilterDeleteInput = {
-  queueId: Scalars['ID'];
   filterId: Scalars['ID'];
+  queueId: Scalars['ID'];
 };
 
 export type QueueJobFilterDeletePayload = {
   __typename?: 'QueueJobFilterDeletePayload';
   filterId: Scalars['String'];
-  queue: Queue;
   isDeleted: Scalars['Boolean'];
+  queue: Queue;
 };
 
 export type QueueJobFilterInput = {
-  queueId: Scalars['ID'];
   fieldId: Scalars['ID'];
+  queueId: Scalars['ID'];
 };
 
 export type QueueJobSchemaDeleteInput = {
-  queueId: Scalars['ID'];
   jobName: Scalars['String'];
+  queueId: Scalars['ID'];
 };
 
 export type QueueJobSchemaDeletePayload = {
@@ -1623,16 +2159,16 @@ export type QueueJobSchemaDeletePayload = {
 };
 
 export type QueueJobSchemaInput = {
-  queueId: Scalars['ID'];
   jobName: Scalars['String'];
+  queueId: Scalars['ID'];
 };
 
 export type QueueJobUpdatesFilterInput = {
-  queueId: Scalars['ID'];
   /** The job names to filter for */
-  names?: Maybe<Array<Scalars['String']>>;
+  names?: InputMaybe<Array<Scalars['String']>>;
+  queueId: Scalars['ID'];
   /** Only return updates for jobs with these states */
-  states?: Maybe<Array<Maybe<JobStatus>>>;
+  states?: InputMaybe<Array<InputMaybe<JobStatus>>>;
 };
 
 export type QueueJobsByIdInput = {
@@ -1640,16 +2176,10 @@ export type QueueJobsByIdInput = {
 };
 
 export type QueueJobsInput = {
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  status?: Maybe<JobStatus>;
-  sortOrder?: Maybe<SortOrderEnum>;
-};
-
-export type QueuePausePayload = {
-  __typename?: 'QueuePausePayload';
-  queue: Queue;
-  isPaused: Scalars['Boolean'];
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  sortOrder?: InputMaybe<SortOrderEnum>;
+  status?: InputMaybe<JobStatus>;
 };
 
 export type QueueRemoveRepeatablePayload = {
@@ -1657,30 +2187,24 @@ export type QueueRemoveRepeatablePayload = {
   queue: Queue;
 };
 
-export type QueueResumePayload = {
-  __typename?: 'QueueResumePayload';
-  queue: Queue;
-  isPaused: Scalars['Boolean'];
-};
-
 /** Options for retrieving queue rule alerts */
 export type QueueRuleAlertsInput = {
-  /** Consider alerts starting on or after this date */
-  startDate?: Maybe<Scalars['Date']>;
   /** Consider alerts ending on or before this date */
-  endDate?: Maybe<Scalars['Date']>;
-  /** The sort order of the results. Alerts are sorted by creation date. */
-  sortOrder?: Maybe<SortOrderEnum>;
+  endDate?: InputMaybe<Scalars['Date']>;
   /** The maximum number of alerts to return */
   limit: Scalars['Int'];
+  /** The sort order of the results. Alerts are sorted by creation date. */
+  sortOrder?: InputMaybe<SortOrderEnum>;
+  /** Consider alerts starting on or after this date */
+  startDate?: InputMaybe<Scalars['Date']>;
 };
 
 export type QueueStatsDeleteInput = {
-  queueId: Scalars['ID'];
-  /** Optional job name to delete stats for. If omitted, all queue stats are erased */
-  jobName?: Maybe<Scalars['String']>;
   /** Optional stats granularity. If omitted, the entire range of data is deleted */
-  granularity?: Maybe<StatsGranularity>;
+  granularity?: InputMaybe<StatsGranularity>;
+  /** Optional job name to delete stats for. If omitted, all queue stats are erased */
+  jobName?: InputMaybe<Scalars['String']>;
+  queueId: Scalars['ID'];
 };
 
 export type QueueStatsDeletePayload = {
@@ -1692,81 +2216,82 @@ export type QueueStatsDeletePayload = {
 export type QueueUnregisterPayload = {
   __typename?: 'QueueUnregisterPayload';
   host: QueueHost;
-  queue: Queue;
   isRemoved: Scalars['Boolean'];
+  queue: Queue;
 };
 
 export type QueueWorker = {
   __typename?: 'QueueWorker';
-  id?: Maybe<Scalars['String']>;
   /** address of the client */
   addr: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
   /** total duration of the connection (in seconds) */
   age: Scalars['Int'];
-  /** Idle time of the connection (in seconds) */
-  idle: Scalars['Int'];
-  /** Date/time when the connection started */
-  started?: Maybe<Scalars['DateTime']>;
   /** the current database number */
   db: Scalars['Int'];
-  role?: Maybe<Scalars['String']>;
-  sub: Scalars['Int'];
+  id?: Maybe<Scalars['String']>;
+  /** Idle time of the connection (in seconds) */
+  idle: Scalars['Int'];
   multi: Scalars['Int'];
-  qbuf: Scalars['Int'];
-  qbufFree: Scalars['Int'];
+  name?: Maybe<Scalars['String']>;
   obl: Scalars['Int'];
   oll: Scalars['Int'];
   omem: Scalars['Int'];
+  qbuf: Scalars['Int'];
+  qbufFree: Scalars['Int'];
+  role?: Maybe<Scalars['String']>;
+  /** Date/time when the connection started */
+  started?: Maybe<Scalars['DateTime']>;
+  sub: Scalars['Int'];
 };
 
 export type RedisInfo = {
   __typename?: 'RedisInfo';
-  redis_version: Scalars['String'];
-  tcp_port?: Maybe<Scalars['Int']>;
-  uptime_in_seconds: Scalars['Int'];
-  uptime_in_days: Scalars['Int'];
-  connected_clients: Scalars['Int'];
   blocked_clients: Scalars['Int'];
-  total_system_memory: Scalars['Int'];
-  used_memory: Scalars['Int'];
-  used_memory_peak: Scalars['Int'];
-  used_memory_lua: Scalars['Int'];
-  used_cpu_sys: Scalars['Float'];
-  maxmemory: Scalars['Int'];
-  number_of_cached_scripts: Scalars['Int'];
+  connected_clients: Scalars['Int'];
   instantaneous_ops_per_sec: Scalars['Int'];
+  maxmemory: Scalars['Int'];
   mem_fragmentation_ratio?: Maybe<Scalars['Float']>;
-  role?: Maybe<Scalars['String']>;
+  number_of_cached_scripts: Scalars['Int'];
+  os: Scalars['String'];
+  redis_version: Scalars['String'];
+  role: Scalars['String'];
+  tcp_port: Scalars['Int'];
+  total_system_memory: Scalars['Int'];
+  uptime_in_days: Scalars['Int'];
+  uptime_in_seconds: Scalars['Int'];
+  used_cpu_sys: Scalars['Float'];
+  used_memory: Scalars['Int'];
+  used_memory_lua: Scalars['Int'];
+  used_memory_peak: Scalars['Int'];
 };
 
 export type RegisterQueueInput = {
+  checkExists?: InputMaybe<Scalars['Boolean']>;
   hostId: Scalars['ID'];
-  prefix?: Maybe<Scalars['String']>;
   /** the queue names */
   name: Scalars['String'];
-  checkExists?: Maybe<Scalars['Boolean']>;
-  trackMetrics?: Maybe<Scalars['Boolean']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  trackMetrics?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type RepeatableJob = {
   __typename?: 'RepeatableJob';
-  key: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  /** Date when the repeat job should stop repeating (only with cron). */
-  endDate?: Maybe<Scalars['Date']>;
-  /** The timezone for the job */
-  tz?: Maybe<Scalars['String']>;
   cron?: Maybe<Scalars['String']>;
   /** Human readable description of the cron expression */
   descr?: Maybe<Scalars['String']>;
+  /** Date when the repeat job should stop repeating (only with cron). */
+  endDate?: Maybe<Scalars['Date']>;
+  id?: Maybe<Scalars['String']>;
+  key: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
   next?: Maybe<Scalars['Date']>;
+  /** The timezone for the job */
+  tz?: Maybe<Scalars['String']>;
 };
 
 export type RepeatableJobRemoveByKeyInput = {
-  queueId: Scalars['ID'];
   key: Scalars['String'];
+  queueId: Scalars['ID'];
 };
 
 export type RepeatableJobRemoveByKeyPayload = {
@@ -1776,53 +2301,60 @@ export type RepeatableJobRemoveByKeyPayload = {
 };
 
 export type RepeatableJobRemoveOptions = {
-  tz?: Maybe<Scalars['String']>;
-  endDate?: Maybe<Scalars['Date']>;
-  cron?: Maybe<Scalars['String']>;
-  every?: Maybe<Scalars['String']>;
+  cron?: InputMaybe<Scalars['String']>;
+  endDate?: InputMaybe<Scalars['Date']>;
+  every?: InputMaybe<Scalars['String']>;
+  tz?: InputMaybe<Scalars['String']>;
 };
 
 export type RepeatableJobsInput = {
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  order?: Maybe<SortOrderEnum>;
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  order?: InputMaybe<SortOrderEnum>;
 };
 
 export type Rule = {
   __typename?: 'Rule';
-  /** The rule id */
-  id: Scalars['ID'];
-  /** The names of the rule */
-  name: Scalars['String'];
-  /** A helpful description of the rule */
-  description?: Maybe<Scalars['String']>;
+  /** The current count of alerts available for this rule */
+  alertCount: Scalars['Int'];
+  alerts: Array<Maybe<RuleAlert>>;
+  /** Rule notification channels */
+  channels: Array<NotificationChannel>;
+  condition: RuleConditionInterface;
   /** The rule creation timestamp */
   createdAt: Scalars['Date'];
-  /** The timestamp of last update */
-  updatedAt: Scalars['Date'];
-  /** The current rule states */
-  state?: Maybe<RuleState>;
-  severity?: Maybe<Severity>;
+  /** A helpful description of the rule */
+  description?: Maybe<Scalars['String']>;
+  /** The rule id */
+  id: Scalars['ID'];
   /** Is this rule active or not */
   isActive: Scalars['Boolean'];
-  metric: RuleMetric;
-  condition: RuleCondition;
+  /** The last time the rule was triggered */
+  lastTriggeredAt?: Maybe<Scalars['Date']>;
   /** Optional text for message when an alert is raised. Markdown and handlebars supported */
   message?: Maybe<Scalars['String']>;
-  /** channels for alert notifications. */
-  channels: Array<Scalars['String']>;
-  /** Optional data passed on to alerts */
-  payload?: Maybe<Scalars['JSONObject']>;
+  /** The metric being monitored */
+  metric?: Maybe<Metric>;
+  /** The names of the rule */
+  name: Scalars['String'];
   /** Options controlling the generation of events */
   options?: Maybe<RuleAlertOptions>;
-  alerts: Array<Maybe<RuleAlert>>;
-  /** The total number of alerts raised for this rule */
-  alertCount: Scalars['Int'];
+  /** Optional data passed on to alerts */
+  payload?: Maybe<Scalars['JSONObject']>;
+  /** The id of the queue to which the rule belongs */
+  queueId: Scalars['ID'];
+  severity?: Maybe<Severity>;
+  /** The current rule states */
+  state?: Maybe<RuleState>;
+  status: RuleStatus;
+  /** The total number of failures */
+  totalFailures: Scalars['Int'];
+  /** The timestamp of last update */
+  updatedAt: Scalars['Date'];
 };
 
-
 export type RuleAlertsArgs = {
-  input: RuleAlertsInput;
+  input?: InputMaybe<RuleAlertsInput>;
 };
 
 export type RuleActivateInput = {
@@ -1836,122 +2368,125 @@ export type RuleActivatePayload = {
   rule: Rule;
 };
 
+/** Information required to add or edit a Rule */
 export type RuleAddInput = {
-  /** The names of the rule */
-  name: Scalars['String'];
+  /** Notification channel ids */
+  channels?: InputMaybe<Array<Scalars['String']>>;
+  /** The rule condition */
+  condition: RuleConditionInput;
   /** A helpful description of the rule */
-  description?: Maybe<Scalars['String']>;
-  severity?: Maybe<Severity>;
+  description?: InputMaybe<Scalars['String']>;
   /** Is this rule active or not */
   isActive: Scalars['Boolean'];
   /** Optional text for message when an alert is raised. Markdown and handlebars supported */
-  message?: Maybe<Scalars['String']>;
-  /** channels for alert notifications. */
-  channels: Array<Scalars['String']>;
-  /** Optional data passed on to alerts */
-  payload?: Maybe<Scalars['JSONObject']>;
-  /** The total number of alerts raised for this rule */
-  alertCount: Scalars['Int'];
-  queueId: Scalars['ID'];
-  metric?: Maybe<RuleMetricInput>;
-  /** The rule condition */
-  condition?: Maybe<Scalars['JSONObject']>;
+  message?: InputMaybe<Scalars['String']>;
+  /** The id of the metric being monitored */
+  metricId: Scalars['String'];
+  /** The names of the rule */
+  name: Scalars['String'];
   /** Options controlling the generation of events */
-  options?: Maybe<RuleAlertOptionsInput>;
-};
-
-export type RuleAddPayload = {
-  __typename?: 'RuleAddPayload';
-  rule: Rule;
-  queue: Queue;
+  options?: InputMaybe<RuleAlertOptionsInput>;
+  /** Optional data passed on to alerts */
+  payload?: InputMaybe<Scalars['JSONObject']>;
+  /** The id of the queue to which the rule belongs */
+  queueId: Scalars['ID'];
+  severity?: InputMaybe<Severity>;
 };
 
 /** An event recording the occurrence of an rule violation or reset */
 export type RuleAlert = {
   __typename?: 'RuleAlert';
-  id: Scalars['ID'];
-  /** The event that raised this alert */
-  event: Scalars['String'];
-  /** Timestamp of when this alert was raised */
-  start: Scalars['DateTime'];
-  /** Timestamp of when this alert was reset */
-  end?: Maybe<Scalars['DateTime']>;
-  /** The value of the alert threshold set in the rule’s alert conditions. */
-  threshold: Scalars['Float'];
-  /** The metric value that crossed the threshold. */
-  value: Scalars['Float'];
-  /** The metric value that reset the threshold. */
-  resetValue?: Maybe<Scalars['Float']>;
-  /** State that triggered alert */
-  state?: Maybe<Scalars['JSONObject']>;
-  /** The number of violations before this alert was generated */
-  violations: Scalars['Int'];
-  /** Optional rule specific data. Corresponds to Rule.payload */
-  payload?: Maybe<Scalars['JSONObject']>;
   /** Error level */
   errorLevel?: Maybe<ErrorLevel>;
+  /** The number of failures before this alert was generated */
+  failures: Scalars['Int'];
+  id: Scalars['ID'];
+  /** Has the alert been read or not */
+  isRead: Scalars['Boolean'];
+  message?: Maybe<Scalars['String']>;
+  /** Optional rule specific data. Corresponds to Rule.payload */
+  payload?: Maybe<Scalars['JSONObject']>;
+  /** Timestamp of when this alert was raised */
+  raisedAt: Scalars['DateTime'];
+  /** Timestamp of when this alert was reset */
+  resetAt?: Maybe<Scalars['DateTime']>;
+  /** The id of the rule that raised this alert */
+  ruleId: Scalars['String'];
   /** A categorization of the severity of the rule type */
   severity?: Maybe<Severity>;
+  /** State that triggered alert */
+  state: RuleEvaluationState;
+  status: Scalars['String'];
+  title?: Maybe<Scalars['String']>;
+  /** The metric value that crossed the threshold. */
+  value: Scalars['Float'];
 };
 
 export type RuleAlertDeleteInput = {
+  alertId: Scalars['ID'];
   queueId: Scalars['ID'];
   ruleId: Scalars['ID'];
-  alertId: Scalars['ID'];
 };
 
 export type RuleAlertDeletePayload = {
   __typename?: 'RuleAlertDeletePayload';
-  ruleId: Scalars['ID'];
+  isDeleted: Scalars['Boolean'];
   rule?: Maybe<Rule>;
+  ruleId: Scalars['ID'];
+};
+
+export type RuleAlertMarkAsReadInput = {
+  alertId: Scalars['ID'];
+  isRead: Scalars['Boolean'];
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+};
+
+export type RuleAlertMarkAsReadPayload = {
+  __typename?: 'RuleAlertMarkAsReadPayload';
+  alert: RuleAlert;
 };
 
 /** Options for raising alerts for a Rule */
 export type RuleAlertOptions = {
   __typename?: 'RuleAlertOptions';
-  /** a timeout after startup (in ms) during which no alerts are raised, irrespective of the truthiness of the rule condition. */
-  warmupWindow?: Maybe<Scalars['Duration']>;
+  /** Raise an alert after an event trigger when the situation returns to normal */
+  alertOnReset?: Maybe<Scalars['Boolean']>;
   /** The minimum number of violations before an alert can be raised */
-  minViolations?: Maybe<Scalars['Int']>;
+  failureThreshold?: Maybe<Scalars['Int']>;
   /**
    * The max number of alerts to receive per event trigger in case the condition is met.
    *  In this case the "event" is a single period between the rule VIOLATION and RESET states.
    */
   maxAlertsPerEvent?: Maybe<Scalars['Int']>;
-  /**
-   * Duration (ms) for which a metric is anomalous before triggering a violation.
-   * After a rule violation is encountered, no alerts are dispatched until this period has passed. This is useful for events which are normally transient by may periodically persist longer than usual, or for not sending notifications out too quickly.
-   */
-  triggerWindow?: Maybe<Scalars['Duration']>;
-  /** How long an anomalous metric must be normal before resetting an alert's states to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
-  recoveryWindow?: Maybe<Scalars['Duration']>;
   /** If specified, the minimum time between alerts for the same incident */
-  renotifyInterval?: Maybe<Scalars['Duration']>;
-  /** Raise an alert after an event trigger when the situation returns to normal */
-  alertOnReset?: Maybe<Scalars['Boolean']>;
+  notifyInterval?: Maybe<Scalars['Duration']>;
+  /** How long an triggered rule must be without failures before resetting it to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
+  recoveryWindow?: Maybe<Scalars['Duration']>;
+  /** Optional number of consecutive successful method executions to close then alert. Default 1 */
+  successThreshold?: Maybe<Scalars['Int']>;
+  /** Wait a certain duration between first encountering a failure and triggering an alert */
+  triggerDelay?: Maybe<Scalars['Duration']>;
 };
 
 export type RuleAlertOptionsInput = {
-  /** a timeout after startup (in ms) during which no alerts are raised, irrespective of the truthiness of the rule condition. */
-  warmupWindow?: Maybe<Scalars['Duration']>;
+  /** Raise an alert after an event trigger when the situation returns to normal */
+  alertOnReset?: InputMaybe<Scalars['Boolean']>;
   /** The minimum number of violations before an alert can be raised */
-  minViolations?: Maybe<Scalars['Int']>;
+  failureThreshold?: InputMaybe<Scalars['Int']>;
   /**
    * The max number of alerts to receive per event trigger in case the condition is met.
    *  In this case the "event" is a single period between the rule VIOLATION and RESET states.
    */
-  maxAlertsPerEvent?: Maybe<Scalars['Int']>;
-  /**
-   * Duration (ms) for which a metric is anomalous before triggering a violation.
-   * After a rule violation is encountered, no alerts are dispatched until this period has passed. This is useful for events which are normally transient by may periodically persist longer than usual, or for not sending notifications out too quickly.
-   */
-  triggerWindow?: Maybe<Scalars['Duration']>;
-  /** How long an anomalous metric must be normal before resetting an alert's states to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
-  recoveryWindow?: Maybe<Scalars['Duration']>;
+  maxAlertsPerEvent?: InputMaybe<Scalars['Int']>;
   /** If specified, the minimum time between alerts for the same incident */
-  renotifyInterval?: Maybe<Scalars['Duration']>;
-  /** Raise an alert after an event trigger when the situation returns to normal */
-  alertOnReset?: Maybe<Scalars['Boolean']>;
+  notifyInterval?: InputMaybe<Scalars['Duration']>;
+  /** How long an triggered rule must be without failures before resetting it to NORMAL. In conjunction with "alertOnReset", this can be used to prevent a possible storm of notifications when a rule condition passes and fails in rapid succession ("flapping") */
+  recoveryWindow?: InputMaybe<Scalars['Duration']>;
+  /** Optional number of consecutive successful method executions to close then alert. Default 1 */
+  successThreshold?: InputMaybe<Scalars['Int']>;
+  /** Wait a certain duration between first encountering a failure and triggering an alert */
+  triggerDelay?: InputMaybe<Scalars['Duration']>;
 };
 
 export type RuleAlertsClearInput = {
@@ -1967,15 +2502,30 @@ export type RuleAlertsClearPayload = {
 };
 
 export type RuleAlertsInput = {
-  start?: Maybe<Scalars['Int']>;
-  end?: Maybe<Scalars['Int']>;
-  sortOrder?: Maybe<SortOrderEnum>;
+  end?: InputMaybe<Scalars['Int']>;
+  sortOrder?: InputMaybe<SortOrderEnum>;
+  start?: InputMaybe<Scalars['Int']>;
+};
+
+export enum RuleCircuitState {
+  Closed = 'CLOSED',
+  HalfOpen = 'HALF_OPEN',
+  Open = 'OPEN',
+}
+
+export type RuleConditionInput = {
+  changeCondition?: InputMaybe<ChangeConditionInput>;
+  peakCondition?: InputMaybe<PeakConditionInput>;
+  thresholdCondition?: InputMaybe<ThresholdConditionInput>;
+  type: RuleType;
 };
 
 /** Describes a queue condition were monitoring. */
-export type RuleCondition = {
+export type RuleConditionInterface = {
   /** The value needed to trigger an error notification */
   errorThreshold: Scalars['Float'];
+  /** The comparison operator */
+  operator: RuleOperator;
   /** The value needed to trigger an warning notification */
   warningThreshold?: Maybe<Scalars['Float']>;
 };
@@ -1998,130 +2548,197 @@ export type RuleDeleteInput = {
 
 export type RuleDeletePayload = {
   __typename?: 'RuleDeletePayload';
-  ruleId: Scalars['ID'];
-  queueId: Scalars['ID'];
   isDeleted: Scalars['Boolean'];
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
 };
 
-export type RuleMetric = {
-  __typename?: 'RuleMetric';
-  type: Scalars['String'];
-  options?: Maybe<Scalars['JSONObject']>;
-};
-
-export type RuleMetricInput = {
-  type: Scalars['String'];
-  options?: Maybe<Scalars['JSONObject']>;
+/** Describes the state value from a rule evaluation. */
+export type RuleEvaluationState = {
+  /** The rule operator */
+  comparator: RuleOperator;
+  errorLevel: ErrorLevel;
+  /** The error threshold of the rule */
+  errorThreshold: Scalars['Float'];
+  /** The type of rule */
+  ruleType: RuleType;
+  unit: Scalars['String'];
+  /** The value which triggered the alert */
+  value: Scalars['Float'];
+  /** The warning threshold of the rule */
+  warningThreshold?: Maybe<Scalars['Float']>;
 };
 
 export enum RuleOperator {
+  Eq = 'EQ',
   Gt = 'GT',
   Gte = 'GTE',
   Lt = 'LT',
   Lte = 'LTE',
-  Eq = 'EQ',
-  Ne = 'NE'
+  Ne = 'NE',
 }
 
 export enum RuleState {
-  Warning = 'WARNING',
-  Normal = 'NORMAL',
   Error = 'ERROR',
-  Muted = 'MUTED'
+  Muted = 'MUTED',
+  Normal = 'NORMAL',
+  Warning = 'WARNING',
 }
 
+/** Real time status of a Rule */
+export type RuleStatus = {
+  __typename?: 'RuleStatus';
+  /** The number of alerts raised for the current failure event (between trigger and close) */
+  alertCount: Scalars['Int'];
+  /** Circuit breaker state. */
+  circuitState?: Maybe<RuleCircuitState>;
+  /** The number of failures for the current event (from trigger to close) */
+  failures: Scalars['Int'];
+  /** The last time the rule triggered */
+  lastFailure?: Maybe<Scalars['Date']>;
+  /** The last time a notification was sent */
+  lastNotification?: Maybe<Scalars['Date']>;
+  /** The rule state. */
+  state?: Maybe<RuleState>;
+  /** The number of successful rule invocations after an alert has triggered. */
+  successes: Scalars['Int'];
+  /** The total number of failures in the lifetime of the rule */
+  totalFailures: Scalars['Int'];
+};
+
+export enum RuleType {
+  Change = 'CHANGE',
+  Peak = 'PEAK',
+  Threshold = 'THRESHOLD',
+}
+
+/** Information needed to update a rule */
+export type RuleUpdateInput = {
+  /** Notification channel ids */
+  channels?: InputMaybe<Array<Scalars['String']>>;
+  /** The rule condition */
+  condition: RuleConditionInput;
+  /** A helpful description of the rule */
+  description?: InputMaybe<Scalars['String']>;
+  /** The id of the the rule to update */
+  id: Scalars['ID'];
+  /** Is this rule active or not */
+  isActive?: InputMaybe<Scalars['Boolean']>;
+  /** Optional text for message when an alert is raised. Markdown and handlebars supported */
+  message?: InputMaybe<Scalars['String']>;
+  /** The id of the metric being monitored */
+  metricId?: InputMaybe<Scalars['String']>;
+  /** The names of the rule */
+  name?: InputMaybe<Scalars['String']>;
+  /** Options controlling the generation of events */
+  options?: InputMaybe<RuleAlertOptionsInput>;
+  /** Optional data passed on to alerts */
+  payload?: InputMaybe<Scalars['JSONObject']>;
+  /** The id of the queue to which the rule belongs */
+  queueId: Scalars['ID'];
+  severity?: InputMaybe<Severity>;
+};
+
 export enum Severity {
-  Warning = 'WARNING',
   Critical = 'CRITICAL',
   Error = 'ERROR',
-  Info = 'INFO'
+  Info = 'INFO',
+  Warning = 'WARNING',
 }
 
 /** A channel which sends notifications through slack */
 export type SlackNotificationChannel = NotificationChannel & {
   __typename?: 'SlackNotificationChannel';
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
+  /** The slack webhook to post messages to */
+  channel?: Maybe<Scalars['String']>;
   /** Timestamp of channel creation */
   createdAt?: Maybe<Scalars['Date']>;
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  id: Scalars['ID'];
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** A valid slack auth token. Not needed if a webhook is specified */
+  token?: Maybe<Scalars['String']>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
   /** Timestamp of last channel update */
   updatedAt?: Maybe<Scalars['Date']>;
   /** The slack webhook to post messages to */
-  webhook: Scalars['String'];
-  /** The slack webhook to post messages to */
-  channel?: Maybe<Scalars['String']>;
-  /** A valid slack auth token. Not needed if a webhook is specified */
-  token?: Maybe<Scalars['String']>;
+  webhook: Scalars['URL'];
 };
 
-export type SlackNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
+export type SlackNotificationChannelAddInput = {
+  channel: SlackNotificationChannelUpdate;
+  hostId: Scalars['ID'];
+};
+
+export type SlackNotificationChannelUpdate = {
+  /** The slack webhook to post messages to */
+  channel?: InputMaybe<Scalars['String']>;
   /** Is the channel enabled ? */
   enabled: Scalars['Boolean'];
-  /** The slack webhook to post messages to */
-  webhook: Scalars['String'];
-  /** The slack webhook to post messages to */
-  channel?: Maybe<Scalars['String']>;
+  /** The name of the channel */
+  name: Scalars['String'];
   /** A valid slack auth token. Not needed if a webhook is specified */
-  token?: Maybe<Scalars['String']>;
-  /** the host to add the channel to */
+  token?: InputMaybe<Scalars['String']>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** The slack webhook to post messages to */
+  webhook: Scalars['URL'];
+};
+
+export type SlackNotificationChannelUpdateInput = {
+  channel: SlackNotificationChannelUpdate;
   hostId: Scalars['ID'];
 };
 
 export enum SortOrderEnum {
   Asc = 'ASC',
-  Desc = 'DESC'
+  Desc = 'DESC',
 }
 
 export enum StatsGranularity {
-  Day = 'day',
-  Hour = 'hour',
-  Minute = 'minute',
-  Month = 'month',
-  Week = 'week'
+  Day = 'Day',
+  Hour = 'Hour',
+  Minute = 'Minute',
+  Month = 'Month',
+  Week = 'Week',
 }
 
 /** Queue stats filter to getting latest snapshot. */
 export type StatsLatestInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
   /** Stats snapshot granularity */
-  granularity?: Maybe<StatsGranularity>;
+  granularity?: InputMaybe<StatsGranularity>;
+  /** An optional job name to filter on */
+  jobName?: InputMaybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: InputMaybe<StatsMetricType>;
 };
 
 export enum StatsMetricType {
   Latency = 'Latency',
-  Wait = 'Wait'
+  Wait = 'Wait',
 }
 
 /** Queue stats filter. */
 export type StatsQueryInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
-  /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
   /** Stats snapshot granularity */
   granularity: StatsGranularity;
+  /** An optional job name to filter on */
+  jobName?: InputMaybe<Scalars['String']>;
+  /** The metric requested */
+  metric?: InputMaybe<StatsMetricType>;
   /** An expression specifying the range to query e.g. yesterday, last_7days */
   range: Scalars['String'];
 };
 
 /** Queue stats rates filter. */
 export type StatsRateQueryInput = {
-  /** An optional job name to filter on */
-  jobName?: Maybe<Scalars['String']>;
   /** Stats snapshot granularity */
   granularity: StatsGranularity;
+  /** An optional job name to filter on */
+  jobName?: InputMaybe<Scalars['String']>;
   /** An expression specifying the range to query e.g. yesterday, last_7days */
   range: Scalars['String'];
 };
@@ -2129,26 +2746,30 @@ export type StatsRateQueryInput = {
 /** Queue job stats snapshot. */
 export type StatsSnapshot = JobStatsInterface & {
   __typename?: 'StatsSnapshot';
-  /** The sample size */
-  count: Scalars['Int'];
-  /** The number of failed jobs in the sample interval */
-  failed: Scalars['Int'];
   /** The number of completed jobs in the sample interval */
   completed: Scalars['Int'];
-  /** The start of the interval */
-  startTime: Scalars['Date'];
+  /** The sample size */
+  count: Scalars['Int'];
   /** The end of the interval */
   endTime: Scalars['Date'];
-  /** The average of values during the period */
-  mean: Scalars['Float'];
-  /** The standard deviation of the dataset over the sample period */
-  stddev: Scalars['Float'];
-  /** The minimum value in the data set */
-  min: Scalars['Float'];
+  /** The number of failed jobs in the sample interval */
+  failed: Scalars['Int'];
+  /** One minute exponentially weighted moving average */
+  m1Rate: Scalars['Float'];
+  /** Five minute exponentially weighted moving average */
+  m5Rate: Scalars['Float'];
+  /** Fifteen minute exponentially weighted moving average */
+  m15Rate: Scalars['Float'];
   /** The maximum value in the data set */
   max: Scalars['Float'];
+  /** The average of values during the period */
+  mean: Scalars['Float'];
+  /** The average rate of events over the entire lifetime of measurement (e.g., the total number of requests handled,divided by the number of seconds the process has been running), it doesn’t offer a sense of recency. */
+  meanRate: Scalars['Float'];
   /** The median value of the data set */
   median: Scalars['Float'];
+  /** The minimum value in the data set */
+  min: Scalars['Float'];
   /** The 25th percentile */
   p90: Scalars['Float'];
   /** The 95th percentile */
@@ -2157,905 +2778,2743 @@ export type StatsSnapshot = JobStatsInterface & {
   p99: Scalars['Float'];
   /** The 99.5th percentile */
   p995: Scalars['Float'];
-  /** The average rate of events over the entire lifetime of measurement (e.g., the total number of requests handled, divided by the number of seconds the process has been running), it doesn’t offer a sense of recency. */
-  meanRate: Scalars['Float'];
-  /** One minute exponentially weighted moving average */
-  m1Rate: Scalars['Float'];
-  /** Five minute exponentially weighted moving average */
-  m5Rate: Scalars['Float'];
-  /** Fifteen minute exponentially weighted moving average */
-  m15Rate: Scalars['Float'];
+  /** The start of the interval */
+  startTime: Scalars['Date'];
+  /** The standard deviation of the dataset over the sample period */
+  stddev: Scalars['Float'];
 };
 
 export type StatsSpanInput = {
+  granularity?: InputMaybe<StatsGranularity>;
   /** The host/queue to query */
   id: Scalars['ID'];
-  jobName?: Maybe<Scalars['String']>;
-  granularity?: Maybe<StatsGranularity>;
-};
-
-export type StatsSpanPayload = {
-  __typename?: 'StatsSpanPayload';
-  start: Scalars['Date'];
-  end: Scalars['Date'];
+  jobName?: InputMaybe<Scalars['String']>;
 };
 
 /** Filtering options for stats subscriptions. */
 export type StatsUpdatedSubscriptionFilter = {
+  /** Data granularity */
+  granularity?: InputMaybe<StatsGranularity>;
   /** The id of the queue or host to subscribe to */
   id: Scalars['ID'];
   /** An optional job name for filtering */
-  jobName?: Maybe<Scalars['String']>;
+  jobName?: InputMaybe<Scalars['String']>;
   /** The metric requested */
-  metric?: Maybe<StatsMetricType>;
-  /** Data granularity */
-  granularity?: Maybe<StatsGranularity>;
+  metric?: InputMaybe<StatsMetricType>;
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
-  onNotificationChannelCreated: OnNotificationChannelCreatedPayload;
-  onNotificationChannelDeleted: OnNotificationChannelDeletedPayload;
+  /** Returns job active events */
+  obJobActive?: Maybe<OnJobStateChangePayload>;
+  /** Returns job completed events */
+  obJobCompleted?: Maybe<OnJobStateChangePayload>;
+  /** Returns job failed events */
+  obJobFailed?: Maybe<OnJobStateChangePayload>;
+  /** Returns job stalled events */
+  obJobStalled?: Maybe<OnJobStateChangePayload>;
   /** Subscribe for updates in host statistical snapshots */
   onHostStatsUpdated: StatsSnapshot;
   onJobAdded: OnJobAddedPayload;
-  onJobUpdated: OnJobUpdatedPayload;
+  onJobDelayed: OnJobDelayedPayload;
+  onJobLogAdded: OnJobLogAddedPayload;
   onJobProgress: OnJobProgressPayload;
   onJobRemoved: OnJobRemovedPayload;
-  onJobLogAdded: OnJobLogAddedPayload;
-  /** Returns job active events */
-  obJobActive?: Maybe<OnJobStateChangePayload>;
-  /** Returns job failed events */
-  obJobFailed?: Maybe<OnJobStateChangePayload>;
-  /** Returns job completed events */
-  obJobCompleted?: Maybe<OnJobStateChangePayload>;
-  /** Returns job stalled events */
-  obJobStalled?: Maybe<OnJobStateChangePayload>;
-  onJobDelayed: OnJobDelayedPayload;
-  onQueuePaused: OnQueuePausedPayload;
-  onQueueResumed: OnQueueResumedPayload;
+  onJobUpdated: OnJobUpdatedPayload;
+  onNotificationChannelCreated: OnNotificationChannelCreatedPayload;
+  onNotificationChannelDeleted: OnNotificationChannelDeletedPayload;
   onQueueDeleted: OnQueueDeletedPayload;
-  onQueueWorkersChanged: OnQueueWorkersChangedPayload;
-  onQueueStateChanged: OnQueueStateChangedPayload;
   onQueueJobCountsChanged: OnQueueJobCountsChangedPayload;
   onQueueJobUpdates: OnQueueJobUpdatesPayload;
+  onQueueMetricValueUpdated: OnQueueMetricValueUpdated;
+  onQueuePaused: OnQueuePausedPayload;
+  onQueueRegistered: OnQueueRegisteredPayload;
+  onQueueResumed: OnQueueResumedPayload;
+  onQueueStateChanged: OnQueueStateChangedPayload;
   /** Subscribe for updates in queue statistical snapshots */
   onQueueStatsUpdated: StatsSnapshot;
-  onQueueRegistered: OnQueueRegisteredPayload;
   onQueueUnregistered: OnQueueUnregisteredPayload;
+  onQueueWorkersChanged: OnQueueWorkersChangedPayload;
   /** Returns an updated count of workers assigned to a queue */
   onQueueWorkersCountChanged: OnQueueWorkersCountPayload;
   onRuleAlert: OnRuleAlertPayload;
 };
 
-
-export type SubscriptionOnNotificationChannelCreatedArgs = {
-  hostId: Scalars['String'];
+export type SubscriptionObJobActiveArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
-
-export type SubscriptionOnNotificationChannelDeletedArgs = {
-  hostId: Scalars['String'];
+export type SubscriptionObJobCompletedArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
+export type SubscriptionObJobFailedArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
+};
+
+export type SubscriptionObJobStalledArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
+};
 
 export type SubscriptionOnHostStatsUpdatedArgs = {
   input: StatsUpdatedSubscriptionFilter;
 };
 
-
 export type SubscriptionOnJobAddedArgs = {
   queueId: Scalars['ID'];
 };
-
-
-export type SubscriptionOnJobUpdatedArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionOnJobProgressArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionOnJobRemovedArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionOnJobLogAddedArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionObJobActiveArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionObJobFailedArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionObJobCompletedArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
-
-export type SubscriptionObJobStalledArgs = {
-  queueId: Scalars['String'];
-  jobId: Scalars['String'];
-};
-
 
 export type SubscriptionOnJobDelayedArgs = {
   prefix?: Scalars['String'];
   queueId: Scalars['ID'];
 };
 
-
-export type SubscriptionOnQueuePausedArgs = {
+export type SubscriptionOnJobLogAddedArgs = {
+  jobId: Scalars['String'];
   queueId: Scalars['String'];
 };
 
-
-export type SubscriptionOnQueueResumedArgs = {
-  queueId: Scalars['ID'];
+export type SubscriptionOnJobProgressArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
+export type SubscriptionOnJobRemovedArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
+};
+
+export type SubscriptionOnJobUpdatedArgs = {
+  jobId: Scalars['String'];
+  queueId: Scalars['String'];
+};
+
+export type SubscriptionOnNotificationChannelCreatedArgs = {
+  hostId: Scalars['String'];
+};
+
+export type SubscriptionOnNotificationChannelDeletedArgs = {
+  hostId: Scalars['String'];
+};
 
 export type SubscriptionOnQueueDeletedArgs = {
   hostId: Scalars['String'];
 };
 
-
-export type SubscriptionOnQueueWorkersChangedArgs = {
-  queueId: Scalars['String'];
-};
-
-
-export type SubscriptionOnQueueStateChangedArgs = {
-  queueId: Scalars['String'];
-};
-
-
 export type SubscriptionOnQueueJobCountsChangedArgs = {
   queueId: Scalars['String'];
 };
-
 
 export type SubscriptionOnQueueJobUpdatesArgs = {
   input: QueueJobUpdatesFilterInput;
 };
 
-
-export type SubscriptionOnQueueStatsUpdatedArgs = {
-  input: StatsUpdatedSubscriptionFilter;
+export type SubscriptionOnQueueMetricValueUpdatedArgs = {
+  metricId: Scalars['String'];
+  queueId: Scalars['String'];
 };
 
+export type SubscriptionOnQueuePausedArgs = {
+  queueId: Scalars['String'];
+};
 
 export type SubscriptionOnQueueRegisteredArgs = {
   hostId: Scalars['String'];
 };
 
+export type SubscriptionOnQueueResumedArgs = {
+  queueId: Scalars['ID'];
+};
+
+export type SubscriptionOnQueueStateChangedArgs = {
+  queueId: Scalars['String'];
+};
+
+export type SubscriptionOnQueueStatsUpdatedArgs = {
+  input: StatsUpdatedSubscriptionFilter;
+};
 
 export type SubscriptionOnQueueUnregisteredArgs = {
   hostId: Scalars['String'];
 };
 
+export type SubscriptionOnQueueWorkersChangedArgs = {
+  queueId: Scalars['String'];
+};
 
 export type SubscriptionOnQueueWorkersCountChangedArgs = {
   queueId: Scalars['String'];
 };
 
-
 export type SubscriptionOnRuleAlertArgs = {
   queueId: Scalars['ID'];
-  ruleIds?: Maybe<Array<Scalars['String']>>;
+  ruleIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+/** Basic descriptive statistics */
+export type SummaryStatistics = {
+  __typename?: 'SummaryStatistics';
+  /** The number of input values included in calculations */
+  count: Scalars['Int'];
+  /** The maximum value. */
+  max?: Maybe<Scalars['Float']>;
+  /** The average value - the sum of all values over the number of values. */
+  mean: Scalars['Float'];
+  /** The median is the middle number of a list. This is often a good indicator of "the middle" when there are outliers that skew the mean value. */
+  median?: Maybe<Scalars['Float']>;
+  /** The minimum value. */
+  min?: Maybe<Scalars['Float']>;
+  /** The standard deviation is the square root of the sample variance. */
+  sampleStandardDeviation: Scalars['Float'];
+  /**
+   * The sample variance is the sum of squared deviations from the mean.
+   * The sample variance is distinguished from the variance by dividing the sum of squared deviations by (n - 1) instead of n. This corrects the bias in estimating a value from a sample set rather than the full population.
+   */
+  sampleVariance: Scalars['Float'];
+  /** The standard deviation is the square root of the variance. This is also known as the population standard deviation. It is useful for measuring the amount of variation or dispersion in a set of values. */
+  standardDeviation: Scalars['Float'];
+  /** The variance is the sum of squared deviations from the mean. */
+  variance: Scalars['Float'];
 };
 
 /** A condition based on a simple threshold condition */
-export type ThresholdCondition = RuleCondition & {
+export type ThresholdCondition = RuleConditionInterface & {
   __typename?: 'ThresholdCondition';
   /** The value needed to trigger an error notification */
   errorThreshold: Scalars['Float'];
+  /** The comparison operator */
+  operator: RuleOperator;
   /** The value needed to trigger an warning notification */
   warningThreshold?: Maybe<Scalars['Float']>;
+};
+
+export type ThresholdConditionInput = {
+  /** The value needed to trigger an error notification */
+  errorThreshold: Scalars['Float'];
   /** The comparison operator */
-  operator?: Maybe<RuleOperator>;
+  operator: RuleOperator;
+  /** The value needed to trigger an warning notification */
+  warningThreshold?: InputMaybe<Scalars['Float']>;
+};
+
+/** The state resulting from evaluation off a rule condition */
+export type ThresholdRuleEvaluationState = RuleEvaluationState & {
+  __typename?: 'ThresholdRuleEvaluationState';
+  /** The rule operator */
+  comparator: RuleOperator;
+  errorLevel: ErrorLevel;
+  /** The error threshold of the rule */
+  errorThreshold: Scalars['Float'];
+  /** The type of rule */
+  ruleType: RuleType;
+  unit: Scalars['String'];
+  /** The value which triggered the alert */
+  value: Scalars['Float'];
+  /** The warning threshold of the rule */
+  warningThreshold?: Maybe<Scalars['Float']>;
+};
+
+export type TimeSpan = {
+  __typename?: 'TimeSpan';
+  endTime: Scalars['DateTime'];
+  startTime: Scalars['DateTime'];
+};
+
+export type TimeseriesDataPoint = TimeseriesDataPointInterface & {
+  __typename?: 'TimeseriesDataPoint';
+  /** The timestamp of when the event occurred */
+  ts: Scalars['Timestamp'];
+  /** The value at the given timestamp */
+  value: Scalars['Float'];
+};
+
+/** A data point representing the value of a metric in a time series. */
+export type TimeseriesDataPointInterface = {
+  /** The timestamp of when the event occurred */
+  ts: Scalars['Timestamp'];
+  /** The value at the given timestamp */
+  value: Scalars['Float'];
 };
 
 export type ValidateJobOptionsPayload = {
   __typename?: 'ValidateJobOptionsPayload';
-  isValid: Scalars['Boolean'];
   errors: Array<Scalars['String']>;
+  isValid: Scalars['Boolean'];
 };
 
 /** A channel that posts notifications to a webhook */
 export type WebhookNotificationChannel = NotificationChannel & {
   __typename?: 'WebhookNotificationChannel';
-  id: Scalars['ID'];
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
+  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
+  allowGetBody?: Maybe<Scalars['Boolean']>;
   /** Timestamp of channel creation */
   createdAt?: Maybe<Scalars['Date']>;
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Defines if redirect responses should be followed automatically. */
+  followRedirect?: Maybe<Scalars['Boolean']>;
+  /** Optional request headers */
+  headers?: Maybe<Scalars['JSONObject']>;
+  /** Optional success http status codes. Defaults to http codes 200 - 206 */
+  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
+  id: Scalars['ID'];
+  /** The HTTP method to use */
+  method?: Maybe<HttpMethodEnum>;
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** The number of times to retry the client */
+  retry?: Maybe<Scalars['Int']>;
+  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
+  timeout?: Maybe<Scalars['Duration']>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
   /** Timestamp of last channel update */
   updatedAt?: Maybe<Scalars['Date']>;
   /** Url to send data to */
-  url: Scalars['String'];
-  /** The HTTP method to use */
-  method?: Maybe<HttpMethodEnum>;
-  /** Optional request headers */
-  headers?: Maybe<Scalars['JSONObject']>;
-  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
-  timeout?: Maybe<Scalars['Duration']>;
-  /** The number of times to retry the client */
-  retry?: Maybe<Scalars['Int']>;
-  /** Defines if redirect responses should be followed automatically. */
-  followRedirect?: Maybe<Scalars['Boolean']>;
-  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
-  allowGetBody?: Maybe<Scalars['Boolean']>;
-  /** Optional success http status codes. Defaults to http codes 200 - 206 */
-  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
+  url: Scalars['URL'];
 };
 
-export type WebhookNotificationChannelInput = {
-  /** The type of the channel, e.g. slack, email, webhook etc */
-  type: Scalars['String'];
-  /** The name of the channel */
-  name: Scalars['String'];
-  /** Is the channel enabled ? */
-  enabled: Scalars['Boolean'];
-  /** Url to send data to */
-  url: Scalars['String'];
-  /** The HTTP method to use */
-  method?: Maybe<HttpMethodEnum>;
-  /** Optional request headers */
-  headers?: Maybe<Scalars['JSONObject']>;
-  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
-  timeout?: Maybe<Scalars['Duration']>;
-  /** The number of times to retry the client */
-  retry?: Maybe<Scalars['Int']>;
-  /** Defines if redirect responses should be followed automatically. */
-  followRedirect?: Maybe<Scalars['Boolean']>;
-  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
-  allowGetBody?: Maybe<Scalars['Boolean']>;
-  /** Optional success http status codes. Defaults to http codes 200 - 206 */
-  httpSuccessCodes?: Maybe<Array<Scalars['Int']>>;
-  /** the host to add the channel to */
+export type WebhookNotificationChannelAddInput = {
+  channel: WebhookNotificationChannelUpdate;
   hostId: Scalars['ID'];
 };
 
-export type RedisStatsFragment = { __typename?: 'RedisInfo', redis_version: string, uptime_in_seconds: number, uptime_in_days: number, connected_clients: number, blocked_clients: number, total_system_memory: number, used_memory: number, used_memory_peak: number, used_memory_lua: number, used_cpu_sys: number, maxmemory: number, number_of_cached_scripts: number, instantaneous_ops_per_sec: number, mem_fragmentation_ratio?: Maybe<number>, role?: Maybe<string> };
+export type WebhookNotificationChannelUpdate = {
+  /** Set this to true to allow sending body for the GET method. This option is only meant to interact with non-compliant servers when you have no other choice. */
+  allowGetBody?: InputMaybe<Scalars['Boolean']>;
+  /** Is the channel enabled ? */
+  enabled: Scalars['Boolean'];
+  /** Defines if redirect responses should be followed automatically. */
+  followRedirect?: InputMaybe<Scalars['Boolean']>;
+  /** Optional request headers */
+  headers?: InputMaybe<Scalars['JSONObject']>;
+  /** Optional success http status codes. Defaults to http codes 200 - 206 */
+  httpSuccessCodes?: InputMaybe<Array<Scalars['Int']>>;
+  /** The HTTP method to use */
+  method?: InputMaybe<HttpMethodEnum>;
+  /** The name of the channel */
+  name: Scalars['String'];
+  /** The number of times to retry the client */
+  retry?: InputMaybe<Scalars['Int']>;
+  /** Milliseconds to wait for the server to end the response before aborting the client. By default, there is no timeout. */
+  timeout?: InputMaybe<Scalars['Duration']>;
+  /** The type of the channel, e.g. slack, email, webhook etc */
+  type: Scalars['String'];
+  /** Url to send data to */
+  url: Scalars['URL'];
+};
 
-export type HostFragment = { __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, uri: string, redis: (
-    { __typename?: 'RedisInfo' }
-    & RedisStatsFragment
-  ), channels: Array<(
-    { __typename?: 'MailNotificationChannel' }
-    & NotificationChannel_MailNotificationChannel_Fragment
-  ) | (
-    { __typename?: 'SlackNotificationChannel' }
-    & NotificationChannel_SlackNotificationChannel_Fragment
-  ) | (
-    { __typename?: 'WebhookNotificationChannel' }
-    & NotificationChannel_WebhookNotificationChannel_Fragment
-  )> };
+export type WebhookNotificationChannelUpdateInput = {
+  channel: WebhookNotificationChannelUpdate;
+  hostId: Scalars['ID'];
+};
 
-export type GetAllHostsQueryVariables = Exact<{ [key: string]: never; }>;
+export type RedisStatsFragment = {
+  __typename?: 'RedisInfo';
+  redis_version: string;
+  uptime_in_seconds: number;
+  uptime_in_days: number;
+  connected_clients: number;
+  blocked_clients: number;
+  total_system_memory: number;
+  used_memory: number;
+  used_memory_peak: number;
+  used_memory_lua: number;
+  used_cpu_sys: number;
+  maxmemory: number;
+  number_of_cached_scripts: number;
+  instantaneous_ops_per_sec: number;
+  mem_fragmentation_ratio?: number | null;
+  role: string;
+};
 
+export type HostFragment = {
+  __typename?: 'QueueHost';
+  id: string;
+  name: string;
+  description?: string | null;
+  uri: string;
+  redis: {
+    __typename?: 'RedisInfo';
+    redis_version: string;
+    uptime_in_seconds: number;
+    uptime_in_days: number;
+    connected_clients: number;
+    blocked_clients: number;
+    total_system_memory: number;
+    used_memory: number;
+    used_memory_peak: number;
+    used_memory_lua: number;
+    used_cpu_sys: number;
+    maxmemory: number;
+    number_of_cached_scripts: number;
+    instantaneous_ops_per_sec: number;
+    mem_fragmentation_ratio?: number | null;
+    role: string;
+  };
+  channels: Array<
+    | {
+        __typename?: 'MailNotificationChannel';
+        recipients: Array<string | null>;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+    | {
+        __typename?: 'SlackNotificationChannel';
+        webhook: string;
+        channel?: string | null;
+        token?: string | null;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+    | {
+        __typename?: 'WebhookNotificationChannel';
+        url: string;
+        method?: HttpMethodEnum | null;
+        headers?: { [key: string]: any } | null;
+        timeout?: string | number | null;
+        retry?: number | null;
+        followRedirect?: boolean | null;
+        httpSuccessCodes?: Array<number> | null;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+  >;
+};
 
-export type GetAllHostsQuery = { __typename?: 'Query', hosts: Array<(
-    { __typename?: 'QueueHost' }
-    & HostFragment
-  )> };
+export type GetAllHostsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetHostsAndQueuesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetAllHostsQuery = {
+  __typename?: 'Query';
+  hosts: Array<{
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+    channels: Array<
+      | {
+          __typename?: 'MailNotificationChannel';
+          recipients: Array<string | null>;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'SlackNotificationChannel';
+          webhook: string;
+          channel?: string | null;
+          token?: string | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'WebhookNotificationChannel';
+          url: string;
+          method?: HttpMethodEnum | null;
+          headers?: { [key: string]: any } | null;
+          timeout?: string | number | null;
+          retry?: number | null;
+          followRedirect?: boolean | null;
+          httpSuccessCodes?: Array<number> | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+    >;
+  }>;
+};
 
+export type GetHostsAndQueuesQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetHostsAndQueuesQuery = { __typename?: 'Query', hosts: Array<{ __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, uri: string, redis: (
-      { __typename?: 'RedisInfo' }
-      & RedisStatsFragment
-    ), queues: Array<(
-      { __typename?: 'Queue' }
-      & QueueFragment
-    )> }> };
+export type GetHostsAndQueuesQuery = {
+  __typename?: 'Query';
+  hosts: Array<{
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      host: string;
+      hostId: string;
+      prefix: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      jobNames: Array<string>;
+      workerCount: number;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  }>;
+};
 
 export type GetHostByIdQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetHostByIdQuery = { __typename?: 'Query', host?: Maybe<(
-    { __typename?: 'QueueHost' }
-    & HostFragment
-  )> };
+export type GetHostByIdQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+    channels: Array<
+      | {
+          __typename?: 'MailNotificationChannel';
+          recipients: Array<string | null>;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'SlackNotificationChannel';
+          webhook: string;
+          channel?: string | null;
+          token?: string | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'WebhookNotificationChannel';
+          url: string;
+          method?: HttpMethodEnum | null;
+          headers?: { [key: string]: any } | null;
+          timeout?: string | number | null;
+          retry?: number | null;
+          followRedirect?: boolean | null;
+          httpSuccessCodes?: Array<number> | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+    >;
+  } | null;
+};
 
 export type GetHostByIdFullQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetHostByIdFullQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, uri: string, redis: (
-      { __typename?: 'RedisInfo' }
-      & RedisStatsFragment
-    ), queues: Array<(
-      { __typename?: 'Queue' }
-      & QueueFragment
-    )> }> };
+export type GetHostByIdFullQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      host: string;
+      hostId: string;
+      prefix: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      jobNames: Array<string>;
+      workerCount: number;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  } | null;
+};
 
 export type GetHostQueuesQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
+export type GetHostQueuesQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      host: string;
+      hostId: string;
+      prefix: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      jobNames: Array<string>;
+      workerCount: number;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  } | null;
+};
 
-export type GetHostQueuesQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', id: string, queues: Array<(
-      { __typename?: 'Queue' }
-      & QueueFragment
-    )> }> };
+export type HostQueuesQueryVariables = Exact<{
+  id: Scalars['ID'];
+  range: Scalars['String'];
+  filter?: InputMaybe<HostQueuesFilter>;
+}>;
+
+export type HostQueuesQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      isPaused: boolean;
+      workerCount: number;
+      ruleAlertCount: number;
+      throughput: {
+        __typename?: 'Meter';
+        count: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      };
+      errorRate: {
+        __typename?: 'Meter';
+        count: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      };
+      stats: Array<{
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      }>;
+      statsAggregate?: {
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      } | null;
+      lastStatsSnapshot?: {
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      } | null;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  } | null;
+};
 
 export type GetRedisStatsQueryVariables = Exact<{
   hostId: Scalars['ID'];
 }>;
 
-
-export type GetRedisStatsQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', id: string, redis: (
-      { __typename?: 'RedisInfo' }
-      & RedisStatsFragment
-    ) }> };
+export type GetRedisStatsQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+  } | null;
+};
 
 export type DiscoverQueuesQueryVariables = Exact<{
   hostId: Scalars['ID'];
-  prefix?: Maybe<Scalars['String']>;
-  unregisteredOnly?: Maybe<Scalars['Boolean']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  unregisteredOnly?: InputMaybe<Scalars['Boolean']>;
 }>;
 
-
-export type DiscoverQueuesQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', discoverQueues: Array<{ __typename?: 'DiscoverQueuesPayload', name: string, prefix: string }> }> };
+export type DiscoverQueuesQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    discoverQueues: Array<{
+      __typename?: 'DiscoverQueuesPayload';
+      name: string;
+      prefix: string;
+    }>;
+  } | null;
+};
 
 export type RegisterQueueMutationVariables = Exact<{
   hostId: Scalars['ID'];
   name: Scalars['String'];
-  prefix?: Maybe<Scalars['String']>;
-  checkExists?: Maybe<Scalars['Boolean']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  checkExists?: InputMaybe<Scalars['Boolean']>;
 }>;
 
-
-export type RegisterQueueMutation = { __typename?: 'Mutation', queueRegister: (
-    { __typename: 'Queue' }
-    & QueueFragment
-  ) };
+export type RegisterQueueMutation = {
+  __typename?: 'Mutation';
+  queueRegister: {
+    __typename: 'Queue';
+    id: string;
+    name: string;
+    host: string;
+    hostId: string;
+    prefix: string;
+    isPaused: boolean;
+    repeatableJobCount: number;
+    jobNames: Array<string>;
+    workerCount: number;
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  };
+};
 
 export type UnregisterQueueMutationVariables = Exact<{
   queueId: Scalars['ID'];
 }>;
 
-
-export type UnregisterQueueMutation = { __typename?: 'Mutation', queueUnregister: { __typename?: 'QueueUnregisterPayload', isRemoved: boolean, host: { __typename?: 'QueueHost', id: string } } };
+export type UnregisterQueueMutation = {
+  __typename?: 'Mutation';
+  queueUnregister: {
+    __typename?: 'QueueUnregisterPayload';
+    isRemoved: boolean;
+    host: { __typename?: 'QueueHost'; id: string };
+  };
+};
 
 export type GetJobsByFilterQueryVariables = Exact<{
   id: Scalars['ID'];
-  status?: Maybe<JobStatus>;
-  cursor?: Maybe<Scalars['String']>;
-  criteria?: Maybe<Scalars['String']>;
-  count?: Maybe<Scalars['Int']>;
+  status?: InputMaybe<JobStatus>;
+  cursor?: InputMaybe<Scalars['String']>;
+  criteria?: InputMaybe<Scalars['String']>;
+  count?: InputMaybe<Scalars['Int']>;
 }>;
 
-
-export type GetJobsByFilterQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string, jobSearch: { __typename?: 'JobSearchPayload', cursor?: Maybe<string>, total: number, current: number, jobs: Array<(
-        { __typename?: 'Job' }
-        & JobFragment
-      )> } }
-    & JobCountsFragment
-  )> };
+export type GetJobsByFilterQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    jobSearch: {
+      __typename?: 'JobSearchPayload';
+      cursor?: string | null;
+      total: number;
+      current: number;
+      jobs: Array<{
+        __typename?: 'Job';
+        id: string;
+        queueId: string;
+        timestamp: any;
+        state: JobStatus;
+        name: string;
+        data: { [key: string]: any };
+        delay: number;
+        progress?: string | number | Record<string, any> | null;
+        attemptsMade: number;
+        processedOn?: any | null;
+        finishedOn?: any | null;
+        failedReason?: any | null;
+        stacktrace: Array<string>;
+        returnvalue?: any | null;
+        opts: {
+          __typename?: 'JobOptions';
+          timestamp?: any | null;
+          priority?: number | null;
+          delay?: number | null;
+          attempts?: number | null;
+          backoff?: any | null;
+          lifo?: boolean | null;
+          timeout?: number | null;
+          jobId?: string | null;
+          removeOnComplete?: boolean | number | null;
+          removeOnFail?: boolean | number | null;
+          stackTraceLimit?: number | null;
+          repeat?: {
+            __typename?: 'JobRepeatOptions';
+            cron?: string | null;
+            tz?: string | null;
+            startDate?: any | null;
+            endDate?: any | null;
+            limit?: number | null;
+            every?: string | null;
+            jobId?: string | null;
+            count?: number | null;
+          } | null;
+        };
+      }>;
+    };
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  } | null;
+};
 
 export type GetJobFiltersQueryVariables = Exact<{
   queueId: Scalars['ID'];
-  ids?: Maybe<Array<Scalars['ID']> | Scalars['ID']>;
+  ids?: InputMaybe<Array<Scalars['ID']> | Scalars['ID']>;
 }>;
 
-
-export type GetJobFiltersQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', jobFilters: Array<{ __typename?: 'JobFilter', id: string, name: string, expression: string, createdAt?: Maybe<any> }> }> };
+export type GetJobFiltersQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    jobFilters: Array<{
+      __typename?: 'JobFilter';
+      id: string;
+      name: string;
+      expression: string;
+      createdAt?: any | null;
+    }>;
+  } | null;
+};
 
 export type CreateJobFilterMutationVariables = Exact<{
   input: JobFilterInput;
 }>;
 
-
-export type CreateJobFilterMutation = { __typename?: 'Mutation', queueJobFilterCreate: { __typename?: 'JobFilter', id: string, name: string, expression: string, createdAt?: Maybe<any> } };
+export type CreateJobFilterMutation = {
+  __typename?: 'Mutation';
+  queueJobFilterCreate: {
+    __typename?: 'JobFilter';
+    id: string;
+    name: string;
+    expression: string;
+    createdAt?: any | null;
+  };
+};
 
 export type UpdateJobFilterMutationVariables = Exact<{
   input: JobFilterUpdateInput;
 }>;
 
-
-export type UpdateJobFilterMutation = { __typename?: 'Mutation', queueJobFilterUpdate: { __typename?: 'JobFilterUpdatePayload', isUpdated: boolean } };
+export type UpdateJobFilterMutation = {
+  __typename?: 'Mutation';
+  queueJobFilterUpdate: {
+    __typename?: 'JobFilterUpdatePayload';
+    isUpdated: boolean;
+  };
+};
 
 export type DeleteJobFilterMutationVariables = Exact<{
   input: QueueJobFilterDeleteInput;
 }>;
 
-
-export type DeleteJobFilterMutation = { __typename?: 'Mutation', queueJobFilterDelete: { __typename?: 'QueueJobFilterDeletePayload', isDeleted: boolean } };
+export type DeleteJobFilterMutation = {
+  __typename?: 'Mutation';
+  queueJobFilterDelete: {
+    __typename?: 'QueueJobFilterDeletePayload';
+    isDeleted: boolean;
+  };
+};
 
 export type GetQueueJobCountsQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetQueueJobCountsQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string }
-    & JobCountsFragment
-  )> };
+export type GetQueueJobCountsQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  } | null;
+};
 
 export type GetQueueJobsQueryVariables = Exact<{
   id: Scalars['ID'];
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  status?: Maybe<JobStatus>;
-  sortOrder?: Maybe<SortOrderEnum>;
+  offset?: InputMaybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  status?: InputMaybe<JobStatus>;
+  sortOrder?: InputMaybe<SortOrderEnum>;
 }>;
 
-
-export type GetQueueJobsQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string, jobs: Array<(
-      { __typename?: 'Job' }
-      & JobFragment
-    )> }
-    & JobCountsFragment
-  )> };
+export type GetQueueJobsQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    jobs: Array<{
+      __typename?: 'Job';
+      id: string;
+      queueId: string;
+      timestamp: any;
+      state: JobStatus;
+      name: string;
+      data: { [key: string]: any };
+      delay: number;
+      progress?: string | number | Record<string, any> | null;
+      attemptsMade: number;
+      processedOn?: any | null;
+      finishedOn?: any | null;
+      failedReason?: any | null;
+      stacktrace: Array<string>;
+      returnvalue?: any | null;
+      opts: {
+        __typename?: 'JobOptions';
+        timestamp?: any | null;
+        priority?: number | null;
+        delay?: number | null;
+        attempts?: number | null;
+        backoff?: any | null;
+        lifo?: boolean | null;
+        timeout?: number | null;
+        jobId?: string | null;
+        removeOnComplete?: boolean | number | null;
+        removeOnFail?: boolean | number | null;
+        stackTraceLimit?: number | null;
+        repeat?: {
+          __typename?: 'JobRepeatOptions';
+          cron?: string | null;
+          tz?: string | null;
+          startDate?: any | null;
+          endDate?: any | null;
+          limit?: number | null;
+          every?: string | null;
+          jobId?: string | null;
+          count?: number | null;
+        } | null;
+      };
+    }>;
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  } | null;
+};
 
 export type GetRepeatableJobsQueryVariables = Exact<{
   id: Scalars['ID'];
-  offset?: Maybe<Scalars['Int']>;
-  limit?: Maybe<Scalars['Int']>;
-  sortOrder?: Maybe<SortOrderEnum>;
+  offset?: InputMaybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  sortOrder?: InputMaybe<SortOrderEnum>;
 }>;
 
-
-export type GetRepeatableJobsQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', id: string, repeatableJobCount: number, repeatableJobs: Array<(
-      { __typename?: 'RepeatableJob' }
-      & RepeatableJobFragment
-    )> }> };
+export type GetRepeatableJobsQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    repeatableJobCount: number;
+    repeatableJobs: Array<{
+      __typename?: 'RepeatableJob';
+      key: string;
+      id?: string | null;
+      name?: string | null;
+      endDate?: any | null;
+      tz?: string | null;
+      cron?: string | null;
+      next?: any | null;
+      descr?: string | null;
+    }>;
+  } | null;
+};
 
 export type GetJobByIdQueryVariables = Exact<{
   queueId: Scalars['ID'];
   id: Scalars['ID'];
 }>;
 
-
-export type GetJobByIdQuery = { __typename?: 'Query', job: (
-    { __typename?: 'Job' }
-    & JobFragment
-  ) };
+export type GetJobByIdQuery = {
+  __typename?: 'Query';
+  job: {
+    __typename?: 'Job';
+    id: string;
+    queueId: string;
+    timestamp: any;
+    state: JobStatus;
+    name: string;
+    data: { [key: string]: any };
+    delay: number;
+    progress?: string | number | Record<string, any> | null;
+    attemptsMade: number;
+    processedOn?: any | null;
+    finishedOn?: any | null;
+    failedReason?: any | null;
+    stacktrace: Array<string>;
+    returnvalue?: any | null;
+    opts: {
+      __typename?: 'JobOptions';
+      timestamp?: any | null;
+      priority?: number | null;
+      delay?: number | null;
+      attempts?: number | null;
+      backoff?: any | null;
+      lifo?: boolean | null;
+      timeout?: number | null;
+      jobId?: string | null;
+      removeOnComplete?: boolean | number | null;
+      removeOnFail?: boolean | number | null;
+      stackTraceLimit?: number | null;
+      repeat?: {
+        __typename?: 'JobRepeatOptions';
+        cron?: string | null;
+        tz?: string | null;
+        startDate?: any | null;
+        endDate?: any | null;
+        limit?: number | null;
+        every?: string | null;
+        jobId?: string | null;
+        count?: number | null;
+      } | null;
+    };
+  };
+};
 
 export type GetJobLogsQueryVariables = Exact<{
   queueId: Scalars['ID'];
   id: Scalars['ID'];
-  start?: Maybe<Scalars['Int']>;
-  end?: Maybe<Scalars['Int']>;
+  start?: InputMaybe<Scalars['Int']>;
+  end?: InputMaybe<Scalars['Int']>;
 }>;
 
-
-export type GetJobLogsQuery = { __typename?: 'Query', job: { __typename?: 'Job', logs: { __typename?: 'JobLogs', count: number, items: Array<string> } } };
+export type GetJobLogsQuery = {
+  __typename?: 'Query';
+  job: {
+    __typename?: 'Job';
+    logs: { __typename?: 'JobLogs'; count: number; items: Array<string> };
+  };
+};
 
 export type AddJobMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobName: Scalars['String'];
-  data?: Maybe<Scalars['JSONObject']>;
-  options?: Maybe<JobOptionsInput>;
+  data?: InputMaybe<Scalars['JSONObject']>;
+  options?: InputMaybe<JobOptionsInput>;
 }>;
 
-
-export type AddJobMutation = { __typename?: 'Mutation', jobAdd: (
-    { __typename?: 'Job' }
-    & JobFragment
-  ) };
+export type AddJobMutation = {
+  __typename?: 'Mutation';
+  jobAdd: {
+    __typename?: 'Job';
+    id: string;
+    queueId: string;
+    timestamp: any;
+    state: JobStatus;
+    name: string;
+    data: { [key: string]: any };
+    delay: number;
+    progress?: string | number | Record<string, any> | null;
+    attemptsMade: number;
+    processedOn?: any | null;
+    finishedOn?: any | null;
+    failedReason?: any | null;
+    stacktrace: Array<string>;
+    returnvalue?: any | null;
+    opts: {
+      __typename?: 'JobOptions';
+      timestamp?: any | null;
+      priority?: number | null;
+      delay?: number | null;
+      attempts?: number | null;
+      backoff?: any | null;
+      lifo?: boolean | null;
+      timeout?: number | null;
+      jobId?: string | null;
+      removeOnComplete?: boolean | number | null;
+      removeOnFail?: boolean | number | null;
+      stackTraceLimit?: number | null;
+      repeat?: {
+        __typename?: 'JobRepeatOptions';
+        cron?: string | null;
+        tz?: string | null;
+        startDate?: any | null;
+        endDate?: any | null;
+        limit?: number | null;
+        every?: string | null;
+        jobId?: string | null;
+        count?: number | null;
+      } | null;
+    };
+  };
+};
 
 export type DeleteJobMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobId: Scalars['ID'];
 }>;
 
-
-export type DeleteJobMutation = { __typename?: 'Mutation', jobRemove: { __typename?: 'JobRemovePayload', job: { __typename?: 'Job', id: string } } };
+export type DeleteJobMutation = {
+  __typename?: 'Mutation';
+  jobRemove: {
+    __typename?: 'JobRemovePayload';
+    job: { __typename?: 'Job'; id: string };
+  };
+};
 
 export type DeleteRepeatableJobByKeyMutationVariables = Exact<{
   queueId: Scalars['ID'];
   key: Scalars['String'];
 }>;
 
-
-export type DeleteRepeatableJobByKeyMutation = { __typename?: 'Mutation', repeatableJobRemoveByKey: { __typename?: 'RepeatableJobRemoveByKeyPayload', key: string } };
+export type DeleteRepeatableJobByKeyMutation = {
+  __typename?: 'Mutation';
+  repeatableJobRemoveByKey: {
+    __typename?: 'RepeatableJobRemoveByKeyPayload';
+    key: string;
+  };
+};
 
 export type DeleteBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
-
-export type DeleteBulkJobsMutation = { __typename?: 'Mutation', jobRemoveBulk?: Maybe<{ __typename?: 'BulkJobActionPayload', status: Array<Maybe<{ __typename?: 'BulkStatusItem', id: string, success: boolean, reason?: Maybe<string> }>> }> };
+export type DeleteBulkJobsMutation = {
+  __typename?: 'Mutation';
+  jobRemoveBulk?: {
+    __typename?: 'BulkJobActionPayload';
+    status: Array<{
+      __typename?: 'BulkStatusItem';
+      id: string;
+      success: boolean;
+      reason?: string | null;
+    } | null>;
+  } | null;
+};
 
 export type RetryJobMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobId: Scalars['ID'];
 }>;
 
-
-export type RetryJobMutation = { __typename?: 'Mutation', jobRetry: { __typename?: 'JobRetryPayload', job: { __typename?: 'Job', id: string } } };
+export type RetryJobMutation = {
+  __typename?: 'Mutation';
+  jobRetry: {
+    __typename?: 'JobRetryPayload';
+    job: { __typename?: 'Job'; id: string };
+  };
+};
 
 export type RetryBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
-
-export type RetryBulkJobsMutation = { __typename?: 'Mutation', jobRetryBulk?: Maybe<{ __typename?: 'BulkJobActionPayload', status: Array<Maybe<{ __typename?: 'BulkStatusItem', id: string, success: boolean, reason?: Maybe<string> }>> }> };
+export type RetryBulkJobsMutation = {
+  __typename?: 'Mutation';
+  jobRetryBulk?: {
+    __typename?: 'BulkJobActionPayload';
+    status: Array<{
+      __typename?: 'BulkStatusItem';
+      id: string;
+      success: boolean;
+      reason?: string | null;
+    } | null>;
+  } | null;
+};
 
 export type PromoteJobMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobId: Scalars['ID'];
 }>;
 
-
-export type PromoteJobMutation = { __typename?: 'Mutation', jobPromote: { __typename?: 'JobPromotePayload', job: { __typename?: 'Job', id: string, state: JobStatus } } };
+export type PromoteJobMutation = {
+  __typename?: 'Mutation';
+  jobPromote: {
+    __typename?: 'JobPromotePayload';
+    job: { __typename?: 'Job'; id: string; state: JobStatus };
+  };
+};
 
 export type PromoteBulkJobsMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobIds: Array<Scalars['ID']> | Scalars['ID'];
 }>;
 
-
-export type PromoteBulkJobsMutation = { __typename?: 'Mutation', jobPromoteBulk?: Maybe<{ __typename?: 'BulkJobActionPayload', status: Array<Maybe<{ __typename?: 'BulkStatusItem', id: string, success: boolean, reason?: Maybe<string> }>> }> };
+export type PromoteBulkJobsMutation = {
+  __typename?: 'Mutation';
+  jobPromoteBulk?: {
+    __typename?: 'BulkJobActionPayload';
+    status: Array<{
+      __typename?: 'BulkStatusItem';
+      id: string;
+      success: boolean;
+      reason?: string | null;
+    } | null>;
+  } | null;
+};
 
 export type GetQueueByIdQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetQueueByIdQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue' }
-    & QueueFragment
-  )> };
+export type GetQueueByIdQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    name: string;
+    host: string;
+    hostId: string;
+    prefix: string;
+    isPaused: boolean;
+    repeatableJobCount: number;
+    jobNames: Array<string>;
+    workerCount: number;
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  } | null;
+};
 
 export type GetQueueWorkersQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetQueueWorkersQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', id: string, workers: Array<{ __typename?: 'QueueWorker', id?: Maybe<string>, name?: Maybe<string>, addr: string, age: number, started?: Maybe<number>, idle: number, role?: Maybe<string>, db: number, omem: number }> }> };
+export type GetQueueWorkersQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    workers: Array<{
+      __typename?: 'QueueWorker';
+      id?: string | null;
+      name?: string | null;
+      addr: string;
+      age: number;
+      started?: number | null;
+      idle: number;
+      role?: string | null;
+      db: number;
+      omem: number;
+    }>;
+  } | null;
+};
 
 export type PauseQueueMutationVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type PauseQueueMutation = { __typename?: 'Mutation', queuePause: { __typename?: 'QueuePausePayload', isPaused: boolean } };
+export type PauseQueueMutation = {
+  __typename?: 'Mutation';
+  queuePause: { __typename?: 'Queue'; isPaused: boolean };
+};
 
 export type ResumeQueueMutationVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type ResumeQueueMutation = { __typename?: 'Mutation', queueResume: { __typename?: 'QueueResumePayload', isPaused: boolean } };
+export type ResumeQueueMutation = {
+  __typename?: 'Mutation';
+  queueResume: { __typename?: 'Queue'; isPaused: boolean };
+};
 
 export type GetQueueRulesQueryVariables = Exact<{
   queueId: Scalars['ID'];
 }>;
 
-
-export type GetQueueRulesQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', rules: Array<(
-      { __typename?: 'Rule' }
-      & RuleFragment
-    )> }> };
+export type GetQueueRulesQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    rules: Array<{
+      __typename?: 'Rule';
+      id: string;
+      name: string;
+      description?: string | null;
+      createdAt: any;
+      updatedAt: any;
+      state?: RuleState | null;
+      payload?: { [key: string]: any } | null;
+      isActive: boolean;
+      message?: string | null;
+      alertCount: number;
+      metric?: {
+        __typename?: 'Metric';
+        id: string;
+        isActive: boolean;
+        name: string;
+        options: { [key: string]: any };
+      } | null;
+      condition:
+        | {
+            __typename?: 'ChangeCondition';
+            changeType: ConditionChangeType;
+            errorThreshold: number;
+            warningThreshold?: number | null;
+            operator: RuleOperator;
+            windowSize: string | number;
+            timeShift: string | number;
+            aggregationType: ChangeAggregation;
+          }
+        | {
+            __typename?: 'PeakCondition';
+            errorThreshold: number;
+            warningThreshold?: number | null;
+            influence?: number | null;
+            lag?: string | number | null;
+            direction: PeakSignalDirection;
+          }
+        | {
+            __typename?: 'ThresholdCondition';
+            errorThreshold: number;
+            warningThreshold?: number | null;
+            operator: RuleOperator;
+          };
+      channels: Array<
+        | {
+            __typename?: 'MailNotificationChannel';
+            recipients: Array<string | null>;
+            id: string;
+            type: string;
+            name: string;
+            enabled: boolean;
+          }
+        | {
+            __typename?: 'SlackNotificationChannel';
+            webhook: string;
+            channel?: string | null;
+            token?: string | null;
+            id: string;
+            type: string;
+            name: string;
+            enabled: boolean;
+          }
+        | {
+            __typename?: 'WebhookNotificationChannel';
+            url: string;
+            method?: HttpMethodEnum | null;
+            headers?: { [key: string]: any } | null;
+            timeout?: string | number | null;
+            retry?: number | null;
+            followRedirect?: boolean | null;
+            httpSuccessCodes?: Array<number> | null;
+            id: string;
+            type: string;
+            name: string;
+            enabled: boolean;
+          }
+      >;
+      options?: {
+        __typename?: 'RuleAlertOptions';
+        triggerDelay?: string | number | null;
+        failureThreshold?: number | null;
+        successThreshold?: number | null;
+        maxAlertsPerEvent?: number | null;
+        alertOnReset?: boolean | null;
+        recoveryWindow?: string | number | null;
+        notifyInterval?: string | number | null;
+      } | null;
+    }>;
+  } | null;
+};
 
 export type DeleteQueueMutationVariables = Exact<{
   id: Scalars['ID'];
-  checkActivity?: Maybe<Scalars['Boolean']>;
+  checkActivity?: InputMaybe<Scalars['Boolean']>;
 }>;
 
-
-export type DeleteQueueMutation = { __typename?: 'Mutation', queueDelete: { __typename?: 'QueueDeletePayload', deletedKeys: number } };
+export type DeleteQueueMutation = {
+  __typename?: 'Mutation';
+  queueDelete: { __typename?: 'QueueDeletePayload'; deletedKeys: number };
+};
 
 export type CleanQueueMutationVariables = Exact<{
   id: Scalars['ID'];
   grace: Scalars['Duration'];
-  limit?: Maybe<Scalars['Int']>;
-  status?: Maybe<JobStatus>;
+  limit?: InputMaybe<Scalars['Int']>;
+  status?: InputMaybe<JobStatus>;
 }>;
 
-
-export type CleanQueueMutation = { __typename?: 'Mutation', queueClean: { __typename?: 'QueueCleanPayload', count: number } };
+export type CleanQueueMutation = {
+  __typename?: 'Mutation';
+  queueClean: { __typename?: 'QueueCleanPayload'; count: number };
+};
 
 export type DrainQueueMutationVariables = Exact<{
   id: Scalars['ID'];
-  delayed?: Maybe<Scalars['Boolean']>;
+  delayed?: InputMaybe<Scalars['Boolean']>;
 }>;
 
-
-export type DrainQueueMutation = { __typename?: 'Mutation', queueDrain: { __typename?: 'QueueDrainPayload', queue: (
-      { __typename?: 'Queue' }
-      & QueueFragment
-    ) } };
+export type DrainQueueMutation = {
+  __typename?: 'Mutation';
+  queueDrain: {
+    __typename?: 'QueueDrainPayload';
+    queue: {
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      host: string;
+      hostId: string;
+      prefix: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      jobNames: Array<string>;
+      workerCount: number;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    };
+  };
+};
 
 export type GetJobSchemaQueryVariables = Exact<{
   queueId: Scalars['ID'];
   jobName: Scalars['String'];
 }>;
 
-
-export type GetJobSchemaQuery = { __typename?: 'Query', queueJobSchema?: Maybe<{ __typename?: 'JobSchema', jobName: string, schema?: Maybe<{ [key: string]: any }>, defaultOpts?: Maybe<{ [key: string]: any }> }> };
+export type GetJobSchemaQuery = {
+  __typename?: 'Query';
+  queueJobSchema?: {
+    __typename?: 'JobSchema';
+    jobName: string;
+    schema?: { [key: string]: any } | null;
+    defaultOpts?: { [key: string]: any } | null;
+  } | null;
+};
 
 export type GetJobSchemasQueryVariables = Exact<{
   queueId: Scalars['ID'];
 }>;
 
-
-export type GetJobSchemasQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', jobSchemas: Array<{ __typename?: 'JobSchema', jobName: string, schema?: Maybe<{ [key: string]: any }>, defaultOpts?: Maybe<{ [key: string]: any }> }> }> };
+export type GetJobSchemasQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    jobSchemas: Array<{
+      __typename?: 'JobSchema';
+      jobName: string;
+      schema?: { [key: string]: any } | null;
+      defaultOpts?: { [key: string]: any } | null;
+    }>;
+  } | null;
+};
 
 export type SetJobSchemaMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobName: Scalars['String'];
   schema: Scalars['JSONSchema'];
-  defaultOpts?: Maybe<JobOptionsInput>;
+  defaultOpts?: InputMaybe<JobOptionsInput>;
 }>;
 
-
-export type SetJobSchemaMutation = { __typename?: 'Mutation', queueJobSchemaSet: { __typename?: 'JobSchema', jobName: string, schema?: Maybe<{ [key: string]: any }>, defaultOpts?: Maybe<{ [key: string]: any }> } };
+export type SetJobSchemaMutation = {
+  __typename?: 'Mutation';
+  queueJobSchemaSet: {
+    __typename?: 'JobSchema';
+    jobName: string;
+    schema?: { [key: string]: any } | null;
+    defaultOpts?: { [key: string]: any } | null;
+  };
+};
 
 export type DeleteJobSchemaMutationVariables = Exact<{
   queueId: Scalars['ID'];
   jobName: Scalars['String'];
 }>;
 
+export type DeleteJobSchemaMutation = {
+  __typename?: 'Mutation';
+  queueJobSchemaDelete: {
+    __typename?: 'QueueJobSchemaDeletePayload';
+    jobName: string;
+  };
+};
 
-export type DeleteJobSchemaMutation = { __typename?: 'Mutation', queueJobSchemaDelete: { __typename?: 'QueueJobSchemaDeletePayload', jobName: string } };
+export type GetJobOptionsSchemaQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetJobOptionsSchemaQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetJobOptionsSchemaQuery = { __typename?: 'Query', jobOptionsSchema: { [key: string]: any } };
+export type GetJobOptionsSchemaQuery = {
+  __typename?: 'Query';
+  jobOptionsSchema: { [key: string]: any };
+};
 
 export type GetQueueJobsNamesQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type GetQueueJobsNamesQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', jobNames: Array<string> }> };
-
-export type GetAppInfoQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetAppInfoQuery = { __typename?: 'Query', appInfo: { __typename?: 'AppInfo', env: string, title: string, version: string, brand?: Maybe<string>, author?: Maybe<string> } };
-
-export type GetHostsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetHostsQuery = { __typename?: 'Query', hosts: Array<{ __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, uri: string, workerCount: number, queues: Array<{ __typename?: 'Queue', name: string, id: string, isPaused: boolean }> }> };
-
-export type JobRepeatOptionsFragment = { __typename?: 'JobRepeatOptions', cron?: Maybe<string>, tz?: Maybe<string>, startDate?: Maybe<any>, endDate?: Maybe<any>, limit?: Maybe<number>, every?: Maybe<string>, jobId?: Maybe<string>, count?: Maybe<number> };
-
-export type JobOptionsFragment = { __typename?: 'JobOptions', timestamp?: Maybe<any>, priority?: Maybe<number>, delay?: Maybe<number>, attempts?: Maybe<number>, backoff?: Maybe<any>, lifo?: Maybe<boolean>, timeout?: Maybe<number>, jobId?: Maybe<string>, removeOnComplete?: Maybe<boolean | number>, removeOnFail?: Maybe<boolean | number>, stackTraceLimit?: Maybe<number>, repeat?: Maybe<(
-    { __typename?: 'JobRepeatOptions' }
-    & JobRepeatOptionsFragment
-  )> };
-
-export type JobFragment = { __typename?: 'Job', id: string, queueId: string, timestamp: any, state: JobStatus, name: string, data: { [key: string]: any }, delay: number, progress?: Maybe<string | number | Record<string, any>>, attemptsMade: number, processedOn?: Maybe<any>, finishedOn?: Maybe<any>, failedReason?: Maybe<any>, stacktrace: Array<string>, returnvalue?: Maybe<any>, opts: (
-    { __typename?: 'JobOptions' }
-    & JobOptionsFragment
-  ) };
-
-export type RepeatableJobFragment = { __typename?: 'RepeatableJob', key: string, id?: Maybe<string>, name?: Maybe<string>, endDate?: Maybe<any>, tz?: Maybe<string>, cron?: Maybe<string>, next?: Maybe<any>, descr?: Maybe<string> };
-
-export type MeterFragment = { __typename?: 'Meter', count: number, meanRate: number, m1Rate: number, m5Rate: number, m15Rate: number };
-
-export type StatsSnapshotFragment = { __typename?: 'StatsSnapshot', count: number, failed: number, completed: number, startTime: any, endTime: any, stddev: number, mean: number, min: number, max: number, median: number, p90: number, p95: number, p99: number, p995: number, meanRate: number, m1Rate: number, m5Rate: number, m15Rate: number };
-
-export type JobCountsFragment = { __typename?: 'Queue', jobCounts: { __typename?: 'JobCounts', active: number, failed: number, paused: number, completed: number, delayed: number, waiting: number } };
-
-export type QueueFragment = (
-  { __typename?: 'Queue', id: string, name: string, host: string, hostId: string, prefix: string, isPaused: boolean, repeatableJobCount: number, jobNames: Array<string>, workerCount: number }
-  & JobCountsFragment
-);
-
-export type QueueWorkersFragment = { __typename?: 'Queue', workers: Array<{ __typename?: 'QueueWorker', id?: Maybe<string>, name?: Maybe<string>, addr: string, age: number, started?: Maybe<number>, idle: number, role?: Maybe<string>, db: number, omem: number }> };
-
-export type RuleMetricFragment = { __typename?: 'RuleMetric', type: string, options?: Maybe<{ [key: string]: any }> };
-
-export type RuleAlertOptionsFragment = { __typename?: 'RuleAlertOptions', triggerWindow?: Maybe<string | number>, minViolations?: Maybe<number>, maxAlertsPerEvent?: Maybe<number>, alertOnReset?: Maybe<boolean>, recoveryWindow?: Maybe<string | number>, renotifyInterval?: Maybe<string | number> };
-
-export type RuleFragment = { __typename?: 'Rule', id: string, name: string, description?: Maybe<string>, createdAt: any, updatedAt: any, state?: Maybe<RuleState>, payload?: Maybe<{ [key: string]: any }>, channels: Array<string>, isActive: boolean, message?: Maybe<string>, alertCount: number, metric: (
-    { __typename?: 'RuleMetric' }
-    & RuleMetricFragment
-  ), condition: { __typename?: 'ChangeCondition', changeType?: Maybe<ChangeType>, errorThreshold: number, warningThreshold?: Maybe<number>, operator?: Maybe<RuleOperator>, timeWindow?: Maybe<string | number>, timeShift?: Maybe<string | number>, aggregationType?: Maybe<ChangeAggregation> } | { __typename?: 'PeakCondition', errorThreshold: number, warningThreshold?: Maybe<number>, influence?: Maybe<number>, lag?: Maybe<string | number>, direction?: Maybe<PeakSignalDirection> } | { __typename?: 'ThresholdCondition', errorThreshold: number, warningThreshold?: Maybe<number>, operator?: Maybe<RuleOperator> }, options?: Maybe<(
-    { __typename?: 'RuleAlertOptions' }
-    & RuleAlertOptionsFragment
-  )> };
-
-type NotificationChannel_MailNotificationChannel_Fragment = { __typename?: 'MailNotificationChannel', recipients: Array<string>, id: string, type: string, name: string, enabled: boolean };
-
-type NotificationChannel_SlackNotificationChannel_Fragment = { __typename?: 'SlackNotificationChannel', webhook: string, channel?: Maybe<string>, token?: Maybe<string>, id: string, type: string, name: string, enabled: boolean };
-
-type NotificationChannel_WebhookNotificationChannel_Fragment = { __typename?: 'WebhookNotificationChannel', url: string, method?: Maybe<HttpMethodEnum>, headers?: Maybe<{ [key: string]: any }>, timeout?: Maybe<string | number>, retry?: Maybe<number>, followRedirect?: Maybe<boolean>, httpSuccessCodes?: Maybe<Array<number>>, id: string, type: string, name: string, enabled: boolean };
-
-export type NotificationChannelFragment = NotificationChannel_MailNotificationChannel_Fragment | NotificationChannel_SlackNotificationChannel_Fragment | NotificationChannel_WebhookNotificationChannel_Fragment;
-
-export type GetHostChannelsQueryVariables = Exact<{
-  hostId: Scalars['ID'];
-}>;
-
-
-export type GetHostChannelsQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', channels: Array<(
-      { __typename?: 'MailNotificationChannel' }
-      & NotificationChannel_MailNotificationChannel_Fragment
-    ) | (
-      { __typename?: 'SlackNotificationChannel' }
-      & NotificationChannel_SlackNotificationChannel_Fragment
-    ) | (
-      { __typename?: 'WebhookNotificationChannel' }
-      & NotificationChannel_WebhookNotificationChannel_Fragment
-    )> }> };
-
-export type GetAvailableMetricsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetAvailableMetricsQuery = { __typename?: 'Query', metrics: Array<{ __typename?: 'MetricInfo', key: string, description?: Maybe<string>, unit?: Maybe<string>, category?: Maybe<MetricCategory>, isPolling: boolean }> };
-
-export type GetAvailableAggregatesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetAvailableAggregatesQuery = { __typename?: 'Query', aggregates: Array<Maybe<{ __typename?: 'AggregateInfo', key: string, description: string }>> };
-
-export type GetRuleByIdQueryVariables = Exact<{
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-}>;
-
-
-export type GetRuleByIdQuery = { __typename?: 'Query', rule?: Maybe<(
-    { __typename?: 'Rule' }
-    & RuleFragment
-  )> };
-
-export type CreateRuleMutationVariables = Exact<{
-  input: RuleAddInput;
-}>;
-
-
-export type CreateRuleMutation = { __typename?: 'Mutation', ruleAdd: { __typename?: 'RuleAddPayload', rule: (
-      { __typename?: 'Rule' }
-      & RuleFragment
-    ) } };
-
-export type DeleteRuleMutationVariables = Exact<{
-  queueId: Scalars['ID'];
-  ruleId: Scalars['ID'];
-}>;
-
-
-export type DeleteRuleMutation = { __typename?: 'Mutation', ruleDelete: { __typename?: 'RuleDeletePayload', isDeleted: boolean } };
+export type GetQueueJobsNamesQuery = {
+  __typename?: 'Query';
+  queue?: { __typename?: 'Queue'; jobNames: Array<string> } | null;
+};
 
 export type GetStatsSpanQueryVariables = Exact<{
   id: Scalars['ID'];
   input: StatsSpanInput;
 }>;
 
-
-export type GetStatsSpanQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', statsDateRange?: Maybe<{ __typename?: 'StatsSpanPayload', start: any, end: any }> }> };
+export type GetStatsSpanQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    statsDateRange?: {
+      __typename?: 'TimeSpan';
+      startTime: number;
+      endTime: number;
+    } | null;
+  } | null;
+};
 
 export type GetQueueStatsQueryVariables = Exact<{
   id: Scalars['ID'];
   input: StatsQueryInput;
 }>;
 
-
-export type GetQueueStatsQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', stats: Array<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )> }> };
+export type GetQueueStatsQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    stats: Array<{
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    }>;
+  } | null;
+};
 
 export type GetQueueStatsLatestQueryVariables = Exact<{
   id: Scalars['ID'];
   input: StatsLatestInput;
 }>;
 
-
-export type GetQueueStatsLatestQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', lastStatsSnapshot?: Maybe<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )> }> };
+export type GetQueueStatsLatestQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    lastStatsSnapshot?: {
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    } | null;
+  } | null;
+};
 
 export type GetHostStatsLatestQueryVariables = Exact<{
   id: Scalars['ID'];
   input: StatsLatestInput;
 }>;
 
-
-export type GetHostStatsLatestQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', lastStatsSnapshot?: Maybe<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )> }> };
+export type GetHostStatsLatestQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    lastStatsSnapshot?: {
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    } | null;
+  } | null;
+};
 
 export type QueueStatsUpdatedSubscriptionVariables = Exact<{
   input: StatsUpdatedSubscriptionFilter;
 }>;
 
-
-export type QueueStatsUpdatedSubscription = { __typename?: 'Subscription', onQueueStatsUpdated: (
-    { __typename?: 'StatsSnapshot' }
-    & StatsSnapshotFragment
-  ) };
+export type QueueStatsUpdatedSubscription = {
+  __typename?: 'Subscription';
+  onQueueStatsUpdated: {
+    __typename?: 'StatsSnapshot';
+    count: number;
+    failed: number;
+    completed: number;
+    startTime: any;
+    endTime: any;
+    stddev: number;
+    mean: number;
+    min: number;
+    max: number;
+    median: number;
+    p90: number;
+    p95: number;
+    p99: number;
+    p995: number;
+    meanRate: number;
+    m1Rate: number;
+    m5Rate: number;
+    m15Rate: number;
+  };
+};
 
 export type HostStatsUpdatedSubscriptionVariables = Exact<{
   input: StatsUpdatedSubscriptionFilter;
 }>;
 
+export type HostStatsUpdatedSubscription = {
+  __typename?: 'Subscription';
+  onHostStatsUpdated: {
+    __typename?: 'StatsSnapshot';
+    count: number;
+    failed: number;
+    completed: number;
+    startTime: any;
+    endTime: any;
+    stddev: number;
+    mean: number;
+    min: number;
+    max: number;
+    median: number;
+    p90: number;
+    p95: number;
+    p99: number;
+    p995: number;
+    meanRate: number;
+    m1Rate: number;
+    m5Rate: number;
+    m15Rate: number;
+  };
+};
 
-export type HostStatsUpdatedSubscription = { __typename?: 'Subscription', onHostStatsUpdated: (
-    { __typename?: 'StatsSnapshot' }
-    & StatsSnapshotFragment
-  ) };
+export type GetAppInfoQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetAppInfoQuery = {
+  __typename?: 'Query';
+  appInfo: {
+    __typename?: 'AppInfo';
+    env: string;
+    title: string;
+    version: string;
+    brand?: string | null;
+    author?: string | null;
+  };
+};
+
+export type GetHostsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetHostsQuery = {
+  __typename?: 'Query';
+  hosts: Array<{
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    workerCount: number;
+    queues: Array<{
+      __typename?: 'Queue';
+      name: string;
+      id: string;
+      isPaused: boolean;
+    }>;
+  }>;
+};
+
+export type JobRepeatOptionsFragment = {
+  __typename?: 'JobRepeatOptions';
+  cron?: string | null;
+  tz?: string | null;
+  startDate?: any | null;
+  endDate?: any | null;
+  limit?: number | null;
+  every?: string | null;
+  jobId?: string | null;
+  count?: number | null;
+};
+
+export type JobOptionsFragment = {
+  __typename?: 'JobOptions';
+  timestamp?: any | null;
+  priority?: number | null;
+  delay?: number | null;
+  attempts?: number | null;
+  backoff?: any | null;
+  lifo?: boolean | null;
+  timeout?: number | null;
+  jobId?: string | null;
+  removeOnComplete?: boolean | number | null;
+  removeOnFail?: boolean | number | null;
+  stackTraceLimit?: number | null;
+  repeat?: {
+    __typename?: 'JobRepeatOptions';
+    cron?: string | null;
+    tz?: string | null;
+    startDate?: any | null;
+    endDate?: any | null;
+    limit?: number | null;
+    every?: string | null;
+    jobId?: string | null;
+    count?: number | null;
+  } | null;
+};
+
+export type JobFragment = {
+  __typename?: 'Job';
+  id: string;
+  queueId: string;
+  timestamp: any;
+  state: JobStatus;
+  name: string;
+  data: { [key: string]: any };
+  delay: number;
+  progress?: string | number | Record<string, any> | null;
+  attemptsMade: number;
+  processedOn?: any | null;
+  finishedOn?: any | null;
+  failedReason?: any | null;
+  stacktrace: Array<string>;
+  returnvalue?: any | null;
+  opts: {
+    __typename?: 'JobOptions';
+    timestamp?: any | null;
+    priority?: number | null;
+    delay?: number | null;
+    attempts?: number | null;
+    backoff?: any | null;
+    lifo?: boolean | null;
+    timeout?: number | null;
+    jobId?: string | null;
+    removeOnComplete?: boolean | number | null;
+    removeOnFail?: boolean | number | null;
+    stackTraceLimit?: number | null;
+    repeat?: {
+      __typename?: 'JobRepeatOptions';
+      cron?: string | null;
+      tz?: string | null;
+      startDate?: any | null;
+      endDate?: any | null;
+      limit?: number | null;
+      every?: string | null;
+      jobId?: string | null;
+      count?: number | null;
+    } | null;
+  };
+};
+
+export type RepeatableJobFragment = {
+  __typename?: 'RepeatableJob';
+  key: string;
+  id?: string | null;
+  name?: string | null;
+  endDate?: any | null;
+  tz?: string | null;
+  cron?: string | null;
+  next?: any | null;
+  descr?: string | null;
+};
+
+export type MeterFragment = {
+  __typename?: 'Meter';
+  count: number;
+  meanRate: number;
+  m1Rate: number;
+  m5Rate: number;
+  m15Rate: number;
+};
+
+export type StatsSnapshotFragment = {
+  __typename?: 'StatsSnapshot';
+  count: number;
+  failed: number;
+  completed: number;
+  startTime: any;
+  endTime: any;
+  stddev: number;
+  mean: number;
+  min: number;
+  max: number;
+  median: number;
+  p90: number;
+  p95: number;
+  p99: number;
+  p995: number;
+  meanRate: number;
+  m1Rate: number;
+  m5Rate: number;
+  m15Rate: number;
+};
+
+export type JobCountsFragment = {
+  __typename?: 'Queue';
+  jobCounts: {
+    __typename?: 'JobCounts';
+    active?: number | null;
+    failed?: number | null;
+    paused?: number | null;
+    completed?: number | null;
+    delayed?: number | null;
+    waiting?: number | null;
+  };
+};
+
+export type QueueFragment = {
+  __typename?: 'Queue';
+  id: string;
+  name: string;
+  host: string;
+  hostId: string;
+  prefix: string;
+  isPaused: boolean;
+  repeatableJobCount: number;
+  jobNames: Array<string>;
+  workerCount: number;
+  jobCounts: {
+    __typename?: 'JobCounts';
+    active?: number | null;
+    failed?: number | null;
+    paused?: number | null;
+    completed?: number | null;
+    delayed?: number | null;
+    waiting?: number | null;
+  };
+};
+
+export type QueueWorkersFragment = {
+  __typename?: 'Queue';
+  workers: Array<{
+    __typename?: 'QueueWorker';
+    id?: string | null;
+    name?: string | null;
+    addr: string;
+    age: number;
+    started?: number | null;
+    idle: number;
+    role?: string | null;
+    db: number;
+    omem: number;
+  }>;
+};
+
+export type RuleAlertOptionsFragment = {
+  __typename?: 'RuleAlertOptions';
+  triggerDelay?: string | number | null;
+  failureThreshold?: number | null;
+  successThreshold?: number | null;
+  maxAlertsPerEvent?: number | null;
+  alertOnReset?: boolean | null;
+  recoveryWindow?: string | number | null;
+  notifyInterval?: string | number | null;
+};
+
+export type RuleFragment = {
+  __typename?: 'Rule';
+  id: string;
+  name: string;
+  description?: string | null;
+  createdAt: any;
+  updatedAt: any;
+  state?: RuleState | null;
+  payload?: { [key: string]: any } | null;
+  isActive: boolean;
+  message?: string | null;
+  alertCount: number;
+  metric?: {
+    __typename?: 'Metric';
+    id: string;
+    isActive: boolean;
+    name: string;
+    options: { [key: string]: any };
+  } | null;
+  condition:
+    | {
+        __typename?: 'ChangeCondition';
+        changeType: ConditionChangeType;
+        errorThreshold: number;
+        warningThreshold?: number | null;
+        operator: RuleOperator;
+        windowSize: string | number;
+        timeShift: string | number;
+        aggregationType: ChangeAggregation;
+      }
+    | {
+        __typename?: 'PeakCondition';
+        errorThreshold: number;
+        warningThreshold?: number | null;
+        influence?: number | null;
+        lag?: string | number | null;
+        direction: PeakSignalDirection;
+      }
+    | {
+        __typename?: 'ThresholdCondition';
+        errorThreshold: number;
+        warningThreshold?: number | null;
+        operator: RuleOperator;
+      };
+  channels: Array<
+    | {
+        __typename?: 'MailNotificationChannel';
+        recipients: Array<string | null>;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+    | {
+        __typename?: 'SlackNotificationChannel';
+        webhook: string;
+        channel?: string | null;
+        token?: string | null;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+    | {
+        __typename?: 'WebhookNotificationChannel';
+        url: string;
+        method?: HttpMethodEnum | null;
+        headers?: { [key: string]: any } | null;
+        timeout?: string | number | null;
+        retry?: number | null;
+        followRedirect?: boolean | null;
+        httpSuccessCodes?: Array<number> | null;
+        id: string;
+        type: string;
+        name: string;
+        enabled: boolean;
+      }
+  >;
+  options?: {
+    __typename?: 'RuleAlertOptions';
+    triggerDelay?: string | number | null;
+    failureThreshold?: number | null;
+    successThreshold?: number | null;
+    maxAlertsPerEvent?: number | null;
+    alertOnReset?: boolean | null;
+    recoveryWindow?: string | number | null;
+    notifyInterval?: string | number | null;
+  } | null;
+};
+
+type NotificationChannel_MailNotificationChannel_Fragment = {
+  __typename?: 'MailNotificationChannel';
+  recipients: Array<string | null>;
+  id: string;
+  type: string;
+  name: string;
+  enabled: boolean;
+};
+
+type NotificationChannel_SlackNotificationChannel_Fragment = {
+  __typename?: 'SlackNotificationChannel';
+  webhook: string;
+  channel?: string | null;
+  token?: string | null;
+  id: string;
+  type: string;
+  name: string;
+  enabled: boolean;
+};
+
+type NotificationChannel_WebhookNotificationChannel_Fragment = {
+  __typename?: 'WebhookNotificationChannel';
+  url: string;
+  method?: HttpMethodEnum | null;
+  headers?: { [key: string]: any } | null;
+  timeout?: string | number | null;
+  retry?: number | null;
+  followRedirect?: boolean | null;
+  httpSuccessCodes?: Array<number> | null;
+  id: string;
+  type: string;
+  name: string;
+  enabled: boolean;
+};
+
+export type NotificationChannelFragment =
+  | NotificationChannel_MailNotificationChannel_Fragment
+  | NotificationChannel_SlackNotificationChannel_Fragment
+  | NotificationChannel_WebhookNotificationChannel_Fragment;
+
+export type GetHostChannelsQueryVariables = Exact<{
+  hostId: Scalars['ID'];
+}>;
+
+export type GetHostChannelsQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    channels: Array<
+      | {
+          __typename?: 'MailNotificationChannel';
+          recipients: Array<string | null>;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'SlackNotificationChannel';
+          webhook: string;
+          channel?: string | null;
+          token?: string | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'WebhookNotificationChannel';
+          url: string;
+          method?: HttpMethodEnum | null;
+          headers?: { [key: string]: any } | null;
+          timeout?: string | number | null;
+          retry?: number | null;
+          followRedirect?: boolean | null;
+          httpSuccessCodes?: Array<number> | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+    >;
+  } | null;
+};
+
+export type GetAvailableMetricsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetAvailableMetricsQuery = {
+  __typename?: 'Query';
+  availableMetrics: Array<{
+    __typename?: 'MetricInfo';
+    key: string;
+    description?: string | null;
+    unit?: string | null;
+    category: MetricCategory;
+    isPolling: boolean;
+    valueType: MetricValueType;
+  }>;
+};
+
+export type GetAvailableAggregatesQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type GetAvailableAggregatesQuery = {
+  __typename?: 'Query';
+  aggregates: Array<{
+    __typename?: 'AggregateInfo';
+    type: AggregateTypeEnum;
+    isWindowed: boolean;
+    description: string;
+  } | null>;
+};
+
+export type HostsAndQueuesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type HostsAndQueuesQuery = {
+  __typename?: 'Query';
+  hosts: Array<{
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      host: string;
+      hostId: string;
+      prefix: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      jobNames: Array<string>;
+      workerCount: number;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  }>;
+};
+
+export type GetRuleByIdQueryVariables = Exact<{
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+}>;
+
+export type GetRuleByIdQuery = {
+  __typename?: 'Query';
+  rule?: {
+    __typename?: 'Rule';
+    id: string;
+    name: string;
+    description?: string | null;
+    createdAt: any;
+    updatedAt: any;
+    state?: RuleState | null;
+    payload?: { [key: string]: any } | null;
+    isActive: boolean;
+    message?: string | null;
+    alertCount: number;
+    metric?: {
+      __typename?: 'Metric';
+      id: string;
+      isActive: boolean;
+      name: string;
+      options: { [key: string]: any };
+    } | null;
+    condition:
+      | {
+          __typename?: 'ChangeCondition';
+          changeType: ConditionChangeType;
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          operator: RuleOperator;
+          windowSize: string | number;
+          timeShift: string | number;
+          aggregationType: ChangeAggregation;
+        }
+      | {
+          __typename?: 'PeakCondition';
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          influence?: number | null;
+          lag?: string | number | null;
+          direction: PeakSignalDirection;
+        }
+      | {
+          __typename?: 'ThresholdCondition';
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          operator: RuleOperator;
+        };
+    channels: Array<
+      | {
+          __typename?: 'MailNotificationChannel';
+          recipients: Array<string | null>;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'SlackNotificationChannel';
+          webhook: string;
+          channel?: string | null;
+          token?: string | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'WebhookNotificationChannel';
+          url: string;
+          method?: HttpMethodEnum | null;
+          headers?: { [key: string]: any } | null;
+          timeout?: string | number | null;
+          retry?: number | null;
+          followRedirect?: boolean | null;
+          httpSuccessCodes?: Array<number> | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+    >;
+    options?: {
+      __typename?: 'RuleAlertOptions';
+      triggerDelay?: string | number | null;
+      failureThreshold?: number | null;
+      successThreshold?: number | null;
+      maxAlertsPerEvent?: number | null;
+      alertOnReset?: boolean | null;
+      recoveryWindow?: string | number | null;
+      notifyInterval?: string | number | null;
+    } | null;
+  } | null;
+};
+
+export type CreateRuleMutationVariables = Exact<{
+  input: RuleAddInput;
+}>;
+
+export type CreateRuleMutation = {
+  __typename?: 'Mutation';
+  ruleAdd: {
+    __typename?: 'Rule';
+    id: string;
+    name: string;
+    description?: string | null;
+    createdAt: any;
+    updatedAt: any;
+    state?: RuleState | null;
+    payload?: { [key: string]: any } | null;
+    isActive: boolean;
+    message?: string | null;
+    alertCount: number;
+    metric?: {
+      __typename?: 'Metric';
+      id: string;
+      isActive: boolean;
+      name: string;
+      options: { [key: string]: any };
+    } | null;
+    condition:
+      | {
+          __typename?: 'ChangeCondition';
+          changeType: ConditionChangeType;
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          operator: RuleOperator;
+          windowSize: string | number;
+          timeShift: string | number;
+          aggregationType: ChangeAggregation;
+        }
+      | {
+          __typename?: 'PeakCondition';
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          influence?: number | null;
+          lag?: string | number | null;
+          direction: PeakSignalDirection;
+        }
+      | {
+          __typename?: 'ThresholdCondition';
+          errorThreshold: number;
+          warningThreshold?: number | null;
+          operator: RuleOperator;
+        };
+    channels: Array<
+      | {
+          __typename?: 'MailNotificationChannel';
+          recipients: Array<string | null>;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'SlackNotificationChannel';
+          webhook: string;
+          channel?: string | null;
+          token?: string | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+      | {
+          __typename?: 'WebhookNotificationChannel';
+          url: string;
+          method?: HttpMethodEnum | null;
+          headers?: { [key: string]: any } | null;
+          timeout?: string | number | null;
+          retry?: number | null;
+          followRedirect?: boolean | null;
+          httpSuccessCodes?: Array<number> | null;
+          id: string;
+          type: string;
+          name: string;
+          enabled: boolean;
+        }
+    >;
+    options?: {
+      __typename?: 'RuleAlertOptions';
+      triggerDelay?: string | number | null;
+      failureThreshold?: number | null;
+      successThreshold?: number | null;
+      maxAlertsPerEvent?: number | null;
+      alertOnReset?: boolean | null;
+      recoveryWindow?: string | number | null;
+      notifyInterval?: string | number | null;
+    } | null;
+  };
+};
+
+export type DeleteRuleMutationVariables = Exact<{
+  queueId: Scalars['ID'];
+  ruleId: Scalars['ID'];
+}>;
+
+export type DeleteRuleMutation = {
+  __typename?: 'Mutation';
+  ruleDelete: { __typename?: 'RuleDeletePayload'; isDeleted: boolean };
+};
 
 export type DashboardPageQueryVariables = Exact<{
   range: Scalars['String'];
 }>;
 
+export type DashboardPageQuery = {
+  __typename?: 'Query';
+  hosts: Array<{
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    uri: string;
+    queueCount: number;
+    workerCount: number;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      maxmemory: number;
+    };
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+    stats: Array<{
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    }>;
+    lastStatsSnapshot?: {
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    } | null;
+  }>;
+};
 
-export type DashboardPageQuery = { __typename?: 'Query', hosts: Array<{ __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, uri: string, queueCount: number, workerCount: number, redis: { __typename?: 'RedisInfo', redis_version: string, uptime_in_seconds: number, connected_clients: number, blocked_clients: number, total_system_memory: number, used_memory: number, maxmemory: number }, jobCounts: { __typename?: 'JobCounts', active: number, failed: number, paused: number, completed: number, delayed: number, waiting: number }, stats: Array<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )>, lastStatsSnapshot?: Maybe<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )> }> };
-
-export type HostPageQueryQueryVariables = Exact<{
+export type HostPageQueryVariables = Exact<{
   id: Scalars['ID'];
   range: Scalars['String'];
-  filter?: Maybe<HostQueuesFilter>;
+  filter?: InputMaybe<HostQueuesFilter>;
 }>;
 
-
-export type HostPageQueryQuery = { __typename?: 'Query', host?: Maybe<{ __typename?: 'QueueHost', id: string, name: string, description?: Maybe<string>, redis: (
-      { __typename?: 'RedisInfo' }
-      & RedisStatsFragment
-    ), queues: Array<(
-      { __typename?: 'Queue', id: string, name: string, isPaused: boolean, repeatableJobCount: number, workerCount: number, ruleAlertCount: number, waitTimeAvg: number, throughput: { __typename?: 'Meter', count: number, m1Rate: number, m5Rate: number, m15Rate: number }, errorRate: { __typename?: 'Meter', count: number, m1Rate: number, m5Rate: number, m15Rate: number }, stats: Array<(
-        { __typename?: 'StatsSnapshot' }
-        & StatsSnapshotFragment
-      )>, statsAggregate?: Maybe<(
-        { __typename?: 'StatsSnapshot' }
-        & StatsSnapshotFragment
-      )>, lastStatsSnapshot?: Maybe<(
-        { __typename?: 'StatsSnapshot' }
-        & StatsSnapshotFragment
-      )> }
-      & JobCountsFragment
-    )> }> };
+export type HostPageQuery = {
+  __typename?: 'Query';
+  host?: {
+    __typename?: 'QueueHost';
+    id: string;
+    name: string;
+    description?: string | null;
+    redis: {
+      __typename?: 'RedisInfo';
+      redis_version: string;
+      uptime_in_seconds: number;
+      uptime_in_days: number;
+      connected_clients: number;
+      blocked_clients: number;
+      total_system_memory: number;
+      used_memory: number;
+      used_memory_peak: number;
+      used_memory_lua: number;
+      used_cpu_sys: number;
+      maxmemory: number;
+      number_of_cached_scripts: number;
+      instantaneous_ops_per_sec: number;
+      mem_fragmentation_ratio?: number | null;
+      role: string;
+    };
+    queues: Array<{
+      __typename?: 'Queue';
+      id: string;
+      name: string;
+      isPaused: boolean;
+      repeatableJobCount: number;
+      workerCount: number;
+      ruleAlertCount: number;
+      waitTimeAvg: number;
+      throughput: {
+        __typename?: 'Meter';
+        count: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      };
+      errorRate: {
+        __typename?: 'Meter';
+        count: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      };
+      stats: Array<{
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      }>;
+      statsAggregate?: {
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      } | null;
+      lastStatsSnapshot?: {
+        __typename?: 'StatsSnapshot';
+        count: number;
+        failed: number;
+        completed: number;
+        startTime: any;
+        endTime: any;
+        stddev: number;
+        mean: number;
+        min: number;
+        max: number;
+        median: number;
+        p90: number;
+        p95: number;
+        p99: number;
+        p995: number;
+        meanRate: number;
+        m1Rate: number;
+        m5Rate: number;
+        m15Rate: number;
+      } | null;
+      jobCounts: {
+        __typename?: 'JobCounts';
+        active?: number | null;
+        failed?: number | null;
+        paused?: number | null;
+        completed?: number | null;
+        delayed?: number | null;
+        waiting?: number | null;
+      };
+    }>;
+  } | null;
+};
 
 export type QueueSchemaQueryQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
-
-export type QueueSchemaQueryQuery = { __typename?: 'Query', queue?: Maybe<(
-    { __typename?: 'Queue', id: string, jobNames: Array<string>, jobSchemas: Array<{ __typename?: 'JobSchema', jobName: string, schema?: Maybe<{ [key: string]: any }>, defaultOpts?: Maybe<{ [key: string]: any }> }> }
-    & JobCountsFragment
-  )> };
+export type QueueSchemaQueryQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    jobNames: Array<string>;
+    jobSchemas: Array<{
+      __typename?: 'JobSchema';
+      jobName: string;
+      schema?: { [key: string]: any } | null;
+      defaultOpts?: { [key: string]: any } | null;
+    }>;
+    jobCounts: {
+      __typename?: 'JobCounts';
+      active?: number | null;
+      failed?: number | null;
+      paused?: number | null;
+      completed?: number | null;
+      delayed?: number | null;
+      waiting?: number | null;
+    };
+  } | null;
+};
 
 export type QueueStatsPageQueryQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -3063,86 +5522,5916 @@ export type QueueStatsPageQueryQueryVariables = Exact<{
   granularity: StatsGranularity;
 }>;
 
+export type QueueStatsPageQueryQuery = {
+  __typename?: 'Query';
+  queue?: {
+    __typename?: 'Queue';
+    id: string;
+    name: string;
+    hostId: string;
+    prefix: string;
+    isPaused: boolean;
+    jobNames: Array<string>;
+    workerCount: number;
+    throughput: {
+      __typename?: 'Meter';
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    };
+    errorRate: {
+      __typename?: 'Meter';
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    };
+    stats: Array<{
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    }>;
+    statsAggregate?: {
+      __typename?: 'StatsSnapshot';
+      count: number;
+      failed: number;
+      completed: number;
+      startTime: any;
+      endTime: any;
+      stddev: number;
+      mean: number;
+      min: number;
+      max: number;
+      median: number;
+      p90: number;
+      p95: number;
+      p99: number;
+      p995: number;
+      meanRate: number;
+      m1Rate: number;
+      m5Rate: number;
+      m15Rate: number;
+    } | null;
+  } | null;
+};
 
-export type QueueStatsPageQueryQuery = { __typename?: 'Query', queue?: Maybe<{ __typename?: 'Queue', id: string, name: string, hostId: string, prefix: string, isPaused: boolean, jobNames: Array<string>, workerCount: number, throughput: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, errorRate: { __typename?: 'Meter', m1Rate: number, m5Rate: number, m15Rate: number }, stats: Array<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )>, statsAggregate?: Maybe<(
-      { __typename?: 'StatsSnapshot' }
-      & StatsSnapshotFragment
-    )> }> };
-
-export const RedisStatsFragmentDoc: DocumentNode<RedisStatsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RedisStats"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RedisInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"redis_version"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_days"}},{"kind":"Field","name":{"kind":"Name","value":"connected_clients"}},{"kind":"Field","name":{"kind":"Name","value":"blocked_clients"}},{"kind":"Field","name":{"kind":"Name","value":"total_system_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory_peak"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory_lua"}},{"kind":"Field","name":{"kind":"Name","value":"used_cpu_sys"}},{"kind":"Field","name":{"kind":"Name","value":"maxmemory"}},{"kind":"Field","name":{"kind":"Name","value":"number_of_cached_scripts"}},{"kind":"Field","name":{"kind":"Name","value":"instantaneous_ops_per_sec"}},{"kind":"Field","name":{"kind":"Name","value":"mem_fragmentation_ratio"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]};
-export const NotificationChannelFragmentDoc: DocumentNode<NotificationChannelFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"NotificationChannel"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MailNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recipients"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SlackNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"webhook"}},{"kind":"Field","name":{"kind":"Name","value":"channel"}},{"kind":"Field","name":{"kind":"Name","value":"token"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WebhookNotificationChannel"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"headers"}},{"kind":"Field","name":{"kind":"Name","value":"timeout"}},{"kind":"Field","name":{"kind":"Name","value":"retry"}},{"kind":"Field","name":{"kind":"Name","value":"followRedirect"}},{"kind":"Field","name":{"kind":"Name","value":"httpSuccessCodes"}}]}}]}}]};
-export const HostFragmentDoc: DocumentNode<HostFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Host"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QueueHost"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}},{"kind":"Field","name":{"kind":"Name","value":"channels"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"NotificationChannel"}}]}}]}},...RedisStatsFragmentDoc.definitions,...NotificationChannelFragmentDoc.definitions]};
-export const JobRepeatOptionsFragmentDoc: DocumentNode<JobRepeatOptionsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"JobRepeatOptions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"JobRepeatOptions"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cron"}},{"kind":"Field","name":{"kind":"Name","value":"tz"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"limit"}},{"kind":"Field","name":{"kind":"Name","value":"every"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"count"}}]}}]};
-export const JobOptionsFragmentDoc: DocumentNode<JobOptionsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"JobOptions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"JobOptions"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"delay"}},{"kind":"Field","name":{"kind":"Name","value":"attempts"}},{"kind":"Field","name":{"kind":"Name","value":"repeat"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobRepeatOptions"}}]}},{"kind":"Field","name":{"kind":"Name","value":"backoff"}},{"kind":"Field","name":{"kind":"Name","value":"lifo"}},{"kind":"Field","name":{"kind":"Name","value":"timeout"}},{"kind":"Field","name":{"kind":"Name","value":"jobId"}},{"kind":"Field","name":{"kind":"Name","value":"removeOnComplete"}},{"kind":"Field","name":{"kind":"Name","value":"removeOnFail"}},{"kind":"Field","name":{"kind":"Name","value":"stackTraceLimit"}}]}},...JobRepeatOptionsFragmentDoc.definitions]};
-export const JobFragmentDoc: DocumentNode<JobFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Job"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Job"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"queueId"}},{"kind":"Field","name":{"kind":"Name","value":"timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"data"}},{"kind":"Field","name":{"kind":"Name","value":"opts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobOptions"}}]}},{"kind":"Field","name":{"kind":"Name","value":"delay"}},{"kind":"Field","name":{"kind":"Name","value":"progress"}},{"kind":"Field","name":{"kind":"Name","value":"attemptsMade"}},{"kind":"Field","name":{"kind":"Name","value":"processedOn"}},{"kind":"Field","name":{"kind":"Name","value":"finishedOn"}},{"kind":"Field","name":{"kind":"Name","value":"failedReason"}},{"kind":"Field","name":{"kind":"Name","value":"stacktrace"}},{"kind":"Field","name":{"kind":"Name","value":"returnvalue"}}]}},...JobOptionsFragmentDoc.definitions]};
-export const RepeatableJobFragmentDoc: DocumentNode<RepeatableJobFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RepeatableJob"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RepeatableJob"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"tz"}},{"kind":"Field","name":{"kind":"Name","value":"cron"}},{"kind":"Field","name":{"kind":"Name","value":"next"}},{"kind":"Field","name":{"kind":"Name","value":"descr"}}]}}]};
-export const MeterFragmentDoc: DocumentNode<MeterFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Meter"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Meter"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"meanRate"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}}]};
-export const StatsSnapshotFragmentDoc: DocumentNode<StatsSnapshotFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"StatsSnapshot"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StatsSnapshot"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"completed"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"stddev"}},{"kind":"Field","name":{"kind":"Name","value":"mean"}},{"kind":"Field","name":{"kind":"Name","value":"min"}},{"kind":"Field","name":{"kind":"Name","value":"max"}},{"kind":"Field","name":{"kind":"Name","value":"median"}},{"kind":"Field","name":{"kind":"Name","value":"p90"}},{"kind":"Field","name":{"kind":"Name","value":"p95"}},{"kind":"Field","name":{"kind":"Name","value":"p99"}},{"kind":"Field","name":{"kind":"Name","value":"p995"}},{"kind":"Field","name":{"kind":"Name","value":"meanRate"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}}]};
-export const JobCountsFragmentDoc: DocumentNode<JobCountsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"JobCounts"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Queue"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobCounts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"active"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"paused"}},{"kind":"Field","name":{"kind":"Name","value":"completed"}},{"kind":"Field","name":{"kind":"Name","value":"delayed"}},{"kind":"Field","name":{"kind":"Name","value":"waiting"}}]}}]}}]};
-export const QueueFragmentDoc: DocumentNode<QueueFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Queue"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Queue"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"host"}},{"kind":"Field","name":{"kind":"Name","value":"hostId"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobCount"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}}]}},...JobCountsFragmentDoc.definitions]};
-export const QueueWorkersFragmentDoc: DocumentNode<QueueWorkersFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QueueWorkers"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Queue"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"addr"}},{"kind":"Field","name":{"kind":"Name","value":"age"}},{"kind":"Field","name":{"kind":"Name","value":"started"}},{"kind":"Field","name":{"kind":"Name","value":"idle"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"db"}},{"kind":"Field","name":{"kind":"Name","value":"omem"}}]}}]}}]};
-export const RuleMetricFragmentDoc: DocumentNode<RuleMetricFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RuleMetric"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RuleMetric"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]};
-export const RuleAlertOptionsFragmentDoc: DocumentNode<RuleAlertOptionsFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RuleAlertOptions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RuleAlertOptions"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"triggerWindow"}},{"kind":"Field","name":{"kind":"Name","value":"minViolations"}},{"kind":"Field","name":{"kind":"Name","value":"maxAlertsPerEvent"}},{"kind":"Field","name":{"kind":"Name","value":"alertOnReset"}},{"kind":"Field","name":{"kind":"Name","value":"recoveryWindow"}},{"kind":"Field","name":{"kind":"Name","value":"renotifyInterval"}}]}}]};
-export const RuleFragmentDoc: DocumentNode<RuleFragment, unknown> = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Rule"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Rule"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"metric"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RuleMetric"}}]}},{"kind":"Field","name":{"kind":"Name","value":"condition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ThresholdCondition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errorThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"warningThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"operator"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PeakCondition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errorThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"warningThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"influence"}},{"kind":"Field","name":{"kind":"Name","value":"lag"}},{"kind":"Field","name":{"kind":"Name","value":"direction"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ChangeCondition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"changeType"}},{"kind":"Field","name":{"kind":"Name","value":"errorThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"warningThreshold"}},{"kind":"Field","name":{"kind":"Name","value":"operator"}},{"kind":"Field","name":{"kind":"Name","value":"timeWindow"}},{"kind":"Field","name":{"kind":"Name","value":"timeShift"}},{"kind":"Field","name":{"kind":"Name","value":"aggregationType"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"channels"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"options"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RuleAlertOptions"}}]}},{"kind":"Field","name":{"kind":"Name","value":"alertCount"}}]}},...RuleMetricFragmentDoc.definitions,...RuleAlertOptionsFragmentDoc.definitions]};
-export const GetAllHostsDocument: DocumentNode<GetAllHostsQuery, GetAllHostsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAllHosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Host"}}]}}]}},...HostFragmentDoc.definitions]};
-export const GetHostsAndQueuesDocument: DocumentNode<GetHostsAndQueuesQuery, GetHostsAndQueuesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHostsAndQueues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}}]}},...RedisStatsFragmentDoc.definitions,...QueueFragmentDoc.definitions]};
-export const GetHostByIdDocument: DocumentNode<GetHostByIdQuery, GetHostByIdQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHostById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Host"}}]}}]}},...HostFragmentDoc.definitions]};
-export const GetHostByIdFullDocument: DocumentNode<GetHostByIdFullQuery, GetHostByIdFullQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHostByIdFull"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}}]}},...RedisStatsFragmentDoc.definitions,...QueueFragmentDoc.definitions]};
-export const GetHostQueuesDocument: DocumentNode<GetHostQueuesQuery, GetHostQueuesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHostQueues"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}}]}},...QueueFragmentDoc.definitions]};
-export const GetRedisStatsDocument: DocumentNode<GetRedisStatsQuery, GetRedisStatsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRedisStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}}]}}]}},...RedisStatsFragmentDoc.definitions]};
-export const DiscoverQueuesDocument: DocumentNode<DiscoverQueuesQuery, DiscoverQueuesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"discoverQueues"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"unregisteredOnly"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"discoverQueues"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"prefix"},"value":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}}},{"kind":"Argument","name":{"kind":"Name","value":"unregisteredOnly"},"value":{"kind":"Variable","name":{"kind":"Name","value":"unregisteredOnly"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}}]}}]}}]}}]};
-export const RegisterQueueDocument: DocumentNode<RegisterQueueMutation, RegisterQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RegisterQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"checkExists"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}},"defaultValue":{"kind":"BooleanValue","value":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueRegister"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"hostId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"prefix"},"value":{"kind":"Variable","name":{"kind":"Name","value":"prefix"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"checkExists"},"value":{"kind":"Variable","name":{"kind":"Name","value":"checkExists"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}},...QueueFragmentDoc.definitions]};
-export const UnregisterQueueDocument: DocumentNode<UnregisterQueueMutation, UnregisterQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnregisterQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueUnregister"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isRemoved"}}]}}]}}]};
-export const GetJobsByFilterDocument: DocumentNode<GetJobsByFilterQuery, GetJobsByFilterQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobsByFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"count"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobSearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"count"},"value":{"kind":"Variable","name":{"kind":"Name","value":"count"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"criteria"},"value":{"kind":"Variable","name":{"kind":"Name","value":"criteria"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"total"}},{"kind":"Field","name":{"kind":"Name","value":"current"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobFragmentDoc.definitions,...JobCountsFragmentDoc.definitions]};
-export const GetJobFiltersDocument: DocumentNode<GetJobFiltersQuery, GetJobFiltersQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobFilters"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ids"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobFilters"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ids"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"expression"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]};
-export const CreateJobFilterDocument: DocumentNode<CreateJobFilterMutation, CreateJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JobFilterInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"expression"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]};
-export const UpdateJobFilterDocument: DocumentNode<UpdateJobFilterMutation, UpdateJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JobFilterUpdateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isUpdated"}}]}}]}}]};
-export const DeleteJobFilterDocument: DocumentNode<DeleteJobFilterMutation, DeleteJobFilterMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteJobFilter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueueJobFilterDeleteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobFilterDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isDeleted"}}]}}]}}]};
-export const GetQueueJobCountsDocument: DocumentNode<GetQueueJobCountsQuery, GetQueueJobCountsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueJobCounts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobCountsFragmentDoc.definitions]};
-export const GetQueueJobsDocument: DocumentNode<GetQueueJobsQuery, GetQueueJobsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SortOrderEnum"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"sortOrder"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobFragmentDoc.definitions,...JobCountsFragmentDoc.definitions]};
-export const GetRepeatableJobsDocument: DocumentNode<GetRepeatableJobsQuery, GetRepeatableJobsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRepeatableJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"10"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SortOrderEnum"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"order"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sortOrder"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RepeatableJob"}}]}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobCount"}}]}}]}},...RepeatableJobFragmentDoc.definitions]};
-export const GetJobByIdDocument: DocumentNode<GetJobByIdQuery, GetJobByIdQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},...JobFragmentDoc.definitions]};
-export const GetJobLogsDocument: DocumentNode<GetJobLogsQuery, GetJobLogsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobLogs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"start"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"end"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"-1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"logs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"start"},"value":{"kind":"Variable","name":{"kind":"Name","value":"start"}}},{"kind":"Argument","name":{"kind":"Name","value":"end"},"value":{"kind":"Variable","name":{"kind":"Name","value":"end"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"items"}}]}}]}}]}}]};
-export const AddJobDocument: DocumentNode<AddJobMutation, AddJobMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JSONObject"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"options"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobOptionsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobAdd"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"options"},"value":{"kind":"Variable","name":{"kind":"Name","value":"options"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Job"}}]}}]}},...JobFragmentDoc.definitions]};
-export const DeleteJobDocument: DocumentNode<DeleteJobMutation, DeleteJobMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobRemove"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]};
-export const DeleteRepeatableJobByKeyDocument: DocumentNode<DeleteRepeatableJobByKeyMutation, DeleteRepeatableJobByKeyMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRepeatableJobByKey"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"key"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"repeatableJobRemoveByKey"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"key"},"value":{"kind":"Variable","name":{"kind":"Name","value":"key"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}}]}}]}}]};
-export const DeleteBulkJobsDocument: DocumentNode<DeleteBulkJobsMutation, DeleteBulkJobsMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteBulkJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobRemoveBulk"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}}]}}]}}]}}]};
-export const RetryJobDocument: DocumentNode<RetryJobMutation, RetryJobMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RetryJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobRetry"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]};
-export const RetryBulkJobsDocument: DocumentNode<RetryBulkJobsMutation, RetryBulkJobsMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RetryBulkJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobRetryBulk"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}}]}}]}}]}}]};
-export const PromoteJobDocument: DocumentNode<PromoteJobMutation, PromoteJobMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"PromoteJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobPromote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"job"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]}}]};
-export const PromoteBulkJobsDocument: DocumentNode<PromoteBulkJobsMutation, PromoteBulkJobsMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"PromoteBulkJobs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobPromoteBulk"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}}]}}]}}]}}]};
-export const GetQueueByIdDocument: DocumentNode<GetQueueByIdQuery, GetQueueByIdQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}},...QueueFragmentDoc.definitions]};
-export const GetQueueWorkersDocument: DocumentNode<GetQueueWorkersQuery, GetQueueWorkersQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueWorkers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"workers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"addr"}},{"kind":"Field","name":{"kind":"Name","value":"age"}},{"kind":"Field","name":{"kind":"Name","value":"started"}},{"kind":"Field","name":{"kind":"Name","value":"idle"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"db"}},{"kind":"Field","name":{"kind":"Name","value":"omem"}}]}}]}}]}}]};
-export const PauseQueueDocument: DocumentNode<PauseQueueMutation, PauseQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"PauseQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queuePause"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isPaused"}}]}}]}}]};
-export const ResumeQueueDocument: DocumentNode<ResumeQueueMutation, ResumeQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResumeQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueResume"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isPaused"}}]}}]}}]};
-export const GetQueueRulesDocument: DocumentNode<GetQueueRulesQuery, GetQueueRulesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueRules"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rules"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Rule"}}]}}]}}]}},...RuleFragmentDoc.definitions]};
-export const DeleteQueueDocument: DocumentNode<DeleteQueueMutation, DeleteQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"checkActivity"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}},"defaultValue":{"kind":"BooleanValue","value":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"options"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"checkActivity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"checkActivity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deletedKeys"}}]}}]}}]};
-export const CleanQueueDocument: DocumentNode<CleanQueueMutation, CleanQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CleanQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"grace"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Duration"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobStatus"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueClean"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"grace"},"value":{"kind":"Variable","name":{"kind":"Name","value":"grace"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}}]}}]}}]};
-export const DrainQueueDocument: DocumentNode<DrainQueueMutation, DrainQueueMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DrainQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"delayed"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueDrain"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"delayed"},"value":{"kind":"Variable","name":{"kind":"Name","value":"delayed"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Queue"}}]}}]}}]}},...QueueFragmentDoc.definitions]};
-export const GetJobSchemaDocument: DocumentNode<GetJobSchemaQuery, GetJobSchemaQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobSchema"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobSchema"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}},{"kind":"Field","name":{"kind":"Name","value":"schema"}},{"kind":"Field","name":{"kind":"Name","value":"defaultOpts"}}]}}]}}]};
-export const GetJobSchemasDocument: DocumentNode<GetJobSchemasQuery, GetJobSchemasQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobSchemas"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobSchemas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}},{"kind":"Field","name":{"kind":"Name","value":"schema"}},{"kind":"Field","name":{"kind":"Name","value":"defaultOpts"}}]}}]}}]}}]};
-export const SetJobSchemaDocument: DocumentNode<SetJobSchemaMutation, SetJobSchemaMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetJobSchema"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"schema"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSONSchema"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"defaultOpts"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"JobOptionsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobSchemaSet"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"schema"},"value":{"kind":"Variable","name":{"kind":"Name","value":"schema"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"defaultOpts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"defaultOpts"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}},{"kind":"Field","name":{"kind":"Name","value":"schema"}},{"kind":"Field","name":{"kind":"Name","value":"defaultOpts"}}]}}]}}]};
-export const DeleteJobSchemaDocument: DocumentNode<DeleteJobSchemaMutation, DeleteJobSchemaMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteJobSchema"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueJobSchemaDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"jobName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"jobName"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}}]}}]}}]};
-export const GetJobOptionsSchemaDocument: DocumentNode<GetJobOptionsSchemaQuery, GetJobOptionsSchemaQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetJobOptionsSchema"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobOptionsSchema"}}]}}]};
-export const GetQueueJobsNamesDocument: DocumentNode<GetQueueJobsNamesQuery, GetQueueJobsNamesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueJobsNames"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobNames"}}]}}]}}]};
-export const GetAppInfoDocument: DocumentNode<GetAppInfoQuery, GetAppInfoQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAppInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"appInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"env"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"brand"}},{"kind":"Field","name":{"kind":"Name","value":"author"}}]}}]}}]};
-export const GetHostsDocument: DocumentNode<GetHostsQuery, GetHostsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}}]}}]}}]}}]};
-export const GetHostChannelsDocument: DocumentNode<GetHostChannelsQuery, GetHostChannelsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getHostChannels"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hostId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"channels"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"NotificationChannel"}}]}}]}}]}},...NotificationChannelFragmentDoc.definitions]};
-export const GetAvailableMetricsDocument: DocumentNode<GetAvailableMetricsQuery, GetAvailableMetricsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getAvailableMetrics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"metrics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"unit"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"isPolling"}}]}}]}}]};
-export const GetAvailableAggregatesDocument: DocumentNode<GetAvailableAggregatesQuery, GetAvailableAggregatesQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getAvailableAggregates"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"aggregates"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]};
-export const GetRuleByIdDocument: DocumentNode<GetRuleByIdQuery, GetRuleByIdQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRuleById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ruleId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rule"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"Argument","name":{"kind":"Name","value":"ruleId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ruleId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Rule"}}]}}]}},...RuleFragmentDoc.definitions]};
-export const CreateRuleDocument: DocumentNode<CreateRuleMutation, CreateRuleMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateRule"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RuleAddInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ruleAdd"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rule"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Rule"}}]}}]}}]}},...RuleFragmentDoc.definitions]};
-export const DeleteRuleDocument: DocumentNode<DeleteRuleMutation, DeleteRuleMutationVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRule"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ruleId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ruleDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"queueId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queueId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"ruleId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ruleId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isDeleted"}}]}}]}}]};
-export const GetStatsSpanDocument: DocumentNode<GetStatsSpanQuery, GetStatsSpanQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStatsSpan"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsSpanInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statsDateRange"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"start"}},{"kind":"Field","name":{"kind":"Name","value":"end"}}]}}]}}]}}]};
-export const GetQueueStatsDocument: DocumentNode<GetQueueStatsQuery, GetQueueStatsQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsQueryInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const GetQueueStatsLatestDocument: DocumentNode<GetQueueStatsLatestQuery, GetQueueStatsLatestQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetQueueStatsLatest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsLatestInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const GetHostStatsLatestDocument: DocumentNode<GetHostStatsLatestQuery, GetHostStatsLatestQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetHostStatsLatest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsLatestInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const QueueStatsUpdatedDocument: DocumentNode<QueueStatsUpdatedSubscription, QueueStatsUpdatedSubscriptionVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"QueueStatsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsUpdatedSubscriptionFilter"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"onQueueStatsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const HostStatsUpdatedDocument: DocumentNode<HostStatsUpdatedSubscription, HostStatsUpdatedSubscriptionVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"HostStatsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsUpdatedSubscriptionFilter"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"onHostStatsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const DashboardPageDocument: DocumentNode<DashboardPageQuery, DashboardPageQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DashboardPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hosts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"uri"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"redis_version"}},{"kind":"Field","name":{"kind":"Name","value":"uptime_in_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"connected_clients"}},{"kind":"Field","name":{"kind":"Name","value":"blocked_clients"}},{"kind":"Field","name":{"kind":"Name","value":"total_system_memory"}},{"kind":"Field","name":{"kind":"Name","value":"used_memory"}},{"kind":"Field","name":{"kind":"Name","value":"maxmemory"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobCounts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"active"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"paused"}},{"kind":"Field","name":{"kind":"Name","value":"completed"}},{"kind":"Field","name":{"kind":"Name","value":"delayed"}},{"kind":"Field","name":{"kind":"Name","value":"waiting"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queueCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
-export const HostPageQueryDocument: DocumentNode<HostPageQueryQuery, HostPageQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HostPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"HostQueuesFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"host"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"redis"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"RedisStats"}}]}},{"kind":"Field","name":{"kind":"Name","value":"queues"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}},{"kind":"Field","name":{"kind":"Name","value":"repeatableJobCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"throughput"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"errorRate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ruleAlertCount"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"statsAggregate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastStatsSnapshot"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"EnumValue","value":"minute"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"waitTimeAvg"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"500"}}]}]}}]}}]}},...RedisStatsFragmentDoc.definitions,...JobCountsFragmentDoc.definitions,...StatsSnapshotFragmentDoc.definitions]};
-export const QueueSchemaQueryDocument: DocumentNode<QueueSchemaQueryQuery, QueueSchemaQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueueSchemaQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"jobSchemas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"jobName"}},{"kind":"Field","name":{"kind":"Name","value":"schema"}},{"kind":"Field","name":{"kind":"Name","value":"defaultOpts"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"JobCounts"}}]}}]}},...JobCountsFragmentDoc.definitions]};
-export const QueueStatsPageQueryDocument: DocumentNode<QueueStatsPageQueryQuery, QueueStatsPageQueryQueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueueStatsPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"range"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatsGranularity"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"hostId"}},{"kind":"Field","name":{"kind":"Name","value":"prefix"}},{"kind":"Field","name":{"kind":"Name","value":"isPaused"}},{"kind":"Field","name":{"kind":"Name","value":"jobNames"}},{"kind":"Field","name":{"kind":"Name","value":"workerCount"}},{"kind":"Field","name":{"kind":"Name","value":"throughput"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"errorRate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"m1Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m5Rate"}},{"kind":"Field","name":{"kind":"Name","value":"m15Rate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"stats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}},{"kind":"Field","name":{"kind":"Name","value":"statsAggregate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"range"},"value":{"kind":"Variable","name":{"kind":"Name","value":"range"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"granularity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"granularity"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StatsSnapshot"}}]}}]}}]}},...StatsSnapshotFragmentDoc.definitions]};
+export const RedisStatsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'RedisStats' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'RedisInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'redis_version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'uptime_in_seconds' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'uptime_in_days' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'connected_clients' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'blocked_clients' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'total_system_memory' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'used_memory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'used_memory_peak' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'used_memory_lua' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'used_cpu_sys' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maxmemory' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'number_of_cached_scripts' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'instantaneous_ops_per_sec' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'mem_fragmentation_ratio' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RedisStatsFragment, unknown>;
+export const NotificationChannelFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'NotificationChannel' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'NotificationChannel' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'enabled' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MailNotificationChannel' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'recipients' } },
+              ],
+            },
+          },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'SlackNotificationChannel' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'webhook' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'token' } },
+              ],
+            },
+          },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'WebhookNotificationChannel' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'method' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'headers' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timeout' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'retry' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'followRedirect' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'httpSuccessCodes' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<NotificationChannelFragment, unknown>;
+export const HostFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Host' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'QueueHost' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'redis' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'RedisStats' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'channels' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'NotificationChannel' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RedisStatsFragmentDoc.definitions,
+    ...NotificationChannelFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<HostFragment, unknown>;
+export const JobRepeatOptionsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'JobRepeatOptions' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'JobRepeatOptions' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'cron' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'tz' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startDate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endDate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'limit' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'every' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<JobRepeatOptionsFragment, unknown>;
+export const JobOptionsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'JobOptions' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'JobOptions' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'delay' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'attempts' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'repeat' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobRepeatOptions' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'backoff' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'timeout' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'removeOnComplete' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'removeOnFail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'stackTraceLimit' } },
+        ],
+      },
+    },
+    ...JobRepeatOptionsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<JobOptionsFragment, unknown>;
+export const JobFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Job' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Job' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'queueId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'data' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'opts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobOptions' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'delay' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'progress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'attemptsMade' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'processedOn' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'finishedOn' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedReason' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'stacktrace' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'returnvalue' } },
+        ],
+      },
+    },
+    ...JobOptionsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<JobFragment, unknown>;
+export const RepeatableJobFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'RepeatableJob' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'RepeatableJob' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endDate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'tz' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'cron' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'next' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'descr' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RepeatableJobFragment, unknown>;
+export const MeterFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Meter' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Meter' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'meanRate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm1Rate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm5Rate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm15Rate' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MeterFragment, unknown>;
+export const StatsSnapshotFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'StatsSnapshot' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StatsSnapshot' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failed' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completed' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'stddev' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'mean' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'median' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'p90' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'p95' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'p99' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'p995' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'meanRate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm1Rate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm5Rate' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'm15Rate' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<StatsSnapshotFragment, unknown>;
+export const JobCountsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'JobCounts' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Queue' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobCounts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'active' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'paused' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'completed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'delayed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'waiting' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<JobCountsFragment, unknown>;
+export const QueueFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Queue' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Queue' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'host' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hostId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isPaused' } },
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'JobCounts' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'repeatableJobCount' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobNames' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workerCount' } },
+        ],
+      },
+    },
+    ...JobCountsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<QueueFragment, unknown>;
+export const QueueWorkersFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'QueueWorkers' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Queue' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'addr' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'age' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'started' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'idle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'db' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'omem' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueueWorkersFragment, unknown>;
+export const RuleAlertOptionsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'RuleAlertOptions' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'RuleAlertOptions' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'triggerDelay' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failureThreshold' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successThreshold' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maxAlertsPerEvent' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alertOnReset' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'recoveryWindow' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'notifyInterval' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RuleAlertOptionsFragment, unknown>;
+export const RuleFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Rule' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Rule' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metric' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'options' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'condition' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ThresholdCondition' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'errorThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'warningThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'operator' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'PeakCondition' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'errorThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'warningThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'influence' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'lag' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'direction' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ChangeCondition' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'changeType' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'errorThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'warningThreshold' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'operator' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'windowSize' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'timeShift' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'aggregationType' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'channels' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'NotificationChannel' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'options' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'RuleAlertOptions' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'alertCount' } },
+        ],
+      },
+    },
+    ...NotificationChannelFragmentDoc.definitions,
+    ...RuleAlertOptionsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<RuleFragment, unknown>;
+export const GetAllHostsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetAllHosts' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hosts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Host' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...HostFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetAllHostsQuery, GetAllHostsQueryVariables>;
+export const GetHostsAndQueuesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHostsAndQueues' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hosts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'redis' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'RedisStats' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Queue' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RedisStatsFragmentDoc.definitions,
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetHostsAndQueuesQuery,
+  GetHostsAndQueuesQueryVariables
+>;
+export const GetHostByIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHostById' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Host' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...HostFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetHostByIdQuery, GetHostByIdQueryVariables>;
+export const GetHostByIdFullDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHostByIdFull' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'redis' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'RedisStats' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Queue' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RedisStatsFragmentDoc.definitions,
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetHostByIdFullQuery,
+  GetHostByIdFullQueryVariables
+>;
+export const GetHostQueuesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHostQueues' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Queue' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetHostQueuesQuery, GetHostQueuesQueryVariables>;
+export const HostQueuesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'HostQueues' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'range' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'filter' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'HostQueuesFilter' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'filter' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'filter' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'isPaused' },
+                      },
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'JobCounts' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'workerCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'throughput' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'count' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm1Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm5Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm15Rate' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'errorRate' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'count' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm1Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm5Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm15Rate' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'ruleAlertCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'workerCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'stats' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'range' },
+                                  value: {
+                                    kind: 'Variable',
+                                    name: { kind: 'Name', value: 'range' },
+                                  },
+                                },
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'statsAggregate' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'range' },
+                                  value: {
+                                    kind: 'Variable',
+                                    name: { kind: 'Name', value: 'range' },
+                                  },
+                                },
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'lastStatsSnapshot' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobCountsFragmentDoc.definitions,
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<HostQueuesQuery, HostQueuesQueryVariables>;
+export const GetRedisStatsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetRedisStats' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'hostId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'hostId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'redis' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'RedisStats' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RedisStatsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetRedisStatsQuery, GetRedisStatsQueryVariables>;
+export const DiscoverQueuesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'discoverQueues' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'hostId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'prefix' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'unregisteredOnly' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'hostId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discoverQueues' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'prefix' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'prefix' },
+                      },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'unregisteredOnly' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'unregisteredOnly' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'prefix' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DiscoverQueuesQuery, DiscoverQueuesQueryVariables>;
+export const RegisterQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RegisterQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'hostId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'prefix' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'checkExists' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+          defaultValue: { kind: 'BooleanValue', value: false },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueRegister' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'hostId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'hostId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'name' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'name' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'prefix' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'prefix' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'checkExists' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'checkExists' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Queue' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  RegisterQueueMutation,
+  RegisterQueueMutationVariables
+>;
+export const UnregisterQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UnregisterQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueUnregister' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'host' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'isRemoved' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UnregisterQueueMutation,
+  UnregisterQueueMutationVariables
+>;
+export const GetJobsByFilterDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobsByFilter' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'status' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JobStatus' },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'cursor' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'criteria' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'count' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '10' },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobSearch' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'filter' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'cursor' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'cursor' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'count' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'count' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'status' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'status' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'criteria' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'criteria' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'cursor' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'current' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'jobs' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'Job' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobCounts' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobFragmentDoc.definitions,
+    ...JobCountsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetJobsByFilterQuery,
+  GetJobsByFilterQueryVariables
+>;
+export const GetJobFiltersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobFilters' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ids' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobFilters' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'ids' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'ids' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'expression' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'createdAt' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetJobFiltersQuery, GetJobFiltersQueryVariables>;
+export const CreateJobFilterDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateJobFilter' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'JobFilterInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobFilterCreate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expression' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CreateJobFilterMutation,
+  CreateJobFilterMutationVariables
+>;
+export const UpdateJobFilterDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateJobFilter' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'JobFilterUpdateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobFilterUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isUpdated' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateJobFilterMutation,
+  UpdateJobFilterMutationVariables
+>;
+export const DeleteJobFilterDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteJobFilter' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'QueueJobFilterDeleteInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobFilterDelete' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isDeleted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeleteJobFilterMutation,
+  DeleteJobFilterMutationVariables
+>;
+export const GetQueueJobCountsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueJobCounts' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobCounts' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobCountsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetQueueJobCountsQuery,
+  GetQueueJobCountsQueryVariables
+>;
+export const GetQueueJobsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueJobs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'offset' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '0' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'limit' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '10' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'status' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JobStatus' },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'sortOrder' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'SortOrderEnum' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobs' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'offset' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'offset' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'limit' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'status' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'status' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'sortOrder' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'sortOrder' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Job' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobCounts' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobFragmentDoc.definitions,
+    ...JobCountsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetQueueJobsQuery, GetQueueJobsQueryVariables>;
+export const GetRepeatableJobsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetRepeatableJobs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'offset' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '0' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'limit' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '10' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'sortOrder' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'SortOrderEnum' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'repeatableJobs' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'offset' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'offset' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'limit' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'order' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'sortOrder' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'RepeatableJob' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'repeatableJobCount' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RepeatableJobFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetRepeatableJobsQuery,
+  GetRepeatableJobsQueryVariables
+>;
+export const GetJobByIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobById' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'job' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'queueId' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Job' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetJobByIdQuery, GetJobByIdQueryVariables>;
+export const GetJobLogsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobLogs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'start' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '0' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'end' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '-1' },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'job' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'queueId' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logs' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'start' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'start' },
+                      },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'end' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'end' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'items' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetJobLogsQuery, GetJobLogsQueryVariables>;
+export const AddJobDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddJob' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobName' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'data' } },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JSONObject' },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'options' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JobOptionsInput' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobAdd' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobName' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'data' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'data' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'options' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'options' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Job' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<AddJobMutation, AddJobMutationVariables>;
+export const DeleteJobDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteJob' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobRemove' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobId' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'job' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteJobMutation, DeleteJobMutationVariables>;
+export const DeleteRepeatableJobByKeyDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteRepeatableJobByKey' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'repeatableJobRemoveByKey' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'key' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'key' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeleteRepeatableJobByKeyMutation,
+  DeleteRepeatableJobByKeyMutationVariables
+>;
+export const DeleteBulkJobsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteBulkJobs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobIds' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobRemoveBulk' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobIds' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobIds' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'status' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'success' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'reason' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeleteBulkJobsMutation,
+  DeleteBulkJobsMutationVariables
+>;
+export const RetryJobDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryJob' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobRetry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobId' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'job' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetryJobMutation, RetryJobMutationVariables>;
+export const RetryBulkJobsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryBulkJobs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobIds' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobRetryBulk' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobIds' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobIds' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'status' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'success' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'reason' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RetryBulkJobsMutation,
+  RetryBulkJobsMutationVariables
+>;
+export const PromoteJobDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'PromoteJob' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobPromote' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobId' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'job' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PromoteJobMutation, PromoteJobMutationVariables>;
+export const PromoteBulkJobsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'PromoteBulkJobs' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobIds' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'jobPromoteBulk' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobIds' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobIds' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'status' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'success' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'reason' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  PromoteBulkJobsMutation,
+  PromoteBulkJobsMutationVariables
+>;
+export const GetQueueByIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueById' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Queue' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetQueueByIdQuery, GetQueueByIdQueryVariables>;
+export const GetQueueWorkersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueWorkers' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'workers' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'addr' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'age' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'started' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'idle' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'db' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'omem' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetQueueWorkersQuery,
+  GetQueueWorkersQueryVariables
+>;
+export const PauseQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'PauseQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queuePause' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isPaused' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PauseQueueMutation, PauseQueueMutationVariables>;
+export const ResumeQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ResumeQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueResume' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isPaused' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ResumeQueueMutation, ResumeQueueMutationVariables>;
+export const GetQueueRulesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueRules' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'rules' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Rule' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RuleFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetQueueRulesQuery, GetQueueRulesQueryVariables>;
+export const DeleteQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'checkActivity' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+          defaultValue: { kind: 'BooleanValue', value: false },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueDelete' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'options' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'checkActivity' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'checkActivity' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'deletedKeys' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteQueueMutation, DeleteQueueMutationVariables>;
+export const CleanQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CleanQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'grace' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'Duration' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'limit' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'status' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JobStatus' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueClean' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'id' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'id' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'grace' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'grace' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'limit' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'limit' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'status' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CleanQueueMutation, CleanQueueMutationVariables>;
+export const DrainQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DrainQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'delayed' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueDrain' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'delayed' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'delayed' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Queue' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<DrainQueueMutation, DrainQueueMutationVariables>;
+export const GetJobSchemaDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobSchema' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobName' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobSchema' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobName' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'jobName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'schema' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'defaultOpts' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetJobSchemaQuery, GetJobSchemaQueryVariables>;
+export const GetJobSchemasDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobSchemas' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobSchemas' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'schema' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'defaultOpts' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetJobSchemasQuery, GetJobSchemasQueryVariables>;
+export const SetJobSchemaDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetJobSchema' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobName' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'schema' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'JSONSchema' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'defaultOpts' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'JobOptionsInput' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobSchemaSet' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobName' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'schema' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'schema' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'defaultOpts' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'defaultOpts' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'jobName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'schema' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'defaultOpts' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetJobSchemaMutation,
+  SetJobSchemaMutationVariables
+>;
+export const DeleteJobSchemaDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteJobSchema' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'jobName' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queueJobSchemaDelete' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'jobName' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'jobName' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeleteJobSchemaMutation,
+  DeleteJobSchemaMutationVariables
+>;
+export const GetJobOptionsSchemaDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetJobOptionsSchema' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'jobOptionsSchema' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetJobOptionsSchemaQuery,
+  GetJobOptionsSchemaQueryVariables
+>;
+export const GetQueueJobsNamesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueJobsNames' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'jobNames' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetQueueJobsNamesQuery,
+  GetQueueJobsNamesQueryVariables
+>;
+export const GetStatsSpanDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetStatsSpan' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsSpanInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'statsDateRange' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'input' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'startTime' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'endTime' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetStatsSpanQuery, GetStatsSpanQueryVariables>;
+export const GetQueueStatsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueStats' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsQueryInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'stats' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'input' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetQueueStatsQuery, GetQueueStatsQueryVariables>;
+export const GetQueueStatsLatestDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetQueueStatsLatest' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsLatestInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lastStatsSnapshot' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'input' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetQueueStatsLatestQuery,
+  GetQueueStatsLatestQueryVariables
+>;
+export const GetHostStatsLatestDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHostStatsLatest' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsLatestInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lastStatsSnapshot' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'input' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetHostStatsLatestQuery,
+  GetHostStatsLatestQueryVariables
+>;
+export const QueueStatsUpdatedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'subscription',
+      name: { kind: 'Name', value: 'QueueStatsUpdated' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsUpdatedSubscriptionFilter' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onQueueStatsUpdated' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'StatsSnapshot' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  QueueStatsUpdatedSubscription,
+  QueueStatsUpdatedSubscriptionVariables
+>;
+export const HostStatsUpdatedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'subscription',
+      name: { kind: 'Name', value: 'HostStatsUpdated' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsUpdatedSubscriptionFilter' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onHostStatsUpdated' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'StatsSnapshot' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  HostStatsUpdatedSubscription,
+  HostStatsUpdatedSubscriptionVariables
+>;
+export const GetAppInfoDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetAppInfo' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'env' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'brand' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'author' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetAppInfoQuery, GetAppInfoQueryVariables>;
+export const GetHostsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetHosts' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hosts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workerCount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'isPaused' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetHostsQuery, GetHostsQueryVariables>;
+export const GetHostChannelsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getHostChannels' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'hostId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'hostId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'channels' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'NotificationChannel' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...NotificationChannelFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetHostChannelsQuery,
+  GetHostChannelsQueryVariables
+>;
+export const GetAvailableMetricsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getAvailableMetrics' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableMetrics' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unit' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPolling' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'valueType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetAvailableMetricsQuery,
+  GetAvailableMetricsQueryVariables
+>;
+export const GetAvailableAggregatesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getAvailableAggregates' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'aggregates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isWindowed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetAvailableAggregatesQuery,
+  GetAvailableAggregatesQueryVariables
+>;
+export const HostsAndQueuesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'HostsAndQueues' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hosts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'Queue' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...QueueFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<HostsAndQueuesQuery, HostsAndQueuesQueryVariables>;
+export const GetRuleByIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetRuleById' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'ruleId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rule' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'queueId' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'queueId' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ruleId' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'ruleId' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Rule' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RuleFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<GetRuleByIdQuery, GetRuleByIdQueryVariables>;
+export const CreateRuleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateRule' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'RuleAddInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ruleAdd' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Rule' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RuleFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<CreateRuleMutation, CreateRuleMutationVariables>;
+export const DeleteRuleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteRule' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'queueId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'ruleId' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ruleDelete' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'queueId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'queueId' },
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'ruleId' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'ruleId' },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isDeleted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteRuleMutation, DeleteRuleMutationVariables>;
+export const DashboardPageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'DashboardPage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'range' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hosts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'redis' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'redis_version' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'uptime_in_seconds' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'connected_clients' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'blocked_clients' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'total_system_memory' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'used_memory' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'maxmemory' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobCounts' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'active' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'failed' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'paused' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'completed' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'delayed' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'waiting' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'queueCount' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workerCount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'stats' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'range' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'range' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'granularity' },
+                            value: { kind: 'EnumValue', value: 'Minute' },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lastStatsSnapshot' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'granularity' },
+                            value: { kind: 'EnumValue', value: 'Minute' },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<DashboardPageQuery, DashboardPageQueryVariables>;
+export const HostPageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'HostPage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'range' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'filter' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'HostQueuesFilter' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'host' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'redis' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'RedisStats' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queues' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'filter' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'filter' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'isPaused' },
+                      },
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'JobCounts' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'repeatableJobCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'workerCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'throughput' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'count' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm1Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm5Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm15Rate' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'errorRate' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'count' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm1Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm5Rate' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'm15Rate' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'ruleAlertCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'workerCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'stats' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'range' },
+                                  value: {
+                                    kind: 'Variable',
+                                    name: { kind: 'Name', value: 'range' },
+                                  },
+                                },
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'statsAggregate' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'range' },
+                                  value: {
+                                    kind: 'Variable',
+                                    name: { kind: 'Name', value: 'range' },
+                                  },
+                                },
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'lastStatsSnapshot' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'input' },
+                            value: {
+                              kind: 'ObjectValue',
+                              fields: [
+                                {
+                                  kind: 'ObjectField',
+                                  name: { kind: 'Name', value: 'granularity' },
+                                  value: { kind: 'EnumValue', value: 'Minute' },
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'StatsSnapshot' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'waitTimeAvg' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: { kind: 'IntValue', value: '500' },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...RedisStatsFragmentDoc.definitions,
+    ...JobCountsFragmentDoc.definitions,
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<HostPageQuery, HostPageQueryVariables>;
+export const QueueSchemaQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'QueueSchemaQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'jobNames' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'jobSchemas' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'jobName' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'schema' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'defaultOpts' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'JobCounts' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...JobCountsFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  QueueSchemaQueryQuery,
+  QueueSchemaQueryQueryVariables
+>;
+export const QueueStatsPageQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'QueueStatsPageQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'range' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'granularity' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'StatsGranularity' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queue' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hostId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPaused' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'jobNames' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workerCount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'throughput' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm1Rate' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm5Rate' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm15Rate' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'errorRate' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm1Rate' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm5Rate' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'm15Rate' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'stats' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'range' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'range' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'granularity' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'granularity' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'statsAggregate' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'input' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'range' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'range' },
+                            },
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: 'granularity' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'granularity' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'StatsSnapshot' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...StatsSnapshotFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  QueueStatsPageQueryQuery,
+  QueueStatsPageQueryQueryVariables
+>;

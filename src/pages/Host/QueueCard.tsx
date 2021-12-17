@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Statistic, Space, Badge, Col, Row, Tooltip } from 'antd';
 import ProCard from '@ant-design/pro-card';
-import { QueueActions } from '../../@types/actions';
+import { QueueActions } from '@/@types';
 import { QueueMenu, QueueStateTag } from '../../components';
 
 import prettyMilliseconds from 'pretty-ms';
 
-import { JobCounts, Queue, StatsSnapshot } from '../../api';
+import { JobCounts, Queue, StatsSnapshot } from '@/api';
 import { useNavigate } from 'react-router-dom';
 import { JobCountsPieChart, MiniArea } from '../../components/Charts';
 import { BellOutlined } from '@ant-design/icons';
 import { FaCogs } from 'react-icons/fa';
-import { calcErrorPercentage } from '../../lib/stats';
+import { calcErrorPercentage } from '@/lib/stats';
 const { Divider } = ProCard;
 
 type QueueCardProps = {

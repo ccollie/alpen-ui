@@ -1,10 +1,14 @@
-import dropWhile from 'lodash-es/dropWhile';
-import get from 'lodash-es/get';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import take from 'lodash-es/take';
-import uniqWith from 'lodash-es/uniqWith';
-import initial from 'lodash-es/initial';
+import {
+  last,
+  first,
+  take,
+  uniqWith,
+  initial,
+  flatMap,
+  get,
+} from '@/lib/nodash';
 
 import {
   Functions,
@@ -68,14 +72,14 @@ export default class ExpressionSuggester {
       inputValue,
       caretPosition2d,
     );
-    const lastExpressionPart = this._focusedLastExpressionPartWithoutMethodParens(
-      normalized.input,
-      normalized.caretPosition,
-    );
+    const lastExpressionPart =
+      this._focusedLastExpressionPartWithoutMethodParens(
+        normalized.input,
+        normalized.caretPosition,
+      );
     const properties = this._alreadyTypedProperties(lastExpressionPart);
-    const variablesIncludingSelectionOrProjection = this._getAllVariables(
-      normalized,
-    );
+    const variablesIncludingSelectionOrProjection =
+      this._getAllVariables(normalized);
     const focusedClazz = this.findRootClazz(
       properties,
       variablesIncludingSelectionOrProjection,
@@ -93,7 +97,7 @@ export default class ExpressionSuggester {
   ): NormalizedInput {
     const rows = inputValue.split('\n');
     const trimmedRows = rows.map((row) => {
-      const trimmedAtStartRow = dropWhile(row, (c) => c === ' ').join('');
+      const trimmedAtStartRow = row.trimStart();
       return {
         trimmedAtStartRow: trimmedAtStartRow,
         trimmedCount: row.length - trimmedAtStartRow.length,
@@ -430,9 +434,8 @@ export default class ExpressionSuggester {
   }
 
   private _findProjectionOrSelectionRootClazz(normalized: NormalizedInput) {
-    const currentProjectionOrSelection = this._findCurrentProjectionOrSelection(
-      normalized,
-    );
+    const currentProjectionOrSelection =
+      this._findCurrentProjectionOrSelection(normalized);
     if (currentProjectionOrSelection) {
       const properties = this._alreadyTypedProperties(
         currentProjectionOrSelection,
@@ -484,19 +487,4 @@ function convertSuggestion(variable: TypedMethod): TypedSuggestion {
     });
   }
   return suggestion;
-}
-
-function first<T>(items: T[]): T | undefined {
-  return items.length ? items[0] : undefined;
-}
-
-function last<T>(items: T[]): T {
-  return items[items.length - 1];
-}
-
-function flatMap<T, U>(array: T[], mapFunc: (x: T) => U[]): U[] {
-  return array.reduce(
-    (cumulus: U[], next: T) => [...mapFunc(next), ...cumulus],
-    <U[]>[],
-  );
 }

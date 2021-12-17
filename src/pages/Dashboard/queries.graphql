@@ -23,10 +23,10 @@ query DashboardPage($range: String!) {
     }
     queueCount
     workerCount
-    stats(input: { range: $range, granularity: minute }) {
+    stats(input: { range: $range, granularity: Minute }) {
       ...StatsSnapshot
     }
-    lastStatsSnapshot(input:{ granularity: minute }) {
+    lastStatsSnapshot(input:{ granularity: Minute }) {
       ...StatsSnapshot
     }
   }

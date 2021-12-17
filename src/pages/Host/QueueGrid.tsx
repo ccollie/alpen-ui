@@ -1,7 +1,7 @@
 import { Space } from 'antd';
 import React from 'react';
 import { QueueActions } from '../../@types/actions';
-import { Queue } from '../../api';
+import { Queue } from '@/api';
 import QueueCard from './QueueCard';
 
 interface QueueGridProps {

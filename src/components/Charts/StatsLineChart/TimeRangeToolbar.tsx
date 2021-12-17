@@ -15,7 +15,7 @@ import {
   startOf,
 } from '@/lib/dates';
 import DatePicker from '../../DatePicker';
-import { RangePickerValue } from '../../RangePicker';
+import { RangePickerValue } from '@/components';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;

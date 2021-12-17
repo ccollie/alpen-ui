@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Select, Checkbox } from 'antd';
-import { DiscoverQueuesPayload, Queue } from '../../api';
-import { useAsync } from '../../hooks';
+import { DiscoverQueuesPayload, Queue } from '@/api';
+import { useAsync } from '@/hooks';
 const { Option } = Select;
 
 interface RegisterQueueDialogProps {

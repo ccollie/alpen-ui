@@ -2,7 +2,7 @@ import { Card, Col, Row, Tabs } from 'antd';
 
 import React from 'react';
 import DatePicker from '../../DatePicker';
-import { RangePickerValue } from '../../RangePicker';
+import { RangePickerValue } from '@/components';
 import Bar from '../Bar';
 import styles from '../style.less';
 

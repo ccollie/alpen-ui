@@ -1,8 +1,11 @@
-import { useHostQuery } from '@/pages/Host/useHostQuery';
+import {
+  QueueFilter,
+  useQueueFiltersStore,
+  useHostQuery,
+} from '@/modules/host';
 import { Button, PageHeader, Space, Tag } from 'antd';
 import React, { Fragment, useState, useEffect } from 'react';
-import { QueueFilter } from '@/@types';
-import { Queue, RedisInfo, QueueHost } from '../../api';
+import { Queue, RedisInfo, QueueHost } from '@/api';
 
 import { useParams } from 'react-router';
 import QueueFilterToolbar from './QueueFilterToolbar';
@@ -10,23 +13,15 @@ import QueueCard from './QueueCard';
 import { RedisStats } from '@/components';
 import RedisIcon from '../../components/Icons/Redis';
 import { PlusOutlined, CloudServerOutlined } from '@ant-design/icons';
-import {
-  useCallbackRef,
-  useDisclosure,
-  useNavigationUpdate,
-  useQueueActions,
-  useQueueFilterParams,
-} from '../../hooks';
+import { useCallbackRef, useDisclosure, useQueueActions } from '@/hooks';
 import RegisterQueueDialog from './RegisterQueueDialog';
 
 const Host: React.FC = () => {
   const { hostId: id } = useParams();
-  const [host, setHost] = useState<QueueHost | null>(null);
-  const [queues, setQueues] = useState<Queue[]>([]);
   const [name, setName] = useState('host');
   const [range, setRange] = useState('last_hour');
-  const filter = useQueueFilterParams();
   let actions = useQueueActions();
+  const filterStore = useQueueFiltersStore();
 
   const {
     isOpen: isAddQueueOpen,
@@ -42,21 +37,21 @@ const Host: React.FC = () => {
     },
   );
 
-  const updateNavigation = useNavigationUpdate();
-
-  const { loading, data: hostData, error: hostError, setFilter } = useHostQuery(
-    id,
-    range,
+  const {
+    loading,
+    called,
     filter,
-  );
+    host,
+    error: hostError,
+    queues,
+    updateFilter,
+  } = useHostQuery(id, range);
 
   useEffect(() => {
-    if (hostData && !loading) {
-      setHost(hostData.host as QueueHost);
-      setName(hostData.name || 'host');
-      setQueues(hostData.queues);
+    if (host && !loading) {
+      setName(host.name || 'host');
     }
-  }, [loading, hostData]);
+  }, [loading, host]);
 
   function onQueueAdded(queue: Queue) {
     const newItems = [...queues, queue];
@@ -74,8 +69,9 @@ const Host: React.FC = () => {
     });
   }
 
-  function onQueueRemoved(id: string) {
-    const newItems = queues.filter((q) => q.id !== id);
+  function onQueueRemoved(queueId: string) {
+    const newItems = queues.filter((q: { id: string }) => q.id !== queueId);
+    filterStore.removeQueue(id, queueId);
     // refresh;
   }
 
@@ -107,6 +103,10 @@ const Host: React.FC = () => {
     return actions.resumeQueue(id);
   }
 
+  const onFilterUpdate = useCallbackRef((newFilter: Partial<QueueFilter>) => {
+    updateFilter(newFilter);
+  });
+
   actions = {
     ...actions,
     deleteQueue: handleDeleteQueue,
@@ -125,13 +125,6 @@ const Host: React.FC = () => {
     }
     return <Tag color={color}>{state}</Tag>;
   }
-
-  const onFilterUpdate = useCallbackRef((newFilter: QueueFilter) => {
-    setFilter(newFilter);
-    // updateNavigation({
-    //   ...newFilter,
-    // });
-  });
 
   const toolbar = (
     <Space key="header-toolbar">

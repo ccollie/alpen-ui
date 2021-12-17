@@ -4,6 +4,7 @@ import QueueHeader from './QueueHeader';
 import { Empty, Skeleton, Button, Result } from 'antd';
 import { useParams, Outlet } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
+import { useHostsStore } from '@/stores/hosts';
 
 const Queue: React.FC = () => {
   const { queueId } = useParams();
@@ -11,6 +12,7 @@ const Queue: React.FC = () => {
     variables: { id: queueId },
   });
 
+  const store = useHostsStore();
   const queue = data?.queue as AppQueue;
   if (loading) {
     return <Skeleton active loading={loading} />;

@@ -12,6 +12,7 @@ generates:
       withComponent: false
       withHooks: true
       withRefetchFn: true
+      maybeValue: T | null
       scalars:
         DateTime: "number"
         Duration: "string | number"
@@ -19,8 +20,18 @@ generates:
         JSONSchema: "{ [key: string]: any }"
         JobRemoveOption: "boolean | number"
         JobProgress: "string | number | Record<string, any>"
+        Timestamp: "number"
+        EmailAddress: "string"
+        URL: "string"
 
     plugins:
+      - add:
+          content:
+            - /* eslint-disable */
       - typescript
       - typescript-operations
       - typed-document-node
+
+    hooks:
+      afterOneFileWrite:
+        - prettier --write

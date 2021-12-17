@@ -1,4 +1,4 @@
-query HostPageQuery($id: ID!, $range: String!, $filter: HostQueuesFilter) {
+query HostPage($id: ID!, $range: String!, $filter: HostQueuesFilter) {
   host(id: $id) {
     id
     name
@@ -27,13 +27,13 @@ query HostPageQuery($id: ID!, $range: String!, $filter: HostQueuesFilter) {
       }
       ruleAlertCount
       workerCount
-      stats(input: { range: $range, granularity: minute }) {
+      stats(input: { range: $range, granularity: Minute }) {
         ...StatsSnapshot
       }
-      statsAggregate(input: { range: $range, granularity: minute }) {
+      statsAggregate(input: { range: $range, granularity: Minute }) {
         ...StatsSnapshot
       }
-      lastStatsSnapshot(input:{ granularity: minute }) {
+      lastStatsSnapshot(input:{ granularity: Minute }) {
         ...StatsSnapshot
       }
       waitTimeAvg(limit: 500)

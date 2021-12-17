@@ -1,5 +1,5 @@
 import { ApolloError, FetchResult } from '@apollo/client';
-import { client } from '../../providers/ApolloProvider';
+import { client } from '@/providers/ApolloProvider';
 import {
   DiscoverQueuesDocument,
   DiscoverQueuesPayload,

@@ -1,6 +1,6 @@
 import { Empty, PageHeader } from 'antd';
 import React, { FC, useState, useEffect } from 'react';
-import { DashboardPageDocument, QueueHost } from '../../api';
+import { DashboardPageDocument, QueueHost } from '@/api';
 import { useQuery } from '@apollo/client';
 import { HostCard } from '../../components';
 

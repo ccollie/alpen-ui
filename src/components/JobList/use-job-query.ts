@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getJobs, JobFragment, JobStatus } from '../../api';
+import { getJobs, JobFragment, JobStatus } from '@/api';
 
 interface ListState {
   isLoading: boolean;
@@ -67,7 +67,7 @@ export function useJobQuery(props: JobQueryProps) {
       _setStatus(status);
       state.current.data = data = jobs;
     } catch (err) {
-      state.current.error = err;
+      state.current.error = err as Error;
       console.log(err);
     } finally {
       state.current.isLoading = false;

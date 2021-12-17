@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Modal, InputNumber, Checkbox } from 'antd';
 import { JobStatus } from '../../api';
-import { useDisclosure } from '../../hooks';
+import { useDisclosure } from '@/hooks';
 import { ucFirst } from '../../lib';
 import { parseDuration } from '../../lib/dates';
 import ms from 'ms';

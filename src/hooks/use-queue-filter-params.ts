@@ -1,19 +1,21 @@
+import { QueueFilterStatus, SortOrderEnum } from '@/api';
+import { toBool } from '@/lib';
 import { QueueFilter } from '../@types/queue';
-import { SortOrderEnum } from '../api';
-import { toBool } from '../lib';
 import { useQueryString } from './index';
 
 const defaultValues: QueueFilter = {
   sortOrder: SortOrderEnum.Asc,
+  statuses: [],
   sortBy: 'name',
 };
 
 export function useQueueFilterParams(props?: QueueFilter): QueueFilter {
   props = props || defaultValues;
+
   const {
-    active = props.isActive,
-    paused = props.isPaused,
-    sortBy = props.sortBy,
+    active = props.statuses?.includes(QueueFilterStatus.Active),
+    paused = props.statuses?.includes(QueueFilterStatus.Paused),
+    sortBy = (props.sortBy = 'name'),
     sortOrder = props.sortOrder,
     searchText = undefined,
     prefix = undefined,
@@ -30,12 +32,15 @@ export function useQueueFilterParams(props?: QueueFilter): QueueFilter {
 
   const result: QueueFilter = {
     sortBy: sortBy ?? 'name',
+    statuses: [],
     sortOrder: order as QueueFilter['sortOrder'],
   };
 
   if (searchText && searchText !== 'undefined') result.search = searchText;
   if (prefix && prefix !== 'undefined') result.prefix = prefix;
-  if (active !== undefined) result.isActive = toBool(active);
-  if (paused !== undefined) result.isPaused = toBool(paused);
+  if (active !== undefined || toBool(active))
+    result.statuses?.push(QueueFilterStatus.Active);
+  if (paused !== undefined || toBool(paused))
+    result.statuses?.push(QueueFilterStatus.Paused);
   return result;
 }

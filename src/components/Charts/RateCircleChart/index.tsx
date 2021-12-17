@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { scaleLinear, scaleSqrt } from 'd3-scale';
 import React, { useEffect, useRef } from 'react';
-import { usePrevious } from '../../../hooks';
+import { usePrevious } from '@/hooks';
 import { getColorRange } from './colorScale';
 
 const maxXaxis = '40%';

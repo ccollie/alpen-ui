@@ -20,7 +20,6 @@ const JobFilterCard: React.FC<JobFilterCardProps> = (props) => {
   const { expression, name, id, createdAt } = props.filter || {};
   const canSave = !name || name.length === 0;
   const { onFilterClick } = props;
-  const theme = getThemeName();
   const header = name ? name : parseDate(createdAt).toString();
 
   const {

@@ -6,7 +6,7 @@ import {
 import { message, Button, Space } from 'antd';
 import React, { Fragment } from 'react';
 import { QueueJobActions } from '@/@types';
-import { BulkStatusItem, JobStatus } from '../../api';
+import { BulkStatusItem, JobStatus } from '@/api';
 import { useDisclosure } from '@/hooks';
 import { AsyncButton } from '../AsyncButton';
 import { TrashIcon } from '../Icons/Trash';

@@ -1,8 +1,8 @@
 import { Alert } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { IMarker } from 'react-ace';
-import { useWhyDidYouUpdate } from '../../hooks/use-why-update';
-import { validate, validateSchema } from '../../lib/ajv';
+import { useWhyDidYouUpdate } from '@/hooks';
+import { validate, validateSchema } from '@/lib/ajv';
 import AceEditor from '../../lib/ace';
 
 type JsonEditorProps = {

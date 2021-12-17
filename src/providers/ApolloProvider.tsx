@@ -16,7 +16,7 @@ import {
 } from '@apollo/client/utilities';
 import { WebSocketLink } from '@apollo/client/link/ws';
 
-import { apiUrl, wsUrl } from '../lib/config';
+import { apiUrl, wsUrl } from '@/lib/config';
 import { SafeReadonly } from '@apollo/client/cache/core/types/common';
 import { Job, Queue, QueueWorker, RepeatableJob, StatsSnapshot } from '../api';
 

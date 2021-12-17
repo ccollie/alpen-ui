@@ -45,7 +45,6 @@ export function updateCached<T>(
   }
 
   const data = {
-    __typename: 'Queue',
     ...update,
   };
 

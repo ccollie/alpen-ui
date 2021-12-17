@@ -1,11 +1,11 @@
 import { DonutChart } from 'bizcharts';
 import React, { useState } from 'react';
-import { JobStatus } from '../../../api';
+import { JobStatus } from '@/api';
 import { Empty, Space } from 'antd';
 
 type PieChartDataProps = {
   height?: number;
-  counts: { [key in JobStatus]: number };
+  counts: { [key in JobStatus]?: number };
   onClick?: (status: JobStatus, value?: number) => void;
 };
 

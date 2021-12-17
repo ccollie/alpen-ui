@@ -1,3 +1,4 @@
+// todo: dynamic import
 import AceEditor, { IMarker } from 'react-ace';
 import { Ace } from 'ace-builds';
 import { getAceInstance } from 'react-ace/lib/editorOptions';
