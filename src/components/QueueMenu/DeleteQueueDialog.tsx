@@ -1,10 +1,10 @@
 import { Form, Input, Modal, Typography } from 'antd';
 import React, { useState } from 'react';
-import { Queue } from '../../api';
-import { useDisclosure } from '../../hooks';
+import { Queue } from '@/api';
+import { useDisclosure } from '@/hooks';
 const { Title } = Typography;
 
-type DeleteJobsProps = {
+type DeleteQueueProps = {
   queue: Queue;
   onDeleted?: (queue?: Queue) => void;
   onDelete: (queueId?: string) => Promise<void>;
@@ -13,7 +13,7 @@ type DeleteJobsProps = {
   onClose?: () => void;
 };
 
-const DeleteQueueDialog: React.FC<DeleteJobsProps> = (props) => {
+const DeleteQueueDialog: React.FC<DeleteQueueProps> = (props) => {
   const { queue, onDeleted, onDelete } = props;
   const [isPending, setIsPending] = useState<boolean>(false);
   const [canDelete, setCanDelete] = useState(false);

@@ -270,7 +270,7 @@ export function roundDown(ts: DateLike, interval: number): Date {
 export function roundToNearest(date: DateLike, precision: number): Date {
   const up = roundUp(date, precision);
   const down = roundDown(date, precision);
-  return closestTo(date, [up, down]);
+  return closestTo(date, [up, down])!;
 }
 
 export function convertUTCDateToLocalDate(date: DateLike): Date {

@@ -1,27 +1,27 @@
-import createStore, { UseStore } from 'zustand';
+import createStore, { UseBoundStore } from 'zustand';
 
 type TState<T = string> = {
   selected: Set<T>;
   addItem: (item: T) => void;
   toggleItem: (item: T) => void;
-  setItems: (items: T[]) => void;
+  setItems: (items: T[] | Set<T>) => void;
   removeItem: (item: T) => void;
   removeItems: (items: T[]) => void;
   clear: () => void;
 };
 
-export function createSelectedItemsStore<T>(): UseStore<TState<T>> {
+export function createSelectedItemsStore<T>(): UseBoundStore<TState<T>> {
   return createStore<TState<T>>((set, get) => ({
     selected: new Set(),
-    setItems: items =>
+    setItems: (items) =>
       set({
         selected: new Set(items),
       }),
-    addItem: item =>
+    addItem: (item) =>
       set({
         selected: new Set(get().selected).add(item),
       }),
-    toggleItem: item => {
+    toggleItem: (item) => {
       const { selected } = get();
       if (selected.has(item)) {
         selected.delete(item);
@@ -32,14 +32,14 @@ export function createSelectedItemsStore<T>(): UseStore<TState<T>> {
         });
       }
     },
-    removeItem: item => {
+    removeItem: (item) => {
       const selected = new Set(get().selected);
       selected.delete(item);
       set({ selected });
     },
-    removeItems: items => {
+    removeItems: (items) => {
       const selected = new Set(get().selected);
-      items.forEach(item => selected.delete(item));
+      items.forEach((item) => selected.delete(item));
       set({ selected });
     },
     clear: () => {

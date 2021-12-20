@@ -1,5 +1,5 @@
 import React, { ReactNode, useRef } from 'react';
-import { useAsync, useUnmountEffect } from '../../hooks';
+import { useAsync, useUnmountEffect } from '@/hooks';
 import { LoadingOutlined } from '@ant-design/icons';
 import { message, Popconfirm, Tooltip } from 'antd';
 

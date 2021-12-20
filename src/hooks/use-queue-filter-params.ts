@@ -1,6 +1,6 @@
 import { QueueFilterStatus, SortOrderEnum } from '@/api';
 import { toBool } from '@/lib';
-import { QueueFilter } from '../@types/queue';
+import { QueueFilter } from '@/modules/host';
 import { useQueryString } from './index';
 
 const defaultValues: QueueFilter = {

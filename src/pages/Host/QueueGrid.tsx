@@ -1,6 +1,5 @@
-import { Space } from 'antd';
 import React from 'react';
-import { QueueActions } from '../../@types/actions';
+import { QueueActions } from '@/@types';
 import { Queue } from '@/api';
 import QueueCard from './QueueCard';
 
@@ -14,11 +13,11 @@ const QueueGrid: React.FC<QueueGridProps> = (props) => {
   const { queues, actions } = props;
 
   return (
-    <Space size={[8, 8]} wrap>
+    <div className="flex flex-wrap flex-start gap-2 gap-y-2">
       {queues.map((queue) => (
         <QueueCard key={`q-${queue.id}`} queue={queue} actions={actions} />
       ))}
-    </Space>
+    </div>
   );
 };
 

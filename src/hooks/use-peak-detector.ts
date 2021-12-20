@@ -3,7 +3,7 @@ import {
   PeakDetector,
   PeakDetectorOptions,
   PeakSignal,
-} from '../lib/peak-detector';
+} from '@/lib/peak-detector';
 
 export function usePeakDetector(options: PeakDetectorOptions) {
   const detector = useRef(new PeakDetector(options));

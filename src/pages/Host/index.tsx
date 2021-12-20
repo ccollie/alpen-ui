@@ -3,9 +3,10 @@ import {
   useQueueFiltersStore,
   useHostQuery,
 } from '@/modules/host';
+import { useQueueActions } from '@/modules/queue/hooks';
 import { Button, PageHeader, Space, Tag } from 'antd';
 import React, { Fragment, useState, useEffect } from 'react';
-import { Queue, RedisInfo, QueueHost } from '@/api';
+import { Queue, RedisInfo } from '@/api';
 
 import { useParams } from 'react-router';
 import QueueFilterToolbar from './QueueFilterToolbar';
@@ -13,7 +14,7 @@ import QueueCard from './QueueCard';
 import { RedisStats } from '@/components';
 import RedisIcon from '../../components/Icons/Redis';
 import { PlusOutlined, CloudServerOutlined } from '@ant-design/icons';
-import { useCallbackRef, useDisclosure, useQueueActions } from '@/hooks';
+import { useCallbackRef, useDisclosure } from '@/hooks';
 import RegisterQueueDialog from './RegisterQueueDialog';
 
 const Host: React.FC = () => {

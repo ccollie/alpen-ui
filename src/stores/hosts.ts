@@ -7,16 +7,18 @@ export type THostState = {
   activeQueue: Queue | undefined;
   activeQueueId: string;
   setHosts: (hosts: QueueHost[]) => void;
+  updateHosts: (hosts: QueueHost[]) => void;
   addHost: (item: QueueHost) => void;
-  removeHost: (id: string) => void;
-  findQueue: (id: string) => Queue | undefined;
   findHost: (id: string) => QueueHost | undefined;
+  removeHost: (id: string) => void;
+  addQueue(hostId: string, queue: Queue): boolean;
+  findQueue: (id: string) => Queue | undefined;
   updateQueue: (
     id: string,
     update: Partial<Omit<Queue, 'id' | 'hostId'>>,
   ) => Queue;
   removeQueue(id: string): Queue;
-  updateHost: (id: string, delta: Partial<Omit<QueueHost, 'id'>>) => void;
+  updateHost: (id: string, delta: Partial<Omit<QueueHost, 'id'>>) => boolean;
 };
 
 export const useHostsStore = createStore<THostState>(
@@ -70,9 +72,32 @@ export const useHostsStore = createStore<THostState>(
           hostIndex,
         };
       },
+      _updateHostQueues(host: QueueHost, queues: Queue[]) {
+        const { hosts } = get();
+        const hostIndex = hosts.findIndex((x) => x.id === host.id);
+        if (hostIndex >= 0) {
+          const newHost = { ...hosts[hostIndex], queues };
+          const newHosts = [...hosts];
+          newHosts[hostIndex] = newHost;
+          set({ hosts: newHosts });
+        }
+      },
       findQueue(id: string): Queue | undefined {
         const { queue } = (get() as any)._findQueue(id);
         return queue;
+      },
+      addQueue(hostId: string, queue: Queue): boolean {
+        const { hosts } = get();
+        const hostIndex = hosts.findIndex((x) => x.id === hostId);
+        if (hostIndex < 0) return false;
+        const host = hosts[hostIndex];
+        const queues = host.queues || [];
+        const current = queues.find((x) => x.id === queue.id);
+        if (!current) {
+          queues.push(queue);
+          (get() as any)._updateHostQueues(host, queues);
+        }
+        return !current;
       },
       removeQueue(id: string): Queue {
         const { hosts } = get();
@@ -80,12 +105,7 @@ export const useHostsStore = createStore<THostState>(
         if (queue) {
           const host = hosts[hostIndex];
           const queues = [...host.queues].filter((x) => x.id !== id);
-          const newHosts = [...hosts];
-          newHosts[hostIndex] = {
-            ...host,
-            queues,
-          };
-          set({ hosts: newHosts });
+          (get() as any)._updateHostQueues(host, queues);
         }
         return queue;
       },
@@ -106,12 +126,7 @@ export const useHostsStore = createStore<THostState>(
             ...found,
             ...update,
           };
-          const newHosts = [...hosts];
-          newHosts[hostIndex] = {
-            ...host,
-            queues,
-          };
-          set({ hosts: newHosts });
+          (get() as any)._updateHostQueues(host, queues);
         }
         return found;
       },
@@ -119,7 +134,26 @@ export const useHostsStore = createStore<THostState>(
         const { hosts } = get();
         return hosts.find((x) => x.id === id);
       },
-      updateHost(id: string, delta: Partial<Omit<QueueHost, 'id'>>) {
+      updateHosts(hosts: QueueHost[]): void {
+        const { hosts: current } = get();
+        const newMap = new Map(hosts.map((x) => [x.id, x]));
+        const update = {
+          hosts: current.reduce((acc: QueueHost[], host) => {
+            const modified = newMap.get(host.id);
+            if (modified) {
+              newMap.delete(host.id);
+              return acc.concat({
+                ...host,
+                ...modified,
+              });
+            }
+            return acc;
+          }, []),
+        };
+        update.hosts = [...update.hosts, ...newMap.values()];
+        set(update);
+      },
+      updateHost(id: string, delta: Partial<Omit<QueueHost, 'id'>>): boolean {
         const { hosts } = get();
         const idx = hosts.findIndex((x) => x.id === id);
         if (idx >= 0) {
@@ -129,7 +163,9 @@ export const useHostsStore = createStore<THostState>(
             ...delta,
           };
           set({ hosts: h });
+          return true;
         }
+        return false;
       },
     }),
     (state) => {

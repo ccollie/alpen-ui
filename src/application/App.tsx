@@ -1,8 +1,8 @@
 import React from 'react';
+import './index.css';
 import './App.less';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { StoreProvider } from '../hooks/use-store';
-import { DSProvider } from '@synerise/ds-core';
+import { StoreProvider } from '@/hooks/use-store';
 import ApolloProvider from '../providers/ApolloProvider';
 import Main from './Main';
 import AppRoutes from './AppRoutes';
@@ -12,13 +12,11 @@ function App() {
     <ApolloProvider>
       <StoreProvider>
         <Router>
-          <DSProvider>
-            <Main>
-              <React.Suspense fallback={null}>
-                <AppRoutes />
-              </React.Suspense>
-            </Main>
-          </DSProvider>
+          <Main>
+            <React.Suspense fallback={null}>
+              <AppRoutes />
+            </React.Suspense>
+          </Main>
         </Router>
       </StoreProvider>
     </ApolloProvider>

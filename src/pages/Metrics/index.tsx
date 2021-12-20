@@ -7,7 +7,7 @@ import {
   Queue,
   StatsGranularity,
   StatsSnapshot,
-} from '../../api';
+} from '@/api';
 import { useParams } from 'react-router';
 import { useLazyQuery } from '@apollo/client';
 import { RangePickerValue } from '@/components';
@@ -18,7 +18,7 @@ import ErrorRateChart, {
 import TimeRangeToolbar, {
   RangeType,
 } from '../../components/Charts/StatsLineChart/TimeRangeToolbar';
-import { useInterval, useUpdateEffect, useWhyDidYouUpdate } from '../../hooks';
+import { useInterval, useUpdateEffect } from '../../hooks';
 import { calcErrorPercentage } from '@/lib/stats';
 
 const ChartHeight = '340px';

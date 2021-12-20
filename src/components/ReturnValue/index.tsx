@@ -1,7 +1,7 @@
 import React from 'react';
 import { Popover, Tooltip } from 'antd';
 
-import { safeParse } from '../../lib';
+import { safeParse } from '@/lib';
 import { Highlight } from '../Highlight';
 
 interface ReturnValueCellProps {

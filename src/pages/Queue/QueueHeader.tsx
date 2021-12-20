@@ -1,13 +1,13 @@
+import { useQueueActions } from '@/modules/queue/hooks';
 import React, { useEffect, useState } from 'react';
 import { FaBolt, FaClock, FaCog, FaCogs, FaInbox } from 'react-icons/fa';
 import { ImStatsDots } from 'react-icons/im';
 import { Button, Typography, Space, PageHeader } from 'antd';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { QueueActions } from '../../@types/actions';
+import { QueueActions } from '@/@types';
 import { QueueMenu, QueueStateTag } from '../../components';
 import { Queue } from '@/api';
 import { useNavigate } from 'react-router';
-import { useQueueActions } from '@/hooks';
 
 const { Title } = Typography;
 

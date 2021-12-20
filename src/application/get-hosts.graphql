@@ -6,9 +6,11 @@ query GetHosts {
         uri
         workerCount
         queues {
+            hostId
             name
             id
             isPaused
+            ...JobCounts
         }
     }
 }

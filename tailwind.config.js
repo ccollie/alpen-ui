@@ -10,5 +10,9 @@ module.exports = {
   variants: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    // See options here: https://github.com/ecklf/tailwindcss-radix?ref=reactjsexample.com#options
+    require('tailwindcss-radix')(),
+  ],
 };

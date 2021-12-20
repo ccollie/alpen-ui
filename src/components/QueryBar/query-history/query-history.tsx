@@ -1,7 +1,7 @@
 import { JobFilter } from '@/api';
 import FilterList from './filter-list';
 import { useUpdateEffect, useWhyDidYouUpdate } from '@/hooks';
-import { useQueueJobFilters } from '@/hooks/use-queue-job-filters';
+import { useQueueJobFilters } from '@/modules/queue/hooks/use-queue-job-filters';
 import {
   Drawer,
   Form,

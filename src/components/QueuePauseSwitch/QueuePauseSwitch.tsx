@@ -1,6 +1,6 @@
 import { SwitchProps } from 'antd/lib/switch';
 import React from 'react';
-import { Queue, pauseQueue, resumeQueue } from '../../api';
+import { Queue, pauseQueue, resumeQueue } from '@/api';
 import { Switch } from 'antd';
 
 type QueuePauseSwitchOptions = SwitchProps & {

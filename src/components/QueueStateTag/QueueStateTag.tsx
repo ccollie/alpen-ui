@@ -1,7 +1,7 @@
 import { Tag } from 'antd';
 import { TagProps } from 'antd/es/tag';
 import React from 'react';
-import { Queue, QueueFragment } from '../../api';
+import { Queue, QueueFragment } from '@/api';
 
 interface QueueStateTagProps extends TagProps {
   queue: Queue | QueueFragment;

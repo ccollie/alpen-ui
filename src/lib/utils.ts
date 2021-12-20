@@ -137,8 +137,7 @@ export const toBool = (val: unknown): boolean => {
   const type = typeof val;
   if (type === 'boolean') return val as boolean;
   if (type === 'number') return !!(val as number);
-  if (['true', '1'].includes(`${val}`)) return true;
-  return false;
+  return ['true', '1'].includes(`${val}`);
 };
 
 export function stringify(obj: Record<string, any>): string {
@@ -162,12 +161,12 @@ export function download(
 ): void {
   const blobData = typeof bom !== 'undefined' ? [bom, data] : [data];
   const blob = new Blob(blobData, { type: mime || 'application/octet-stream' });
-  if (typeof window.navigator.msSaveBlob !== 'undefined') {
+  if (typeof (window.navigator as any).msSaveBlob !== 'undefined') {
     // IE workaround for "HTML7007: One or more blob URLs were
     // revoked by closing the blob for which they were created.
     // These URLs will no longer resolve as the data backing
     // the URL has been freed."
-    window.navigator.msSaveBlob(blob, filename);
+    (window.navigator as any).msSaveBlob(blob, filename);
   } else {
     const blobURL =
       window.URL && window.URL.createObjectURL

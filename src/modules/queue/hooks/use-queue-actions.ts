@@ -1,21 +1,24 @@
 import { useHostsStore } from '@/stores/hosts';
-import { QueueActions } from '../@types/actions';
+import { QueueActions } from '@/@types';
 import {
-  discoverQueues,
-  pauseQueue,
-  resumeQueue,
-  drainQueue,
   deleteQueue,
+  discoverQueues,
+  drainQueue,
+  pauseQueue,
   registerQueue,
+  resumeQueue,
   unregisterQueue,
-} from '../api';
+} from '@/api';
 
 // move this to store ??
 export function useQueueActions(): QueueActions {
   const hostsStore = useHostsStore();
 
   function register(hostId: string, prefix: string, name: string) {
-    return registerQueue(hostId, prefix, name, true);
+    return registerQueue(hostId, prefix, name, true).then((queue) => {
+      hostsStore.addQueue(hostId, queue);
+      return queue;
+    });
   }
 
   function handleDelete(queueId: string) {
@@ -25,7 +28,7 @@ export function useQueueActions(): QueueActions {
     });
   }
 
-  const actions: QueueActions = {
+  return {
     pauseQueue,
     resumeQueue,
     drainQueue,
@@ -34,6 +37,4 @@ export function useQueueActions(): QueueActions {
     registerQueue: register,
     unregisterQueue,
   };
-
-  return actions;
 }

@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import React from 'react';
 import s from './StatusMenu.module.css';
-import { JobCounts, JobStatus } from '../../api';
+import { JobCounts, JobStatus } from '@/api';
 
 const STATUS_LIST = [
   JobStatus.Active,

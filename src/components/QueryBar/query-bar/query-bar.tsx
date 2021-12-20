@@ -1,5 +1,5 @@
 import { EditorRef } from '@/components/QueryBar/option-editor/option-editor';
-import { useQueueJobFilters } from '@/hooks/use-queue-job-filters';
+import { useQueueJobFilters } from '@/modules/queue/hooks';
 import { Ace } from '@/lib/ace';
 import { HistoryOutlined } from '@ant-design/icons';
 import QueryHistoryDialog from '../query-history/query-history';

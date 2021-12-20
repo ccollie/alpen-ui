@@ -1,13 +1,7 @@
 import { toPrecision } from '@/lib';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StatsGranularity } from '@/api';
-import {
-  BackgroundColor,
-  formatDate,
-  getStatsChartData,
-  TickValues,
-  TimeAxisFormats,
-} from '../chart-utils';
+import { formatDate } from '../chart-utils';
 import { Chart, Area, Line } from 'bizcharts';
 
 export interface ErrorDataItem {
@@ -64,9 +58,10 @@ const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
 
   useEffect(updateSeries, [data]);
 
-  const dateFormatter = useCallback((date) => formatDate(date, granularity), [
-    granularity,
-  ]);
+  const dateFormatter = useCallback(
+    (date) => formatDate(date, granularity),
+    [granularity],
+  );
 
   const valueFormatter = useCallback(
     (value) => toPrecision(value, 1) + ' %',

@@ -7,7 +7,6 @@ import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import Title from 'antd/es/typography/Title';
 import React, { Fragment } from 'react';
 import { JobFilter } from '@/api';
-import { getThemeName } from '@/lib/ace';
 
 interface JobFilterCardProps {
   filter: JobFilter;

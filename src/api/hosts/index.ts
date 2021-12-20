@@ -12,7 +12,7 @@ import {
   RegisterQueueDocument,
   RegisterQueueMutation,
 } from '../generated';
-import { addQueueToCache } from '../queues';
+import { addQueueToCache } from '@/api';
 
 export function registerQueue(
   hostId: string,

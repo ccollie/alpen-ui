@@ -10,7 +10,7 @@ import {
   sortQueues,
   useQueueFilterParams,
 } from '@/modules/host';
-import { useQueueFiltersStore } from '../store/queues-filter';
+import { useQueueFiltersStore } from '@/modules/host/store';
 import shallow from 'zustand/shallow';
 
 export interface HostData {
@@ -27,7 +27,6 @@ export const useHostQuery = (id: string, statsRange = 'last_hour') => {
   const [host, setHost] = useState<QueueHost>();
   const [called, setCalled] = useState(false);
   const hostId = id;
-  const filterStore = useQueueFiltersStore();
 
   const filterFromParams = useQueueFilterParams();
   const defaultFilter = {

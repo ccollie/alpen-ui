@@ -109,13 +109,27 @@ const HostCard: React.FC<HostCardProps> = (props) => {
 
   return (
     <>
-      <ProCard title={title} extra={host.uri} onClick={selectHost}>
-        <JobCountsPieChart counts={counts} height={300} />
-        <div style={{ marginBottom: '8px' }}>
-          <MiniArea height={45} color="#975FE4" data={chartData} />
+      <div className="flex items-center justify-between w-full">
+        <div className="w-full shadow" onClick={selectHost}>
+          <div className="w-full h-64 border-b dark:bg-gray-800 bg-gray-100 dark:border-gray-700 border-gray-400 rounded-t">
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex items-center">
+                <span className="text-lg font-semibold">{title}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-sm text-gray-600">{host.uri}</span>
+              </div>
+            </div>
+            <JobCountsPieChart counts={counts} height={300} />
+            <div style={{ marginBottom: '8px' }}>
+              <MiniArea height={45} color="#975FE4" data={chartData} />
+            </div>
+          </div>
+          <div className="w-full h-24 rounded-b dark:bg-gray-800 bg-white">
+            <StatsCard />
+          </div>
         </div>
-        <StatsCard />
-      </ProCard>
+      </div>
     </>
   );
 };

@@ -1,10 +1,10 @@
 import { QueueActions } from '../../@types';
-import { Queue } from '../../api';
+import { Queue } from '@/api';
 import React from 'react';
 import { Menu, Dropdown, Tooltip } from 'antd';
 import { FaBatteryEmpty } from 'react-icons/fa';
 import { Modal } from 'antd';
-import { useDisclosure } from '../../hooks';
+import { useDisclosure } from '@/hooks';
 import DeleteQueueDialog from './DeleteQueueDialog';
 
 import {

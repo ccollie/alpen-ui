@@ -12,9 +12,6 @@ interface FilterToolbarProps {
 }
 
 const QueueFilterToolbar: React.FC<FilterToolbarProps> = (props) => {
-  const defaultValue = useRef<QueueFilter>(
-    normalizeFilter(props.defaultFilter),
-  );
   const filter = useRef<QueueFilter>(normalizeFilter(props.defaultFilter));
   const saveFilter = useRef<QueueFilter>({
     ...filter.current,

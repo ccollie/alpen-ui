@@ -128,6 +128,7 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
 
   return (
     <ProCard
+      className="shadow-md"
       style={{ marginTop: 8 }}
       gutter={8}
       title={title}

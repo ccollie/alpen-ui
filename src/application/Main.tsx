@@ -1,3 +1,4 @@
+import { useHostsStore } from '@/stores/hosts';
 import { useQuery } from '@apollo/client';
 import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Spin } from 'antd';
@@ -14,7 +15,7 @@ import {
   QueueHost,
 } from '@/api';
 
-const { Header, Content, Footer, Sider } = Layout;
+const { Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
 
 interface HostSubMenuProps {
@@ -50,10 +51,13 @@ const HostSubMenu: React.FC<HostSubMenuProps> = (props) => {
 
 const Main: React.FC = ({ children }) => {
   const [app, setApp] = useState<AppInfo | undefined>();
-  const [hosts, setHosts] = useState<QueueHost[]>([]);
   const [isCollapsed, setCollapsed] = useState(false);
 
-  const { data, error, loading } = useQuery(GetHostsDocument, {
+  const hosts = useHostsStore((x) => x.hosts);
+  const setHosts = useHostsStore((x) => x.setHosts);
+  const updateHosts = useHostsStore((x) => x.updateHosts);
+
+  const { data, error, loading, called } = useQuery(GetHostsDocument, {
     pollInterval: 10000,
   });
 
@@ -68,7 +72,11 @@ const Main: React.FC = ({ children }) => {
   useEffect(() => {
     if (data && !loading) {
       const _hosts = (data.hosts ?? []) as QueueHost[];
-      setHosts(_hosts);
+      if (!called) {
+        setHosts(_hosts);
+      } else {
+        updateHosts(_hosts);
+      }
     }
   }, [data, loading]);
 

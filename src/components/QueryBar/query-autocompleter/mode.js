@@ -30,10 +30,10 @@
 
 ace.define(function (require, exports, module) {
   const oop = require('../lib/oop');
-  const DocCommentHighlightRules = require('./doc_comment_highlight_rules')
-    .DocCommentHighlightRules;
-  const TextHighlightRules = require('./text_highlight_rules')
-    .TextHighlightRules;
+  const DocCommentHighlightRules =
+    require('./doc_comment_highlight_rules').DocCommentHighlightRules;
+  const TextHighlightRules =
+    require('./text_highlight_rules').TextHighlightRules;
 
   // TODO: Unicode escape sequences
   const identifierRe = '[a-zA-Z\\$_\u00a1-\uffff][a-zA-Z\\d\\$_\u00a1-\uffff]*';
@@ -43,13 +43,13 @@ ace.define(function (require, exports, module) {
     const keywordMapper = this.createKeywordMapper(
       {
         'variable.language':
-          'Array|Boolean|Date|Function|Number|Object|RegExp|String|' + // Constructors
+          'Date|' + // Constructors
           'Error|RangeError|' + // Errors
           'decodeURI|encodeURI|isFinite|' + // Non-constructor functions
           'isNaN|parseFloat|parseInt|' +
-          'JSON|Math|' + // Other
-          'this|arguments', // Pseudo
-        keyword: 'function|in|instanceof|typeof|escape|unescape',
+          'JSON|Math|Date|' + // Other
+          'this|', // Pseudo
+        keyword: 'in|instanceof|typeof|escape|unescape',
         'storage.type': 'var|function',
         'constant.language': 'null|Infinity|NaN|undefined',
         'constant.language.boolean': 'true|false',
@@ -149,7 +149,8 @@ ace.define(function (require, exports, module) {
         },
         {
           token: 'keyword.operator',
-          regex: /--|\+\+|\.{3}|===|==|=|!=|!==|<+=?|>+=?|!|&&|\|\||\?:|[!$%&*+\-~\/^]=?/,
+          regex:
+            /--|\+\+|\.{3}|===|==|=|!=|!==|<+=?|>+=?|!|&&|\|\||\?:|[!$%&*+\-~\/^]=?/,
           next: 'start',
         },
         {
@@ -182,11 +183,13 @@ ace.define(function (require, exports, module) {
         },
         {
           token: 'support.function',
-          regex: /(s(pli(?:ce|t)|qrt|lice)|c(?:har(?:CodeAt|At)|eil)|t(?:o(?:GMTString|String|U(?:TCString|pperCase)|LowerCase)|an)|i(?:s(?:NaN|Finite)|ndexOf)|u(?:n(?:shift|escape))|join|p(?:o(?:p|w)|ush|arse(?:Int|Float|Date)?)|e(?:scape|xp)|valueOf|UTC|f(?:i(?:nd|xed)|loor|romCharCode)|watch|lastIndexOf)|a(?:sin|cos|t(?:an(?:2)?)|r(?:ound|everse)|andom)|g(?:et(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Year|Time(?:zoneOffset)?|Da(?:y|te)|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Da(?:y|te)|FullYear)|FullYear))|m(?:in|a(?:tch|x))\b(?=\()/,
+          regex:
+            /(s(pli(?:ce|t)|qrt|lice)|c(?:har(?:CodeAt|At)|eil)|t(?:o(?:GMTString|String|U(?:TCString|pperCase)|LowerCase)|an)|i(?:s(?:NaN|Finite)|ndexOf)|u(?:n(?:shift|escape))|join|p(?:o(?:p|w)|ush|arse(?:Int|Float|Date)?)|e(?:scape|xp)|valueOf|UTC|f(?:i(?:nd|xed)|loor|romCharCode)|watch|lastIndexOf)|a(?:sin|cos|t(?:an(?:2)?)|r(?:ound|everse)|andom)|g(?:et(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Year|Time(?:zoneOffset)?|Da(?:y|te)|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Da(?:y|te)|FullYear)|FullYear))|m(?:in|a(?:tch|x))\b(?=\()/,
         },
         {
           token: 'support.constant',
-          regex: /(M(?:IN_VALUE|AX_VALUE)|SQRT(?:1_2|2)|i|NEGATIVE_INFINITY|u(?:n(?:iqueID|defined))|URLUnencoded|P(?:I|OSITIVE_INFINITY)|E|l(?:e(?:ngth|ft)|a(?:st(?:M(?:odified|atch)|Index)|yer(?:s|X)|nguage))|a(?:pp(?:Name|Version)|ll|r(?:ity|guments))|r(?:ight(?:Context)?)|global|x|m|L(?:N(?:10|2)|OG(?:10E|2E))|b)\b/,
+          regex:
+            /(M(?:IN_VALUE|AX_VALUE)|SQRT(?:1_2|2)|i|NEGATIVE_INFINITY|u(?:n(?:iqueID|defined))|URLUnencoded|P(?:I|OSITIVE_INFINITY)|E|l(?:e(?:ngth|ft)|a(?:st(?:M(?:odified|atch)|Index)|yer(?:s|X)|nguage))|a(?:pp(?:Name|Version)|ll|r(?:ity|guments))|r(?:ight(?:Context)?)|global|x|m|L(?:N(?:10|2)|OG(?:10E|2E))|b)\b/,
         },
         {
           token: 'identifier',
@@ -236,12 +239,12 @@ ace.define(function (require, exports, module) {
         {
           // invalid operators
           token: 'invalid',
-          regex: /\{\d+\b,?\d*\}[+*]|[+*$^?][+*]|[$^][?]|\?{3,}/,
+          regex: /{\d+\b,?\d*\}[+*]|[+*$^?][+*]|[$^][?]|\?{3,}/,
         },
         {
           // operators
           token: 'constant.language.escape',
-          regex: /\(\?[:=!]|\)|\{\d+\b,?\d*\}|[+*]\?|[()$^+*?.]/,
+          regex: /\(\?[:=!]|\)|{\d+\b,?\d*}|[+*]\?|[()$^+*?.]/,
         },
         {
           token: 'constant.language.delimiter',

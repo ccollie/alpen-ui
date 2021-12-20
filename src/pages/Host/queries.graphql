@@ -12,7 +12,6 @@ query HostPage($id: ID!, $range: String!, $filter: HostQueuesFilter) {
       isPaused
       ...JobCounts
       repeatableJobCount
-      workerCount
       throughput {
         count
         m1Rate

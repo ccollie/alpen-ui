@@ -7,7 +7,7 @@ import {
   getJobSchemas,
   JobSchema,
   setJobSchema,
-} from '../api';
+} from '@/api';
 
 export function useJobSchemaActions(queueId: string): JobSchemaActions {
   return {

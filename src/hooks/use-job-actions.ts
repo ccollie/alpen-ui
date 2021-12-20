@@ -11,7 +11,7 @@ import {
   getJobsByFilter,
   getJobLogs,
   JobStatus,
-} from '../api';
+} from '@/api';
 
 // move this to store ??
 export function useJobActions(queueId: string): QueueJobActions {

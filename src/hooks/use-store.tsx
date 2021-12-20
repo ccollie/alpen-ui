@@ -6,9 +6,9 @@ import {
   GetHostsAndQueuesDocument,
   Queue,
   QueueHost,
-} from '../api';
+} from '@/api';
 import { useApolloClient } from '@apollo/client';
-import { useQueueActions } from './use-queue-actions';
+import { useQueueActions } from '@/modules/queue/hooks';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const Noop = () => {};

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Modal, InputNumber } from 'antd';
 import { FaClock } from 'react-icons/fa';
-import { useDisclosure } from '../../hooks';
-import { parseDuration } from '../../lib/dates';
+import { useDisclosure } from '@/hooks';
+import { parseDuration } from '@/lib/dates';
 import ms from 'ms';
 
 type CleanQueueDialogProps = {
