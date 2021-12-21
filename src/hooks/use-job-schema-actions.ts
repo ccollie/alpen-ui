@@ -1,4 +1,4 @@
-import { JobSchemaActions } from '../@types';
+import { JobSchemaActions } from '@/@types';
 import {
   deleteJobSchema,
   getJobNames,

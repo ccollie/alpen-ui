@@ -208,3 +208,28 @@ export function areArraysEqual<T>(a: T[], b: T[]): boolean {
   }
   return true;
 }
+
+export function shallowEqual(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  const length = aKeys.length;
+
+  if (length !== bKeys.length) {
+    return false;
+  }
+
+  let index = -1;
+
+  while (++index < length) {
+    const key = aKeys[index];
+
+    if (key !== bKeys[index] || a[key] !== b[key]) {
+      return false;
+    }
+  }
+
+  return true;
+}

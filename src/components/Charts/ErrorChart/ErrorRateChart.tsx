@@ -1,8 +1,8 @@
+import { TimeseriesChart, TimeseriesDatum } from '../TimeseriesChart';
 import { toPrecision } from '@/lib';
+import { ChartOptions } from 'billboard.js';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StatsGranularity } from '@/api';
-import { formatDate } from '../chart-utils';
-import { Chart, Area, Line } from 'bizcharts';
 
 export interface ErrorDataItem {
   start: number;
@@ -13,8 +13,11 @@ export interface ErrorDataItem {
 
 interface ErrorChartProps {
   height?: number;
+  width?: number;
   granularity?: StatsGranularity;
   data: ErrorDataItem[];
+  type: 'line' | 'area';
+  options?: Partial<ChartOptions>;
 }
 
 export function calcErrorPercentage(completed: number, failed: number): number {
@@ -23,7 +26,13 @@ export function calcErrorPercentage(completed: number, failed: number): number {
 }
 
 const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
-  const { data = [], height = 400, granularity } = props;
+  const {
+    data = [],
+    height = 400,
+    width,
+    granularity,
+    type: chartType = 'line',
+  } = props;
 
   type ChartData = {
     start: number;
@@ -37,6 +46,18 @@ const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
   const [completedCount, setCompletedCount] = useState(0);
   const [errorPercentage, setErrorPercentage] = useState(0);
   const [chartData, setChartData] = useState<ChartData[]>([]);
+
+  const accessor = useCallback(
+    (d: ChartData): TimeseriesDatum | TimeseriesDatum[] => {
+      const res: TimeseriesDatum = {
+        ts: d.end,
+        value: d.value,
+        name: 'rate',
+      };
+      return res;
+    },
+    [],
+  );
 
   function updateSeries() {
     const _data: ChartData[] = [];
@@ -58,34 +79,22 @@ const ErrorRateChart: React.FC<ErrorChartProps> = (props) => {
 
   useEffect(updateSeries, [data]);
 
-  const dateFormatter = useCallback(
-    (date) => formatDate(date, granularity),
-    [granularity],
-  );
-
   const valueFormatter = useCallback(
     (value) => toPrecision(value, 1) + ' %',
     [],
   );
 
-  const scale = {
-    value: {
-      nice: true,
-      formatter: valueFormatter,
-    },
-    start: {
-      alias: 'Time',
-      type: 'time',
-      formatter: dateFormatter,
-      nice: false,
-    },
-  };
-
   return (
-    <Chart scale={scale} height={height} data={chartData} autoFit>
-      <Area position="start*value" color="#e74c3c" />
-      <Line position="start*value" color="red" />
-    </Chart>
+    <TimeseriesChart<ChartData>
+      type={chartType}
+      height={height}
+      width={width}
+      data={chartData}
+      accessor={accessor}
+      granularity={granularity}
+      valueFormatter={valueFormatter}
+      options={props.options}
+    />
   );
 };
 export default ErrorRateChart;

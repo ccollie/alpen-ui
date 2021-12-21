@@ -2,9 +2,14 @@ import { JobStatus } from '@/api';
 
 export type OnPieClickCallback = (status: JobStatus, value?: number) => void;
 
+export type JobCountsHash = {
+  [key in JobStatus]: number;
+};
+
 export type PieChartDataProps = {
   height?: number;
-  counts: { [key in JobStatus]: number };
+  title?: string;
+  counts: JobCountsHash;
   onClick?: OnPieClickCallback;
 };
 

@@ -1,18 +1,13 @@
 module.exports = {
-  purge: [
-    './src/pages/**/*.{js,ts,jsx,tsx}',
-    './src/components/**/*.{js,ts,jsx,tsx}',
-  ],
-  darkMode: false, // or 'media' or 'class'
+  content: ['./public/index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'media',
   theme: {
-    extend: {},
-  },
-  variants: {
     extend: {},
   },
   plugins: [
     require('@tailwindcss/forms'),
+    // require('@tailwindcss/typography'),
     // See options here: https://github.com/ecklf/tailwindcss-radix?ref=reactjsexample.com#options
-    require('tailwindcss-radix')(),
+    // require('tailwindcss-radix')(),
   ],
 };

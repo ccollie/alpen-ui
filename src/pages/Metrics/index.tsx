@@ -15,9 +15,7 @@ import { StatsLineChart } from '../../components/Charts';
 import ErrorRateChart, {
   ErrorDataItem,
 } from '../../components/Charts/ErrorChart/ErrorRateChart';
-import TimeRangeToolbar, {
-  RangeType,
-} from '../../components/Charts/StatsLineChart/TimeRangeToolbar';
+import TimeRangeToolbar, { RangeType } from '@/components/TimeRangeToolbar';
 import { useInterval, useUpdateEffect } from '../../hooks';
 import { calcErrorPercentage } from '@/lib/stats';
 

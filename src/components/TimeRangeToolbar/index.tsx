@@ -14,7 +14,7 @@ import {
   ONE_WEEK,
   startOf,
 } from '@/lib/dates';
-import DatePicker from '../../DatePicker';
+import DatePicker from '../DatePicker';
 import { RangePickerValue } from '@/components';
 
 const { RangePicker } = DatePicker;

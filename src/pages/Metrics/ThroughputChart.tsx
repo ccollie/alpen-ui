@@ -1,8 +1,6 @@
 import { StatsGranularity, StatsSnapshot } from '@/api';
-import { formatDate, getStatsChartData } from '@/components/Charts/chart-utils';
-import ms from 'ms';
-import React, { useCallback, useMemo } from 'react';
-import { AreaChart } from 'bizcharts';
+import { StatsLineChart } from '@/components';
+import React from 'react';
 
 interface ThroughputChartProps {
   height?: number;
@@ -19,35 +17,12 @@ const ThroughputChart: React.FC<ThroughputChartProps> = (props) => {
     granularity,
   } = props;
 
-  const dateFormatter = useCallback((date) => formatDate(date, granularity), [
-    granularity,
-  ]);
-
-  const valueFormatter = useCallback((value) => ms(value), []);
-
-  const chartData = useMemo(() => getStatsChartData(data, fields), [
-    data,
-    fields,
-  ]);
-
   return (
-    <AreaChart
-      meta={{
-        value: {
-          formatter: valueFormatter,
-        },
-        start: {
-          alias: 'Time',
-          type: 'time',
-          formatter: dateFormatter,
-        },
-      }}
+    <StatsLineChart
+      fields={fields}
       height={height}
-      data={chartData}
-      xField="start"
-      yField="value"
-      seriesField="metric"
-      autoFit
+      data={data}
+      granularity={granularity}
     />
   );
 };

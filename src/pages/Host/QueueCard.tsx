@@ -8,7 +8,7 @@ import prettyMilliseconds from 'pretty-ms';
 
 import { JobCounts, Queue, StatsSnapshot } from '@/api';
 import { useNavigate } from 'react-router-dom';
-import { JobCountsPieChart, MiniArea } from '../../components/Charts';
+import { JobCountsPieChart, MiniChart } from '../../components/Charts';
 import { BellOutlined } from '@ant-design/icons';
 import { FaCogs } from 'react-icons/fa';
 import { calcErrorPercentage } from '@/lib/stats';
@@ -162,7 +162,7 @@ const QueueCard: React.FC<QueueCardProps> = (props) => {
       </Row>
       <JobCountsPieChart counts={counts} height={300} />
       <div style={{ marginBottom: '8px' }}>
-        <MiniArea height={45} color="#975FE4" data={chartData} />
+        <MiniChart height={45} color="#975FE4" data={chartData} />
       </div>
       {statsSummary && <StatsCard stats={statsSummary} />}
     </ProCard>

@@ -1,4 +1,3 @@
-import ProCard from '@ant-design/pro-card';
 import { Col, Row, Space, Statistic } from 'antd';
 import formatBytes from 'pretty-bytes';
 import React, { ReactText, useCallback, useEffect, useState } from 'react';
@@ -7,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWhyDidYouUpdate } from '@/hooks';
 import { calcErrorPercentage, calcJobRatePerUnit } from '@/lib/stats';
 import { roundNumber } from '@/lib';
-import { JobCountsPieChart, MiniArea } from '../Charts';
+import { JobCountsPieChart, MiniChart } from '../Charts';
 import { HostStateTag } from '../HostStateTag';
 
 interface HostCardProps {
@@ -121,8 +120,14 @@ const HostCard: React.FC<HostCardProps> = (props) => {
               </div>
             </div>
             <JobCountsPieChart counts={counts} height={300} />
+            ya
             <div style={{ marginBottom: '8px' }}>
-              <MiniArea height={45} color="#975FE4" data={chartData} />
+              <MiniChart
+                type="area"
+                height={45}
+                color="#975FE4"
+                data={chartData}
+              />
             </div>
           </div>
           <div className="w-full h-24 rounded-b dark:bg-gray-800 bg-white">

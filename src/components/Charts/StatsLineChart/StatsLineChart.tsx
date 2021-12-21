@@ -1,54 +1,55 @@
-import ms from 'ms';
-import React, { useCallback, useMemo } from 'react';
 import { StatsGranularity, StatsSnapshot } from '@/api';
-import { formatDate, getStatsChartData } from '../chart-utils';
-import { AreaChart } from 'bizcharts';
+import { TimeseriesChart, TimeseriesDatum } from '../TimeseriesChart';
+import { ChartOptions } from 'billboard.js';
+import ms from 'ms';
+import React, { useCallback } from 'react';
 
 interface StatsLineChartProps {
   height?: number;
-  fields?: string[];
+  width?: number;
+  fields?: Array<keyof StatsSnapshot>;
   granularity?: StatsGranularity;
   data?: StatsSnapshot[];
+  type?: 'area' | 'line';
+  options?: Partial<ChartOptions>;
 }
 
 const StatsLineChart: React.FC<StatsLineChartProps> = (props) => {
   const {
     data = [],
     fields = ['mean', 'median', 'p90', 'p95'],
-    height = 400,
+    height,
+    width,
     granularity,
+    type: chartType = 'line',
   } = props;
-
-  const dateFormatter = useCallback(
-    (date) => formatDate(date, granularity),
-    [granularity],
-  );
 
   const valueFormatter = useCallback((value) => ms(value), []);
 
-  const chartData = useMemo(
-    () => getStatsChartData(data, fields),
-    [data, fields],
+  const accessor = useCallback(
+    (d: StatsSnapshot): TimeseriesDatum | TimeseriesDatum[] => {
+      return fields.map((field) => {
+        const res: TimeseriesDatum = {
+          ts: d.endTime,
+          value: d[field],
+          name: field,
+        };
+        return res;
+      });
+    },
+    [fields],
   );
 
   return (
-    <AreaChart
-      meta={{
-        value: {
-          formatter: valueFormatter,
-        },
-        start: {
-          alias: 'Time',
-          type: 'time',
-          formatter: dateFormatter,
-        },
-      }}
+    <TimeseriesChart<StatsSnapshot>
+      type={chartType}
       height={height}
-      data={chartData}
-      xField="start"
-      yField="value"
-      seriesField="metric"
-      autoFit
+      width={width}
+      data={data}
+      accessor={accessor}
+      granularity={granularity}
+      valueFormatter={valueFormatter}
+      options={props.options}
     />
   );
 };
